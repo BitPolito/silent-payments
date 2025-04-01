@@ -1,3 +1,13 @@
+'''
+how to perform a test: 
+- run test.py
+- select the test you want to perform (from 0 to 25), see test_list.json
+- choose the type of test: sending, receiving or both
+- wait for results :) 
+pay attention to set up cwd correctly for reading .json files
+'''
+
+
 import json
 from sender import sending_run
 from receiver import receiving_run
@@ -116,10 +126,14 @@ def receiving_test(data) -> bool:
         return False
 
 
-if __name__ == "__main__":
+def test_run():
     b = test()
     if b: 
         print('Good job!')
     else:
         print('Try again!')
+    return
 
+
+if __name__ == "__main__":
+    test_run()
