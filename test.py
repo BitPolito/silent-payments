@@ -32,11 +32,11 @@ def test(test_file = 'send_and_receive_test_vectors.json', test_id = None, test_
     # read the test file 
     test_data = test_file_reading(test_file)
     if test_data is None:
-        return False
+        print('test_data problem')
+        raise 
     
     # print the test list
-    with open('test_list.json', 'r') as file:
-        test_list = json.load(file)
+    test_list = test_file_reading(test_file='test_list.json')
     print(json.dumps(test_list['TEST LIST'], indent=4))
 
     if test_id is None:
@@ -126,14 +126,5 @@ def receiving_test(data) -> bool:
         return False
 
 
-def test_run():
-    b = test()
-    if b: 
-        print('Good job!')
-    else:
-        print('Try again!')
-    return
-
-
 if __name__ == "__main__":
-    test_run()
+    test()
