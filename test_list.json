@@ -1,0 +1,30 @@
+{
+    "TEST LIST" : [  
+        "0. Simple send: two inputs", 
+        "1. Simple send: two inputs, order reversed", 
+        "2. Simple send: two inputs from the same transaction", 
+        "3. Simple send: two inputs from the same transaction, order reversed",
+        "4. Outpoint ordering byte-lexicographically vs. vout-integer", 
+        "5. Single recipient: multiple UTXOs from the same public key", 
+        "6. Single recipient: taproot only inputs with even y-values", 
+        "7. Single recipient: taproot only with mixed even/odd y-values", 
+        "8. Single recipient: taproot input with even y-value and non-taproot input", 
+        "9. Single recipient: taproot input with odd y-value and non-taproot input", 
+        "10. Multiple outputs: multiple outputs, same recipient", 
+        "11. Multiple outputs: multiple outputs, multiple recipients", 
+        "12. Receiving with labels: label with even parity", 
+        "13. Receiving with labels: label with odd parity", 
+        "14. Receiving with labels: large label integer", 
+        "15. Multiple outputs with labels: un-labeled and labeled address; same recipient", 
+        "16. Multiple outputs with labels: multiple outputs for labeled address; same recipient", 
+        "17. Multiple outputs with labels: un-labeled, labeled, and multiple outputs for labeled address; same recipients", 
+        "18. Single recipient: use silent payments for sender change", 
+        "19. Single recipient: taproot input with NUMS point", 
+        "20. Pubkey extraction from malleated p2pkh", 
+        "21. P2PKH and P2WPKH Uncompressed Keys are skipped", 
+        "22. Skip invalid P2SH inputs", 
+        "23. Recipient ignores unrelated outputs", 
+        "24. No valid inputs, sender generates no outputs", 
+        "25. Input keys sum up to zero / point at infinity: sending fails, receiver skips tx"
+    ]
+}

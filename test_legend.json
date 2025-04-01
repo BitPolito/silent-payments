@@ -1,0 +1,76 @@
+{
+    "comment": "Test decription",
+    "sending": [ 
+        { 
+            "given": {
+                "vin": [ 
+                    { 
+                        "txid": "ID of the transaction from which the input originates",
+                        "vout": "(int) Index of the output in the previous transaction.",
+                        "scriptSig": "Signature script used to authorize the input.",
+                        "txinwitness": "Witness for the input (used in SegWit transactions, can be empty).", 
+                        "prevout": {
+                            "scriptPubKey": {
+                                "hex": "Hexadecimal representation of the public script of the previous output"
+                            }
+                        },
+                        "private_key": "Private key associated with the input (sensitive and should not be shared)."
+                    }
+                ],
+                "recipients": [
+                    "Array of recipient addresses for the transaction"
+                ]
+            },
+            "expected": {
+                "outputs": [
+                    [
+                        "Array of expected outputs for the sending transaction"
+                    ]
+                ]
+            }
+        }
+    ], 
+    "receiving": [
+        {
+            "given": {
+                "vin": [
+                    { 
+                        "txid": "ID of the transaction from which the input originates",
+                        "vout": "(int) Index of the output in the previous transaction.",
+                        "scriptSig": "Signature script used to authorize the input.",
+                        "txinwitness": "Witness for the input (used in SegWit transactions, can be empty).",
+                        "prevout": {
+                            "scriptPubKey": {
+                                "hex": "Hexadecimal representation of the public script of the previous output"
+                            }
+                        }
+                    }
+                ],
+                "outputs": [
+                    "Array of outputs for the receiving transaction."
+                ],
+                "key_material": {
+                    "spend_priv_key": "Private key for spending.",
+                    "scan_priv_key": "Private key for scanning."
+                },
+                "labels": "Array of labels associated with the transaction (can be empty)." 
+            }, 
+            "expected": {
+                "addresses": [
+                    "Array of expected sp addresses for receiving."
+                ],
+                "outputs": [
+                    {
+                        "priv_key_tweak": "Tweak for the private key.",
+                        "pub_key": "Public key of the output.",
+                        "signature": "Signature associated with the output."
+                    }
+                ]
+            }
+        }
+    ]
+}
+
+
+
+
