@@ -48,12 +48,27 @@ def generate_sp_address(key_material: dict = None, label: int =None, network: st
     return sp_address 
 
 
-def encode_sp_address() -> str:
-    return
+def encoding_sp_address(sp_address,b_scan, b_spend):
+    # Public keys
+    B_scan=point_mul(G,b_scan)
+    B_spend=point_mul(G,b_spend)
+
+    # Label m (with no label : B_m=B_spend)
+    m = get_label()
+    label_tweak = hash_BIP0352_Label(ser256(b_scan) + ser32(m)) if m else 0
+
+    #Modified public key
+    B_m = B_spend + label_tweak * G
+    data = b"q" + serP(B_scan) + serP(B_m)
+
+    # Bech32m encoding
+    hrp = "sp"  # oppure "tsp" per testnet
+    sp_address = bech32m_encode(hrp, data)
+    return sp_address
 
 
 
-def scanning():
+def scanning(transactions: list, bscan: int, Bspend: Point, labels: list) -> list:
     '''
     If each of the checks in Scanning silent payment eligible transactions passes, the receiving wallet must:
 
@@ -80,20 +95,115 @@ def scanning():
                     If a label is not found, negate output and check a second time
             If no matches are found, stop
     '''
-    return
+    """
+    Scans transactions for silent payment eligible outputs.
+    
+    Args:
+        transactions: List of transaction dicts with at least:
+            - 'inputs': list of dicts with public keys as Points and 'outpoint'
+            - 'outputs': list of Points (taproot output keys)
+        bscan: Private scan key (int)
+        Bspend: Public spend key (Point)
+        labels: List of Points (public keys used as labels)
+    
+    Returns:
+        List of detected output Points that belong to the wallet.
+    """
+    detected_outputs = []
+
+    for tx in transactions:
+        inputs = tx["inputs"]
+        outputs_to_check = tx["outputs"]
+
+        # Step 1: Aggregate input public keys A = A1 + A2 + ... + An
+        A = None
+        for i in inputs:
+            A = point_add(A, i["pubkey"])
+
+        if is_infinity(A):
+            continue
+
+        # Step 2: Get the smallest outpoint lexicographically
+        outpoints = [i["outpoint"] for i in inputs]
+        outpointL = min(outpoints)
+
+        # Step 3: Compute input_hash = hashBIP0352/Inputs(outpointL || A)
+        input_hash = tagged_hash("BIP0352/Inputs", outpointL + bytes_from_point(A))
+
+        # Step 4: ecdh_shared_secret = input_hash * bscan * A
+        ecdh_scalar = (int_from_bytes(input_hash) * bscan) % n
+        ecdh_shared_secret = point_mul(A, ecdh_scalar)
+        if ecdh_shared_secret is None:
+            continue
+
+        # Step 5: Iterate over outputs and derive possible matches
+        k = 0
+        while outputs_to_check:
+            # tk = hashBIP0352/SharedSecret(serP(ecdh_shared_secret) || ser32(k))
+            ser_secret = bytes_from_point(ecdh_shared_secret)
+            ser_k = k.to_bytes(4, byteorder='big')
+            tk_bytes = tagged_hash("BIP0352/SharedSecret", ser_secret + ser_k)
+            tk = int_from_bytes(tk_bytes)
+
+            if tk == 0 or tk >= n:
+                break
+
+            # Pk = Bspend + tk * G
+            Pk = point_add(Bspend, point_mul(G, tk))
+            if Pk is None:
+                break
+
+            matched = False
+            for out in outputs_to_check:
+                if Pk == out:
+                    detected_outputs.append(Pk)
+                    outputs_to_check.remove(out)
+                    matched = True
+                    break
+
+                # Check label
+                label = point_add(out, point_mul(Pk, n - 1))  # label = out - Pk
+                if label in labels:
+                    derived = point_add(Pk, label)
+                    detected_outputs.append(derived)
+                    outputs_to_check.remove(out)
+                    matched = True
+                    break
+
+                # Check negated output
+                neg_out = point_mul(out, n - 1)
+                label_neg = point_add(neg_out, point_mul(Pk, n - 1))
+                if label_neg in labels:
+                    derived = point_add(Pk, label_neg)
+                    detected_outputs.append(derived)
+                    outputs_to_check.remove(out)
+                    matched = True
+                    break
+
+            if not matched:
+                break
+
+            k += 1
+
+    return detected_outputs
 
 
 
-def spending():
+def spending(bspend: int, tk: int, bscan: int, m: int, label: bool = False) -> int:
     '''
     Recall that a silent payment output is of the form Bspend + tk·G + hashBIP0352/Label(ser256(bscan) || ser32(m))·G, where hashBIP0352/Label(ser256(bscan) || ser32(m))·G is an optional label. 
     To spend a silent payment output:
     - Let d = (bspend + tk + hashBIP0352/Label(ser256(bscan) || ser32(m))) mod n, where hashBIP0352/Label(ser256(bscan) || ser32(m)) is the optional label
     - Spend the BIP341 output with the private key d
     '''
+    d = (bspend + tk) % n
 
-    return
+    if label:
+        data = ser256(bscan) + ser32(m)
+        label_hash = tagged_hash("BIP0352/Label", data)
+        d = (d + int.from_bytes(label_hash, 'big')) % n
 
+    return d
 
 
 
