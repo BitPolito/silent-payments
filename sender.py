@@ -7,6 +7,8 @@ The sender performs coin selection as usual with the following restrictions:
 
 from schnorr_lib import *
 from utils import *
+from receiver import generate_sp_address
+from segwit_addr import decode as bech32m_decode
 
 
 def get_transaction_type(txinwitness: str, scriptPubKey: str)  -> str: 
@@ -36,13 +38,11 @@ def select_inputs(vin: list[dict]) -> list[dict]:
             valid_inputs.append(tx) 
 
     # exclude inputs with SegWit version > 1 
-
     return valid_inputs
 
+    
 
-
-
-def create_outputs(inputs: list[dict], recipients: list[str]) -> list[dict]:
+def create_outputs(inputs: list[dict], recipients: list[str], change: bool = False) -> list:
 
     # collect keys for valid inputs
     keys = []
@@ -65,41 +65,50 @@ def create_outputs(inputs: list[dict], recipients: list[str]) -> list[dict]:
     # let input_hash = hashBIP0352/Inputs(outpointL || A)
     # where outpointL is the smallest outpoint lexicographically used in the transaction and A = a·G
     outpointL = get_outpoint()
-    A = point_mul(G, a)
-    input_hash = tagged_hash(inputs, outpointL + A)
+    A = point_mul(G, a) 
+    input_hash = tagged_hash('Inputs', outpointL + bytes_from_point(A)) 
 
     # Group receiver silent payment addresses by B_scan (e.g. each group consists of one B_scan and one or more B_m)
-
+    
+    outputs = []
     # For each group:
     for rp in recipients:
         # decode sp address
-        B_scan, B_m = decode_sp_address()
+        B_scan, B_m = bech32m_decode(hrp='sp', addr=rp) 
         # Let ecdh_shared_secret = input_hash·a·Bscan
-        ecdh_shared_secret = input_hash * a * B_scan
+        ecdh_shared_secret = point_mul(B_scan, int_from_bytes(input_hash) * a)
         # Let k = 0
-        k = 0
-        # For each Bm in the group:
-        for B_m in rp: # ????????????????????????????
+        k = int(0)
+        # For each Bm in the group: 
+        for B_m in rp: 
             # Let tk = hashBIP0352/SharedSecret(serP(ecdh_shared_secret) || ser32(k))
-            t_k = tagged_hash(ecdh_shared_secret, serP(ecdh_shared_secret) + ser32(k))
+            t_k = tagged_hash('SharedSecret', serP(ecdh_shared_secret) + ser32(k))
             # If tk is not valid tweak, i.e., if tk = 0 or tk is larger or equal to the secp256k1 group order, fail
-            if t_k == 0 or t_k > p:
+            if t_k == 0 or t_k >= n: 
                 raise ValueError('ERROR') 
             
             # Let Pmn = Bm + tk·G
-            P_mn = B_m + y(point_mul(G, t_k))
+            P_mn = point_add(B_m, point_mul(G, t_k))
             # Encode Pmn as a BIP341 taproot output
+            taproot_output = taproot_encode(P_mn)
+            outputs.append(taproot_output)
+
             # Optionally, repeat with k++ to create additional outputs for the current Bm
-            # If no additional outputs are required, continue to the next Bm with k++[18]
+            # If no additional outputs are required, continue to the next Bm with k++
+            k += 1
+
     
-    # Optionally, if the sending wallet implements receiving silent payments, it can create change outputs by sending to its own silent payment address using label m = 0, following the steps above
+    # Optionally, if the sending wallet implements receiving silent payments, 
+    # it can create change outputs by sending to its own silent payment address using label m = 0, following the steps above
+    if change:
+        change_address = generate_sp_address(label=0)
+        outputs.append(change_address)
 
+    return outputs
+
+
+def taproot_encode(P: Point) -> str: 
     return
-
-
-def decode_sp_address(address: str) -> Tuple[bytes, bytes]:
-    return
-
 
 
 def sending_run(vin, recipients):
