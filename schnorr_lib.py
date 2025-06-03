@@ -48,6 +48,7 @@ def x(P: Point) -> int:
 def y(P: Point) -> int:
     return P[1]
 
+
 # Point addition
 def point_add(P1: Optional[Point], P2: Optional[Point]) -> Optional[Point]:
     if P1 is None:

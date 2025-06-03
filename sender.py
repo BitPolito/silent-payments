@@ -25,6 +25,7 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str)  -> str:
     return None
 
 
+
 def select_inputs(vin: list[dict]) -> list[dict]: 
     # Inputs For Shared Secret Derivation
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH'] 
@@ -96,7 +97,6 @@ def create_outputs(inputs: list[dict], recipients: list[str], change: bool = Fal
             # Optionally, repeat with k++ to create additional outputs for the current Bm
             # If no additional outputs are required, continue to the next Bm with k++
             k += 1
-
     
     # Optionally, if the sending wallet implements receiving silent payments, 
     # it can create change outputs by sending to its own silent payment address using label m = 0, following the steps above

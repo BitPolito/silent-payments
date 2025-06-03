@@ -5,26 +5,26 @@
             "given": {
                 "vin": [ 
                     { 
-                        "txid": "ID of the transaction from which the input originates",
-                        "vout": "(int) Index of the output in the previous transaction.",
-                        "scriptSig": "Signature script used to authorize the input.",
-                        "txinwitness": "Witness for the input (used in SegWit transactions, can be empty).", 
+                        "txid": "The TXID of the transaction containing the output you want to spend",
+                        "vout": "The index number of the output you want to spend",
+                        "scriptSig": "The unlocking code for the output you want to spend",
+                        "txinwitness": "Witness for the input (used in SegWit transactions, can be empty)", 
                         "prevout": {
                             "scriptPubKey": {
                                 "hex": "Hexadecimal representation of the public script of the previous output"
                             }
-                        },
-                        "private_key": "Private key associated with the input (sensitive and should not be shared)."
+                        }, 
+                        "private_key": "private key associated with the input"
                     }
                 ],
                 "recipients": [
-                    "Array of recipient addresses for the transaction"
+                    "array of strings, where each string is a bech32m encoding representing a silent payment address"
                 ]
             },
             "expected": {
                 "outputs": [
                     [
-                        "Array of expected outputs for the sending transaction"
+                        "array of strings, where each string is a hex encoding of 32-byte X-only public key; contains all possible output sets, test must match a subset of size `n_outputs`"
                     ]
                 ]
             }
@@ -35,9 +35,9 @@
             "given": {
                 "vin": [
                     { 
-                        "txid": "ID of the transaction from which the input originates",
-                        "vout": "(int) Index of the output in the previous transaction.",
-                        "scriptSig": "Signature script used to authorize the input.",
+                        "txid": "The TXID of the transaction containing the output you want to spend",
+                        "vout": "The index number of the output you want to spend",
+                        "scriptSig": "The unlocking code for the output you want to spend",
                         "txinwitness": "Witness for the input (used in SegWit transactions, can be empty).",
                         "prevout": {
                             "scriptPubKey": {
@@ -50,20 +50,20 @@
                     "Array of outputs for the receiving transaction."
                 ],
                 "key_material": {
-                    "spend_priv_key": "Private key for spending.",
-                    "scan_priv_key": "Private key for scanning."
+                    "spend_priv_key": "hex encoded spend private key",
+                    "scan_priv_key": "hex encoded scan private key"
                 },
-                "labels": "Array of labels associated with the transaction (can be empty)." 
+                "labels": "array of ints, representing labels the receiver has used (can be empty)" 
             }, 
             "expected": {
                 "addresses": [
-                    "Array of expected sp addresses for receiving."
+                    "array of bech32m strings, one for the silent payment address and each labeled address (if used)"
                 ],
                 "outputs": [
                     {
-                        "priv_key_tweak": "Tweak for the private key.",
-                        "pub_key": "Public key of the output.",
-                        "signature": "Signature associated with the output."
+                        "priv_key_tweak": "hex encoded private key tweak data",
+                        "pub_key": "hex encoded X-only public key",
+                        "signature": "hex encoded signature for the output (produced with spend_priv_key + priv_key_tweak)"
                     }
                 ]
             }

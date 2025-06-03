@@ -4,7 +4,6 @@ from hardened_keys import generate_hardened_keys
 from segwit_addr import encode as bech32m
 
 
-
 # generating silent payments address
 def generate_sp_address(key_material: dict = None, labels: list[int] = None, network: str = 'mainnet', version: int = 0) -> str:
     
@@ -32,8 +31,7 @@ def generate_sp_address(key_material: dict = None, labels: list[int] = None, net
         label_hash = pubkey_point_gen_from_int(int_from_bytes(h))
         B_m = point_add(B_spend, label_hash)  # Tweak the spend public key 
     else: 
-        B_m = B_spend # If no label is applied then Bm = Bspend
-
+        B_m = B_spend # If no label is applied then Bm = Bspend 
     
     # human-readable part based on the network
     hrp = 'sp' if network == 'mainnet' else 'tsp' 
@@ -41,10 +39,8 @@ def generate_sp_address(key_material: dict = None, labels: list[int] = None, net
     # Create the data part
     data_part = serP(B_scan) + serP(B_m)  # Concatenate the serialized public keys
 
-    # Encode the address in Bech32m format
-    # sp_address = encode_sp_address(hrp, data_part, version)
-    
-    sp_address = bech32m(hrp, data_part, version)
+    # Encode the address in Bech32m format    
+    sp_address = bech32m(hrp, version, data_part)
 
     return sp_address
 
@@ -56,9 +52,7 @@ The final address is a Bech32m encoding of:
         The character "q", to represent a silent payment address of version 0
         The 66-byte concatenation of the receiver's public keys, serP(Bscan) || serP(Bm)
 '''
-def encode_sp_address(hrp: str, data_part: bytes, version: int) -> str:
 
-    return 
 
 
 
@@ -199,26 +193,19 @@ def spending(bspend: int, tk: int, bscan: int, m: int, label: bool = False) -> i
 
 
 
+
+
+
 # running the receiving process
 def receiving_run(key_material: dict = None, labels: list = []) -> str:
-
     print('receiver.py loading...')  
     address = generate_sp_address(key_material, labels)
-    print(address)
-    return address
+    print(f'Address: {address}')
+    return 
 
 
 if __name__ == '__main__':
     receiving_run()
-
-
-
-
-
-
-
-
-
 
 
 
