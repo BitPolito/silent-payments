@@ -1,11 +1,15 @@
 from schnorr_lib import *
 
 # outpoint (36 bytes): the COutPoint of an input (32-byte txid, least significant byte first || 4-byte vout, least significant byte first)
-def get_outpoint(vin: dict) -> bytes:
-    txid, vout = vin['txid'], vin['vout'] 
-    txid_bytes = bytes.fromhex(txid)[::-1] # Convert txid to bytes and reverse the order (little-endian)
-    vout_bytes = vout(4, 'little') # Convert vout to bytes (little-endian)
-    return txid_bytes + vout_bytes
+def get_outpointL(vin: list[dict]) -> bytes:
+    outpoint_list = []
+    for tx in vin:
+        txid, vout = tx['txid'], tx['vout'] 
+        txid_bytes = bytes_from_hex(txid) 
+        vout_bytes = vout.to_bytes(4, 'little')
+        outpoint_list.append(txid_bytes + vout_bytes)
+    outpointL = min(outpoint_list)
+    return outpointL
 
 # ser32(i): serializes a 32-bit unsigned integer i as a 4-byte sequence, most significant byte first. 
 def ser32(i: int) -> bytes:

@@ -1,11 +1,11 @@
 from utils import *
 from schnorr_lib import pubkey_point_gen_from_int, tagged_hash, point_add, int_from_bytes, bytes_from_hex
 from hardened_keys import generate_hardened_keys
-from segwit_addr import encode as bech32m
+from segwit_addr import encode
 
 
 # generating silent payments address
-def generate_sp_address(key_material: dict = None, labels: list[int] = None, network: str = 'mainnet', version: int = 0) -> str:
+def generate_sp_address(key_material: dict = None, labels: list[int] = None, network: str = 'mainnet', version: int = 0) -> list[str]:
     
     # if there are no keys in input create a key pair
     if key_material is None: 
@@ -21,37 +21,36 @@ def generate_sp_address(key_material: dict = None, labels: list[int] = None, net
 
     # Let Bspend, bspend = Receiver's spend public key and corresponding private key
     B_spend = pubkey_point_gen_from_int(int_from_bytes(b_spend))
-
-    # If a label is provided, apply the tweak
-    # Assuming label is an integer 
-    if len(labels) > 0: 
-        # Let Bm = Bspend + hashBIP0352/Label(ser256(bscan) || ser32(m))·G 
-        # where hashBIP0352/Label(ser256(bscan) || ser32(m))·G is an optional integer tweak for labeling
-        h = tagged_hash('Label', ser256(int_from_bytes(b_scan)) + ser32(labels)) 
-        label_hash = pubkey_point_gen_from_int(int_from_bytes(h))
-        B_m = point_add(B_spend, label_hash)  # Tweak the spend public key 
-    else: 
-        B_m = B_spend # If no label is applied then Bm = Bspend 
     
     # human-readable part based on the network
     hrp = 'sp' if network == 'mainnet' else 'tsp' 
 
-    # Create the data part
-    data_part = serP(B_scan) + serP(B_m)  # Concatenate the serialized public keys
+    sp_addresses = []
+    
+    # If a label is provided, apply the tweak
+    # Assuming label is an integer 
+    if len(labels) > 0: 
+        for l in labels:
+            # Let Bm = Bspend + hashBIP0352/Label(ser256(bscan) || ser32(m))·G 
+            # where hashBIP0352/Label(ser256(bscan) || ser32(m))·G is an optional integer tweak for labeling
+            h = tagged_hash('BIP0352/Label', ser256(int_from_bytes(b_scan)) + ser32(l)) 
+            label_hash = pubkey_point_gen_from_int(int_from_bytes(h))
+            B_m = point_add(B_spend, label_hash)  # Tweak the spend public key 
 
-    # Encode the address in Bech32m format    
-    sp_address = bech32m(hrp, version, data_part)
+            # Create the data part
+            data_part = serP(B_scan) + serP(B_m)  # Concatenate the serialized public keys
 
-    return sp_address
+            # Encode the address in Bech32m format    
+            sp_addresses.append(encode(hrp, version, data_part))
 
+    else: 
+        # If no label is applied then Bm = Bspend 
+        data_part = serP(B_scan) + serP(B_spend)  # Concatenate the serialized public keys
 
-'''
-The final address is a Bech32m encoding of:
-    The human-readable part "sp" for mainnet, "tsp" for testnets (e.g. signet, testnet)
-    The data-part values:
-        The character "q", to represent a silent payment address of version 0
-        The 66-byte concatenation of the receiver's public keys, serP(Bscan) || serP(Bm)
-'''
+        # Encode the address in Bech32m format    
+        sp_addresses.append(encode(hrp, version, data_part))
+
+    return sp_addresses
 
 
 
@@ -196,15 +195,11 @@ def spending(bspend: int, tk: int, bscan: int, m: int, label: bool = False) -> i
 
 
 # running the receiving process
-def receiving_run(key_material: dict = None, labels: list = []) -> str:
+def receiving_run(key_material: dict = None, labels: list = []) -> list[str]:
     print('receiver.py loading...')  
     address = generate_sp_address(key_material, labels)
-    print(f'Address: {address}')
-    return 
+    return address
 
 
 if __name__ == '__main__':
     receiving_run()
-
-
-

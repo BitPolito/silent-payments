@@ -1,27 +1,9 @@
-# Copyright (c) 2017, 2020 Pieter Wuille
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+'''
+Reference implementation for Bech32/Bech32m and segwit addresses.
 
-"""Reference implementation for Bech32/Bech32m and segwit addresses."""
-
-# The decode functions are intended for use with silent payment addresses;
-# they are not guaranteed to work with regular segwit addresses.
+The functions are intended for use with silent payment addresses;
+they are not guaranteed to work with regular segwit addresses.
+'''
 
 from enum import Enum
 from typing import Optional, Tuple
@@ -70,7 +52,7 @@ def bech32_encode(hrp: str, data: list[int], spec: Encoding) -> str:
     combined = data + bech32_create_checksum(hrp, data, spec)
     return hrp + '1' + ''.join([CHARSET[d] for d in combined])
 
-def bech32m_decode(bech: str) -> Tuple[Optional[str], Optional[list[int]], Optional[Encoding]]:
+def bech32_decode(bech: str) -> Tuple[Optional[str], Optional[list[int]], Optional[Encoding]]:
     """Validate a Bech32m string, and determine HRP and data."""
     if ((any(ord(x) < 33 or ord(x) > 126 for x in bech)) or
             (bech.lower() != bech and bech.upper() != bech)):
@@ -88,7 +70,7 @@ def bech32m_decode(bech: str) -> Tuple[Optional[str], Optional[list[int]], Optio
         return (None, None, None)
     return (hrp, data[:-6], spec)
 
-def convertbits(data: list[int], frombits: int, tobits: int, pad: bool = True) -> Optional[list[int]]:
+def convertbits(data: bytes, frombits: int, tobits: int, pad: bool = True) -> Optional[list[int]]:
     """General power-of-2 base conversion."""
     acc = 0
     bits = 0
@@ -112,7 +94,7 @@ def convertbits(data: list[int], frombits: int, tobits: int, pad: bool = True) -
 
 def decode(hrp: str, addr: str) -> Tuple[Optional[int], Optional[list[int]]]:
     """Decode a segwit address."""
-    hrpgot, data = bech32m_decode(addr)[:2]
+    hrpgot, data, _ = bech32_decode(addr)
     if hrpgot != hrp:
         return (None, None)
     decoded = convertbits(data[1:], 5, 8, False) if data else None
@@ -124,7 +106,7 @@ def decode(hrp: str, addr: str) -> Tuple[Optional[int], Optional[list[int]]]:
         return (None, None)
     return (data[0], decoded)
 
-def encode(hrp: str, witver: int, witprog: list[int]) -> Optional[str]:
+def encode(hrp: str, witver: int, witprog: bytes) -> Optional[str]:
     """Encode a segwit address."""
     spec = Encoding.BECH32M
     ret = bech32_encode(hrp, [witver] + convertbits(witprog, 8, 5), spec)
