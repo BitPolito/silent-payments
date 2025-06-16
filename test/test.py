@@ -7,10 +7,9 @@ how to perform a test:
 pay attention to set up cwd correctly for reading .json files
 '''
 
-
 import json
-from sender import sending_run
-from receiver import receiving_run
+from src.sender import sending_run
+from src.receiver import receiving_run
 
 
 def test_file_reading(file = None): 
@@ -26,7 +25,6 @@ def test_file_reading(file = None):
     except json.JSONDecodeError:
         print("Error: json file not valid.")
         return None
-    
 
 
 def test(test_file = './test_vectors.json', test_id = None, test_type = None) -> bool:

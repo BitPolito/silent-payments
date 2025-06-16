@@ -75,7 +75,7 @@ def dleq_proof_generation(a: int, B: Point, r: bytes, G: Point = G, m: bytes = N
     R2 = point_mul(B, k)
 
     # Let e = int(hashBIP0374/challenge(cbytes(A) || cbytes(B) || cbytes(C) || cbytes(G) || cbytes(R1) || cbytes(R2) || m'))
-    e = int_from_bytes(tagged_hash(challenge_tag, bytes_from_point(A) + bytes_from_point(B) + bytes_from_point(C) + bytes_from_point(G) + bytes_from_point(R1) + bytes_from_point(R2) + m_))
+    e = int_from_bytes(tagged_hash('challenge', bytes_from_point(A) + bytes_from_point(B) + bytes_from_point(C) + bytes_from_point(G) + bytes_from_point(R1) + bytes_from_point(R2) + m_))
 
     # Let s = (k + e⋅a) mod n
     s = (k + e*a) % n
@@ -137,7 +137,7 @@ def verify_proof(A: Point, B: Point, C: Point, proof: bytes, G: Point = G, m: by
     m_ = m if m is not None else b''
     
     # Fail if e ≠ int(hashBIP0374/challenge(cbytes(A) || cbytes(B) || cbytes(C) || cbytes(G) || cbytes(R1) || cbytes(R2) || m')).
-    e_ = int_from_bytes(tagged_hash(challenge_tag, bytes_from_point(A) + bytes_from_point(B) + bytes_from_point(C) + bytes_from_point(G) + bytes_from_point(R1) + bytes_from_point(R2) + m_))
+    e_ = int_from_bytes(tagged_hash('challenge', bytes_from_point(A) + bytes_from_point(B) + bytes_from_point(C) + bytes_from_point(G) + bytes_from_point(R1) + bytes_from_point(R2) + m_))
     if e != e_:
         return False
     

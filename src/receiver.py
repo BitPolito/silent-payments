@@ -177,6 +177,7 @@ def scanning(transactions: list, bscan: int, Bspend: Point, labels: list) -> lis
 
 
 
+
 def spending(bspend: int, tk: int, bscan: int, m: int, label: bool = False) -> int:
     '''
     Recall that a silent payment output is of the form Bspend + tk·G + hashBIP0352/Label(ser256(bscan) || ser32(m))·G, where hashBIP0352/Label(ser256(bscan) || ser32(m))·G is an optional label. 
@@ -190,8 +191,6 @@ def spending(bspend: int, tk: int, bscan: int, m: int, label: bool = False) -> i
         label_hash = tagged_hash("BIP0352/Label", data)
         d = (d + int.from_bytes(label_hash, 'big')) % n
     return d
-
-
 
 
 
