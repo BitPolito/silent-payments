@@ -12,7 +12,9 @@ purpose is a constant set to 352 following the BIP43 recommendation. Refer to BI
 '''
 
 import hmac
-from schnorr_lib import *
+import hashlib
+import os
+from typing import Tuple, List
 
 def hmac_sha512(key: bytes, data: bytes) -> bytes:
     return hmac.new(key, data, hashlib.sha512).digest()
@@ -23,9 +25,8 @@ def derive_hardened_key(master_key: bytes, index: int) -> bytes:
     return hmac_sha512(master_key, b'\x00' + master_key + index_bytes)
 
 
-def generate_hardened_keys() -> Tuple[bytes, bytes]:
+def generate_hardened_keys() -> dict:
     master_key = os.urandom(32)  # 32 bytes 
-
     scan_private_key = derive_hardened_key(master_key, 1)  # m/1'
     spend_private_key = derive_hardened_key(master_key, 0)  # m/0'
 
@@ -34,6 +35,4 @@ def generate_hardened_keys() -> Tuple[bytes, bytes]:
         'scan_priv_key': scan_private_key,
         'spend_priv_key': spend_private_key
     }
-    
     return key_material
-

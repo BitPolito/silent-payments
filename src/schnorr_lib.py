@@ -20,7 +20,7 @@ def bytes_from_int(a: int) -> bytes:
 
 
 # Get bytes from a hex
-def bytes_from_hex(a: hex) -> bytes:
+def bytes_from_hex(a: str) -> bytes:
     return unhexlify(a)
 
 
@@ -35,7 +35,7 @@ def int_from_bytes(b: bytes) -> int:
 
 
 # Get an int from hex
-def int_from_hex(a: hex) -> int:
+def int_from_hex(a: str) -> int:
     return int.from_bytes(unhexlify(a), byteorder="big")
 
 
@@ -74,11 +74,7 @@ def point_mul(P: Optional[Point], d: int) -> Optional[Point]:
         P = point_add(P, P)
     return R
 
-
-# Note: 
-# This implementation can be sped up by storing the midstate
-# after hashing tag_hash instead of rehashing it all the time
-# Get the hash digest of (tag_hashed || tag_hashed || message)
+# Tagged hash function as per BIP0340
 def tagged_hash(tag: str, msg: bytes) -> bytes:
     tag_hash = hashlib.sha256(tag.encode()).digest()
     return hashlib.sha256(tag_hash + tag_hash + msg).digest()
@@ -146,9 +142,8 @@ def pubkey_gen_from_int(seckey: int) -> bytes:
 
 
 # Generate public key from a hex
-def pubkey_gen_from_hex(seckey: hex) -> bytes:
-    seckey = bytes.fromhex(seckey)
-    d0 = int_from_bytes(seckey)
+def pubkey_gen_from_hex(seckey: str) -> bytes:
+    d0 = int_from_hex(seckey)
     if not (1 <= d0 <= n - 1):
         raise ValueError(
             'The secret key must be an integer in the range 1..n-1.')
@@ -180,11 +175,61 @@ def get_int_s_from_sig(sig: bytes) -> int:
 
 
 # Extract R_x bytes from signature 
-def get_bytes_R_from_sig(sig: bytes) -> int:
+def get_bytes_R_from_sig(sig: bytes) -> bytes:
     return sig[0:32]
 
 
 # Extract s bytes from signature 
-def get_bytes_s_from_sig(sig: bytes) -> int:
+def get_bytes_s_from_sig(sig: bytes) -> bytes:
     return sig[32:64]
+
+
+# Generate Schnorr signature
+def schnorr_sign(msg: bytes, privateKey: str) -> bytes:
+    if len(msg) != 32:
+        raise ValueError('The message must be a 32-byte array.')
+    d0 = int_from_hex(privateKey)
+    if not (1 <= d0 <= n - 1):
+        raise ValueError(
+            'The secret key must be an integer in the range 1..n-1.')
+    P = point_mul(G, d0)
+    assert P is not None
+    d = d0 if has_even_y(P) else n - d0
+    t = xor_bytes(bytes_from_int(d), tagged_hash("BIP0340/aux", get_aux_rand()))
+    k0 = int_from_bytes(tagged_hash("BIP0340/nonce", t + bytes_from_point(P) + msg)) % n
+    if k0 == 0:
+        raise RuntimeError('Failure. This happens only with negligible probability.')
+    R = point_mul(G, k0)
+    assert R is not None
+    k = n - k0 if not has_even_y(R) else k0
+    e = int_from_bytes(tagged_hash("BIP0340/challenge", bytes_from_point(R) + bytes_from_point(P) + msg)) % n
+    sig = bytes_from_point(R) + bytes_from_int((k + e * d) % n)
+    
+    if not schnorr_verify(msg, bytes_from_point(P), sig):
+        raise RuntimeError('The created signature does not pass verification.')
+    return sig
+
+
+# Verify Schnorr signature
+def schnorr_verify(msg: bytes, pubkey: bytes, sig: bytes) -> bool:
+    if len(msg) != 32:
+        raise ValueError('The message must be a 32-byte array.')
+    if len(pubkey) != 32:
+        raise ValueError('The public key must be a 32-byte array.')
+    if len(sig) != 64:
+        raise ValueError('The signature must be a 64-byte array.')
+    P = lift_x_even_y(pubkey)
+    r = get_int_R_from_sig(sig)
+    s = get_int_s_from_sig(sig)
+    if (P is None) or (r >= p) or (s >= n):
+        return False
+    e = int_from_bytes(tagged_hash("BIP0340/challenge", get_bytes_R_from_sig(sig) + pubkey + msg)) % n
+    R = point_add(point_mul(G, s), point_mul(P, n - e))
+    if (R is None) or (not has_even_y(R)):
+        # print("Please, recompute the sign. R is None or has even y")
+        return False
+    if x(R) != r:
+        # print("There's something wrong")
+        return False
+    return True
 

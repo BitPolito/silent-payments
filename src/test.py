@@ -8,13 +8,15 @@ pay attention to set up cwd correctly for reading .json files
 '''
 
 import json
-from src.sender import sending_run
-from src.receiver import receiving_run
+from src.sending import sending_run
+from src.receive import run as receiving_run
 
 
 def test_file_reading(file = None): 
     # read test file
     try: 
+        if file is None:
+            file = './test_vectors.json'
         with open(file, 'r') as f:
             print('Reading file...')
             test_data = json.load(f)
@@ -35,6 +37,8 @@ def test(test_file = './test_vectors.json', test_id = None, test_type = None) ->
     
     # print the test list
     test_list = test_file_reading(file='./test_list.json')
+    if test_list is None:
+        raise ValueError('test_list problem')
     print(json.dumps(test_list['TEST LIST'], indent=4)) 
 
     if test_id is None:
@@ -70,7 +74,7 @@ def test(test_file = './test_vectors.json', test_id = None, test_type = None) ->
         case 'sending and receiving':
             send_res = sending_test(data=test_data) 
             rec_res = receiving_test(data=test_data)
-            return send_res + rec_res
+            return send_res and rec_res
 
 
 def sending_test(data) -> bool:
@@ -115,7 +119,7 @@ def receiving_test(data) -> bool:
 
     expected_addresses = expected_receiving['addresses'][0]
     expected_outputs = expected_receiving['outputs'][0]
-
+    
     if address_result == expected_addresses: # and outputs_result == expected_outputs:
         print('Receiving test passed.')
         return True 

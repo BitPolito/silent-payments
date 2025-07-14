@@ -108,8 +108,7 @@ def decode(hrp: str, addr: str) -> Tuple[Optional[int], Optional[list[int]]]:
 
 def encode(hrp: str, witver: int, witprog: bytes) -> Optional[str]:
     """Encode a segwit address."""
-    spec = Encoding.BECH32M
-    ret = bech32_encode(hrp, [witver] + convertbits(witprog, 8, 5), spec)
+    ret = bech32_encode(hrp, [witver] + convertbits(witprog, 8, 5), Encoding.BECH32M)
     if decode(hrp, ret) == (None, None):
         return None
     return ret
