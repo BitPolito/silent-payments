@@ -5,9 +5,9 @@ The sender performs coin selection as usual with the following restrictions:
 - For each taproot output spent the sending wallet MUST have access to the private key corresponding to the taproot output key, unless H is used as the internal public key
 ''' 
 
-from schnorr_lib import *
-from utils import *
-from segwit_addr import *
+from utils.schnorr_lib import *
+from utils.utils import *
+from utils.segwit_addr import *
 
 
 def create_outputs(inputs: list[dict], recipients: list[str]) -> list:

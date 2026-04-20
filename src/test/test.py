@@ -8,7 +8,7 @@ pay attention to set up cwd correctly for reading .json files
 '''
 
 import json
-from src.sending import sending_run
+from src.send import sending_run
 from src.receive import run as receiving_run
 
 

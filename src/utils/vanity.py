@@ -1,5 +1,5 @@
 import argparse
-from receive import generate_sp_address
+from ..receive import generate_sp_address
 from typing import Tuple, List
 
 def get_sp_vanity_address(vanity_string: str) -> Tuple[List[str], dict]:

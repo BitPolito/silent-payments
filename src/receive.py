@@ -1,6 +1,6 @@
 import argparse
 import json
-from utils import (
+from utils.utils import (
     encode_silent_payment_address, 
     create_labeled_silent_payment_address,
     generate_label,
@@ -11,7 +11,7 @@ from utils import (
     random_message,
     create_tweak
 )
-from schnorr_lib import (
+from utils.schnorr_lib import (
     n, 
     G, 
     bytes_from_hex,
@@ -27,7 +27,7 @@ from schnorr_lib import (
     schnorr_sign,
     schnorr_verify
 )
-from hardened_keys import generate_hardened_keys
+from utils.hardened_keys import generate_hardened_keys
 from typing import Tuple, List, Optional, Dict
 
 
