@@ -261,7 +261,7 @@ if __name__ == '__main__':
     if args.function == 'run':
         if vin is None or outputs is None:
             raise ValueError('vin and outputs are required for run')
-        result = run(vin, outputs, key_material, labels)
+        result = receiving_run(vin, outputs, key_material, labels)
         print(result)
     elif args.function == 'scan':
         if vin is None or outputs is None or key_material is None:
