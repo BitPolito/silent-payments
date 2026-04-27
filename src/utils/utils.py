@@ -1,7 +1,7 @@
-from schnorr_lib import *
+from utils.schnorr_lib import *
+from utils.segwit_addr import bech32_encode, convertbits, Encoding, decode
 import binascii
 from typing import Tuple, Optional, List
-from segwit_addr import bech32_encode, convertbits, Encoding, decode
 import hashlib
 import os
 
@@ -19,14 +19,16 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str)  -> str:
         return "P2TR"
     lsh=len(scriptPubKey)-2
     if scriptPubKey[:4]=="a914" and scriptPubKey[lsh:]=="87" and txinwitness != "":
-        return "P2SH-P2PKH"  
+        return "P2SH-P2WPKH"
     return "Unknown"
 
 def select_inputs(vin: List[dict]) -> List[dict]: 
     # Inputs For Shared Secret Derivation   
-    valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH'] 
+    valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
     valid_inputs = [] 
+    print("DEBUG VIN: ", vin)
     for tx in vin:
+        print("DEBUG TX: ", tx)
         txinwitness = tx['txinwitness']
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
         # check if input is a valid type transaction
@@ -85,7 +87,9 @@ def generate_label(b_scan: bytes, m: int) -> bytes:
 def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> List[Point]:
     labels_list = [pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, 0)))]
     if labels:
-        labels_list.append(pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, m) for m in labels)))
+        for m in labels:
+            label_point = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, m)))
+            labels_list.append(label_point)
     return labels_list
 
 # hashBIP0352/Inputs(outpointL || A) 
@@ -93,7 +97,7 @@ def get_input_hash(inputs: List[dict], input_pubkey_sum: Point) -> bytes:
     return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + bytes_from_point(input_pubkey_sum))
 
 def decode_silent_payment_address(address: str, hrp: str = 'sp') -> Tuple:
-    from segwit_addr import decode
+    #from segwit_addr import decode
     _, data = decode(hrp, address)
     if data is None: 
         raise ValueError('ERROR: Invalid data.')
@@ -110,8 +114,8 @@ def encode_silent_payment_address(B_scan: Point, B_m: Point, hrp: str = 'tsp', v
     return ret
 
 def create_labeled_silent_payment_address(b_scan: bytes, B_spend: Point, m: int, hrp: str = 'tsp', version: int = 0) -> str:
-    from schnorr_lib import G, point_mul, point_add, pubkey_point_gen_from_int, int_from_bytes
-    from utils import generate_label
+    #from schnorr_lib import G, point_mul, point_add, pubkey_point_gen_from_int, int_from_bytes
+    #from utils import generate_label
     B_scan = pubkey_point_gen_from_int(int_from_bytes(b_scan))
     B_m = point_add(B_spend, point_mul(G, int_from_bytes(generate_label(b_scan, m))))
     if B_scan is None or B_m is None:
@@ -124,6 +128,6 @@ def random_message() -> bytes:
 
 def create_tweak(ecdh_shared_secret: Point, k: int) -> bytes:
     tk = tagged_hash('BIP0352/SharedSecret', serP(ecdh_shared_secret) + ser32(k))
-    if int_from_bytes(tk) == 0 or int_from_bytes(tk) >= n: 
-        raise ValueError('ERROR: tweak not valid.') 
+    if int_from_bytes(tk) == 0 or int_from_bytes(tk) >= n:
+        raise ValueError('ERROR: tweak not valid.')
     return tk

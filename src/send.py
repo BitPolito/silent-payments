@@ -18,7 +18,7 @@ def create_outputs(inputs: list[dict], recipients: list[str]) -> list:
         a_i = int_from_hex(tx['private_key'])
         P = pubkey_point_gen_from_int(a_i)
         if not has_even_y(P):
-            a_i = p - a_i
+            a_i = n - a_i
         keys.append(a_i)
 
     # let a = sum(a_i) ---> if a=0 fail

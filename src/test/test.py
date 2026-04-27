@@ -1,22 +1,22 @@
 '''
 how to perform a test: 
 - run test.py
-- select the test you want to perform (from 0 to 25), see test_list.json
+- select the test you want to perform (from 0 to 25), see /test/test_list.json
 - choose the type of test: sending, receiving or both
 - wait for results :) 
 pay attention to set up cwd correctly for reading .json files
 '''
 
 import json
-from src.send import sending_run
-from src.receive import run as receiving_run
+from send import sending_run
+from receive import receiving_run
 
 
 def test_file_reading(file = None): 
     # read test file
     try: 
         if file is None:
-            file = './test_vectors.json'
+            file = './test/test_vectors.json'
         with open(file, 'r') as f:
             print('Reading file...')
             test_data = json.load(f)
@@ -29,14 +29,14 @@ def test_file_reading(file = None):
         return None
 
 
-def test(test_file = './test_vectors.json', test_id = None, test_type = None) -> bool:
+def test(test_file = './test/test_vectors.json', test_id = None, test_type = None) -> bool:
     # read the test file 
     test_data = test_file_reading(test_file)
     if test_data is None:
         raise ValueError('test_data problem')
     
     # print the test list
-    test_list = test_file_reading(file='./test_list.json')
+    test_list = test_file_reading(file='./test/test_list.json')
     if test_list is None:
         raise ValueError('test_list problem')
     print(json.dumps(test_list['TEST LIST'], indent=4)) 
@@ -115,7 +115,7 @@ def receiving_test(data) -> bool:
     labels = receiving_details['labels']
 
     # run receiving test
-    address_result = receiving_run(key_material, labels)
+    address_result = receiving_run(vin, outputs, key_material, labels)
 
     expected_addresses = expected_receiving['addresses'][0]
     expected_outputs = expected_receiving['outputs'][0]

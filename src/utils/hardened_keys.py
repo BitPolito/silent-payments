@@ -17,12 +17,12 @@ import os
 from typing import Tuple, List
 
 def hmac_sha512(key: bytes, data: bytes) -> bytes:
-    return hmac.new(key, data, hashlib.sha512).digest()
+    return hmac.new(key, data, hashlib.sha512).digest() # CHECK: generare 64 bytes ma sotto è specificato 32
 
 
 def derive_hardened_key(master_key: bytes, index: int) -> bytes:
     index_bytes = index.to_bytes(4, byteorder='big')
-    return hmac_sha512(master_key, b'\x00' + master_key + index_bytes)
+    return hmac_sha512(master_key, b'\x00' + master_key + index_bytes) # [:32]
 
 
 def generate_hardened_keys() -> dict:

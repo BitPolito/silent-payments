@@ -199,7 +199,7 @@ def get_spending_key(bspend: int, tk: int, bscan: int, m: int, labels: bool = Fa
 
 
 # running the receiving process
-def run(vin: Optional[list[dict]] = None, outputs: Optional[list[str]] = None, key_material: Optional[dict] = None, labels: Optional[list] = None) -> Tuple[List[str], List[Dict]]:
+def receiving_run(vin: Optional[list[dict]] = None, outputs: Optional[list[str]] = None, key_material: Optional[dict] = None, labels: Optional[list] = None) -> Tuple[List[str], List[Dict]]:
     print('receiver.py loading...') 
     if vin is None or outputs is None:
         raise ValueError('vin and outputs are required and cannot be None')
