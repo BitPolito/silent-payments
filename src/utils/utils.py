@@ -19,7 +19,6 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '
         return "P2TR"
     lsh = len(scriptPubKey) - 2
     if scriptPubKey[:4] == "a914" and scriptPubKey[lsh:] == "87" and txinwitness != "":
-        # P2SH-P2WPKH solo se il redeemScript è esattamente 0014<20byte>
         if scriptSig[:6] == "160014" and len(scriptSig) == 46:
             return "P2SH-P2WPKH"
         return "Unknown"
@@ -48,7 +47,6 @@ def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]:
     while pos < len(script_bytes):
         opcode = script_bytes[pos]
         pos += 1
-
         if opcode == 0x00:
             continue
         if 0x01 <= opcode <= 0x4b:
@@ -64,17 +62,14 @@ def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]:
             push_len = int.from_bytes(script_bytes[pos:pos+4], 'little'); pos += 4
         else:
             continue
-
         if pos + push_len > len(script_bytes):
             break
-
         data = script_bytes[pos:pos + push_len]
         pos += push_len
 
         if len(data) == 33 and data[0] in (0x02, 0x03):
             if first_pubkey is None:
-                first_pubkey = data  # prendi solo la prima
-
+                first_pubkey = data 
     if first_pubkey is None:
         return None, None, None
 
@@ -85,7 +80,7 @@ def get_outpointL(vin: list[dict]) -> bytes:
     outpoint_list = []
     for tx in vin:
         txid, vout = tx['txid'], tx['vout']
-        txid_bytes = bytes_from_hex(txid)[::-1]  # ← reversa i byte: big→little-endian
+        txid_bytes = bytes_from_hex(txid)[::-1] 
         vout_bytes = vout.to_bytes(4, 'little')
         outpoint_list.append(txid_bytes + vout_bytes)
     outpointL = min(outpoint_list)
@@ -112,9 +107,7 @@ def generate_label(b_scan: bytes, m: int) -> bytes:
     return tagged_hash('BIP0352/Label', ser256(int_from_bytes(b_scan)) + ser32(m))
 
 def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> dict:
-    """Ritorna {point: m} per tutti i label incluso m=0 (change)"""
     result = {}
-    # sempre includi m=0 (change label)
     m0_point = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, 0)))
     result[m0_point] = 0
     if labels:
@@ -145,8 +138,6 @@ def encode_silent_payment_address(B_scan: Point, B_m: Point, hrp: str = 'tsp', v
     return ret
 
 def create_labeled_silent_payment_address(b_scan: bytes, B_spend: Point, m: int, hrp: str = 'tsp', version: int = 0) -> str:
-    #from schnorr_lib import G, point_mul, point_add, pubkey_point_gen_from_int, int_from_bytes
-    #from utils import generate_label
     B_scan = pubkey_point_gen_from_int(int_from_bytes(b_scan))
     B_m = point_add(B_spend, point_mul(G, int_from_bytes(generate_label(b_scan, m))))
     if B_scan is None or B_m is None:
