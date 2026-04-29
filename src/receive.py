@@ -9,7 +9,10 @@ from utils.utils import (
     decode_scriptSig, 
     select_inputs,
     random_message,
-    create_tweak
+    create_tweak,
+    get_transaction_type,
+    get_outpointL,
+    serP
 )
 from utils.schnorr_lib import (
     n, 
@@ -25,199 +28,325 @@ from utils.schnorr_lib import (
     int_from_hex,
     int_from_bytes,
     schnorr_sign,
-    schnorr_verify
+    schnorr_verify,
+    has_even_y
 )
 from utils.hardened_keys import generate_hardened_keys
 from typing import Tuple, List, Optional, Dict
 
 
-# generating silent payments address
-def generate_sp_address(key_material: Optional[dict] = None, labels: Optional[List[int]] = None, network: str = 'mainnet', version: int = 0) -> Tuple[List[str], dict]:
+# ── helpers ──────────────────────────────────────────────────────────────────
+def _pubkey_point_from_input(tx: dict):
+    """
+    Estrae il punto EC corretto dall'input rispettando la parità.
+
+    - P2PKH                : pubkey compressa (33 byte) dallo scriptSig
+    - P2WPKH / P2SH-P2WPKH: pubkey compressa (33 byte) dall'ultimo elemento del witness
+    - P2TR                 : x-only pubkey (32 byte) dalla scriptPubKey; y sempre pari
     
-    # if there are no keys in input create a private key pair
-    if not key_material: 
+    Ritorna None se l'input deve essere skippato (chiave non compressa, ambigua, NUMS point).
+    """
+    scriptPubKey = tx['prevout']['scriptPubKey']['hex']
+    txinwitness  = tx.get('txinwitness', '')
+    tx_type      = get_transaction_type(txinwitness, scriptPubKey, tx.get('scriptSig', ''))
+
+    if tx_type == 'P2PKH':
+        _, _, pubkey_hex = decode_scriptSig(tx['scriptSig'])
+        if pubkey_hex is None:
+            return None
+        raw = bytes_from_hex(pubkey_hex)
+
+    elif tx_type in ('P2WPKH', 'P2SH-P2WPKH'):
+        # pubkey è nell'ultimo elemento del witness
+        if isinstance(txinwitness, list):
+            items = [bytes_from_hex(x) for x in txinwitness if x]
+        else:
+            wit_bytes = bytes_from_hex(txinwitness)
+            pos = 0
+            n_items = wit_bytes[pos]; pos += 1
+            items = []
+            for _ in range(n_items):
+                item_len = wit_bytes[pos]; pos += 1
+                items.append(wit_bytes[pos:pos + item_len])
+                pos += item_len
+        raw = items[-1]
+
+    elif tx_type == 'P2TR':
+        if isinstance(txinwitness, list):
+            items = [bytes_from_hex(x) for x in txinwitness if x]
+        else:
+            wit_bytes = bytes_from_hex(txinwitness)
+            pos = 0
+            n_items = wit_bytes[pos]; pos += 1
+            items = []
+            for _ in range(n_items):
+                item_len = wit_bytes[pos]; pos += 1
+                items.append(wit_bytes[pos:pos + item_len])
+                pos += item_len
+
+        # rimuovi annex se presente (ultimo elemento che inizia con 0x50)
+        if items and items[-1][0:1] == b'\x50':
+            items = items[:-1]
+
+        NUMS = bytes_from_hex('50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0')
+
+        if len(items) == 1:
+            # key path spend: usa x-only pubkey dalla scriptPubKey
+            return lift_x_even_y(bytes_from_hex(scriptPubKey[4:]))
+        else:
+            # script path spend: internal key = byte 1-32 del control block
+            control_block = items[-1]
+            internal_key  = control_block[1:33]
+            if internal_key == NUMS:
+                return None  # NUMS point → skip
+            return lift_x_even_y(internal_key)
+
+    else:
+        return None  # tipo non supportato → skip
+
+    # ── comune a P2PKH, P2WPKH, P2SH-P2WPKH ─────────────────────────────────
+    # chiave non compressa → skip
+    if len(raw) != 33 or raw[0] not in (0x02, 0x03):
+        return None
+
+    point = lift_x_even_y(raw[1:])
+    if raw[0] == 0x03 and has_even_y(point):
+        return point_mul(point, n - 1)
+    if raw[0] == 0x02 and not has_even_y(point):
+        return point_mul(point, n - 1)
+    return point
+# ── address generation ────────────────────────────────────────────────────────
+
+def generate_sp_address(
+    key_material: Optional[dict] = None,
+    labels: Optional[List[int]] = None,
+    network: str = 'mainnet',
+    version: int = 0
+) -> Tuple[List[str], dict]:
+    """Genera uno o più indirizzi Silent Payment."""
+
+    if not key_material:
         key_material = generate_hardened_keys()
-        b_scan = key_material['scan_priv_key']
+        b_scan  = key_material['scan_priv_key']
         b_spend = key_material['spend_priv_key']
-    else: 
-        b_scan = bytes_from_hex(key_material['scan_priv_key'])
+    else:
+        b_scan  = bytes_from_hex(key_material['scan_priv_key'])
         b_spend = bytes_from_hex(key_material['spend_priv_key'])
-    
-    # Receiver's scan and spend public key 
-    B_scan = pubkey_point_gen_from_int(int_from_bytes(b_scan))
+
+    B_scan  = pubkey_point_gen_from_int(int_from_bytes(b_scan))
     B_spend = pubkey_point_gen_from_int(int_from_bytes(b_spend))
-    
-    # human-readable part based on the network
-    hrp = 'sp' if network == 'mainnet' else 'tsp' 
 
-    sp_addresses = []
+    hrp = 'sp' if network == 'mainnet' else 'tsp'
 
-    # If no label is applied then Bm = Bspend 
-    sp_addresses.append(encode_silent_payment_address(B_scan, B_spend, hrp, version))
+    sp_addresses = [encode_silent_payment_address(B_scan, B_spend, hrp, version)]
 
-    # If a label is provided, apply the tweak
     if labels:
         for m in labels:
-            sp_addresses.append(create_labeled_silent_payment_address(b_scan, B_spend, m, hrp, version))
+            sp_addresses.append(
+                create_labeled_silent_payment_address(b_scan, B_spend, m, hrp, version)
+            )
 
     return sp_addresses, key_material
 
 
-# If each of the checks in Scanning silent payment eligible transactions passes, the receiving wallet must:
-def scan(vin: List[dict], outputs: List[str], key_material: dict, labels: Optional[List[int]] = None) -> List:
-    
-    inputs = select_inputs(vin)
-    print(f'inputs: {inputs}')
-    
-    # Let A = A1 + A2 + ... + An, where each Ai is the public key of an input from the Inputs For Shared Secret Derivation list
-    A = None
-    for tx in inputs:
-        _, _, pubkey = decode_scriptSig(tx['scriptSig'])
-        print(f'pubkey: {pubkey}')
-        # parity = bytes_from_hex(pubkey)[:1]
-        pubkey_bytes = bytes_from_hex(pubkey)[1:]
-        print(f'pubkey_bytes: {pubkey_bytes.hex()}')
-        if len(pubkey_bytes) != 32:
-            raise ValueError('ERROR: pubkey_bytes length is not 32 bytes.')
-        A = point_add(A, lift_x_even_y(pubkey_bytes))
-    if not A or is_infinity(A):
-        raise ValueError('ERROR: point A is infinity or None.')
+# ── scanning ──────────────────────────────────────────────────────────────────
 
-    # Let input_hash = hashBIP0352/Inputs(outpointL || A) 
-    # where outpointL is the smallest outpoint lexicographically used in the transaction
-    input_hash = get_input_hash(inputs, A)
-    print(f'input_hash: {input_hash.hex()}')
+def scan(
+    vin: List[dict],
+    outputs: List[str],
+    key_material: dict,
+    labels: Optional[List[int]] = None
+) -> List[Dict]:
+    """
+    Scansiona gli output di una transazione e restituisce quelli spendibili
+    dal wallet identificato da key_material.
+
+    Ogni voce del wallet contiene:
+      - pub_key        : x-only pubkey hex (32 byte) dell'output trovato
+      - priv_key_tweak : scalare hex (32 byte) tale che d = (bspend + tweak) mod n
+    """
+
+    inputs = select_inputs(vin)
     
-    # Let ecdh_shared_secret = input_hash·bscan·A
-    b_scan = int_from_hex(key_material['scan_priv_key'])
-    s = int_from_bytes(input_hash) * b_scan % n
+    print(f'DEBUG inputs count: {len(inputs)}')
+    for tx in inputs:
+        print(f'  vout={tx["vout"]} type={get_transaction_type(tx.get("txinwitness",""), tx["prevout"]["scriptPubKey"]["hex"], tx.get("scriptSig",""))}')
+
+    if not inputs:
+        return []
+    
+
+    if not inputs:
+        return []
+
+    valid_inputs = []
+    pubkeys = []
+    for tx in inputs:
+        pt = _pubkey_point_from_input(tx)
+        if pt is not None:
+            valid_inputs.append(tx)
+            pubkeys.append(pt)
+
+    if not valid_inputs:
+        return []
+    
+    
+    # ── 1. Somma delle chiavi pubbliche degli input ───────────────────────────
+    A = None
+    for pt in pubkeys:
+        A = point_add(A, pt)
+
+    if A is None or is_infinity(A):
+        return []  # somma dei punti è il punto all'infinito → skip tx
+
+    # ── 2. input_hash = hash_BIP0352/Inputs(outpointL || serP(A)) ────────────
+    input_hash = get_input_hash(inputs, A)
+
+    # ── 3. ecdh_shared_secret = input_hash · bscan · A ───────────────────────
+    b_scan_int        = int_from_hex(key_material['scan_priv_key'])
+    b_scan_bytes      = bytes_from_int(b_scan_int)
+    s                 = int_from_bytes(input_hash) * b_scan_int % n
     ecdh_shared_secret = point_mul(A, s)
-    print(f'ecdh_shared_secret: {ecdh_shared_secret}')
+    
+    print(f'valid_inputs count: {len(valid_inputs)}')
+    for vi in valid_inputs:
+        print(f'  vout={vi["vout"]} type={get_transaction_type(vi.get("txinwitness",""), vi["prevout"]["scriptPubKey"]["hex"], vi.get("scriptSig",""))}')
+    print(f'A: {serP(A).hex() if A else None}')
+    print(f'outpointL (inputs): {get_outpointL(inputs).hex()}')
+    print(f'input_hash: {input_hash.hex()}')
+    print(f't_k[0]: {create_tweak(ecdh_shared_secret, 0).hex()}')
+
     if not ecdh_shared_secret:
         raise ValueError('ERROR: ecdh_shared_secret is None.')
-    
-    # compute labels 
-    # always check for the change label, i.e. hashBIP0352/Label(ser256(bscan) || ser32(m)) where m = 0
-    labels_list = compute_labels(bytes_from_int(b_scan), labels)
-    print(f'labels_list: {[bytes_from_point(label).hex() for label in labels_list]}')
-    
-    # Check for outputs
-    # Let outputs_to_check be the taproot output keys from all taproot outputs in the transaction (spent and unspent).
-    # Starting with k = 0
-    wallet = []
-    k = int(0)
+
+    # ── 4. Mappa label: point → m ─────────────────────────────────────────────
+    # Include sempre m=0 (change label); compute_labels ritorna {point: m}
+    labels_dict = compute_labels(b_scan_bytes, labels)
+
+    # ── 5. Scansione degli output ─────────────────────────────────────────────
+    B_spend = pubkey_point_gen_from_int(int_from_hex(key_material['spend_priv_key']))
+    wallet  = []
+    k       = 0
+
     while True:
         t_k = create_tweak(ecdh_shared_secret, k)
-        print(f't_k: {t_k.hex()}')
-        
-        # Compute Pk = Bspend + tk·G
-        B_spend = pubkey_point_gen_from_int(int_from_hex(key_material['spend_priv_key']))
+
+        # Pk = Bspend + tk·G
         Pk = point_add(B_spend, point_mul(G, int_from_bytes(t_k)))
-        print(f'Pk: {Pk}')
         if Pk is None:
             break
         Pk_hex = bytes_from_point(Pk).hex()
-        print(f'Pk_hex: {Pk_hex}')
 
-        # For each output in outputs_to_check:
-        for out in outputs:
-            print(f'out hex: {out}')
-            # If Pk equals output:
+        matched = False
+        for out in list(outputs):           # list() per evitare modifica durante iterazione
+
+            # ── caso A: match diretto ────────────────────────────────────────
             if out == Pk_hex:
-                # Add Pk to the wallet
                 wallet.append({
-                    'pub_key': Pk_hex, 
+                    'pub_key':        Pk_hex,
                     'priv_key_tweak': t_k.hex()
-                    })
-                print(f'wallet: {wallet}')
-                # Remove output from outputs_to_check and rescan outputs_to_check with k++
+                })
                 outputs.remove(out)
-                k += 1
+                k      += 1
+                matched = True
                 break
-            
-            # Else, check for labels
-            elif labels_list:
+
+            # ── caso B: output con label ─────────────────────────────────────
+            elif labels_dict:
                 out_point = lift_x_even_y(bytes_from_hex(out))
-                print(f'out_point: {out_point}')
-                # Compute label = output - Pk
-                label = point_add(out_point, point_mul(Pk, n - 1)) 
-                print(f'label: {bytes_from_point(label).hex()}')
-                # Check if label exists in the list of labels used by the wallet
-                # If a match is found:
-                if label in labels_list:
-                    # Add Pk + label to the wallet
-                    Pkm = point_add(Pk, label)
-                    print(f'Pkm: {Pkm}')
-                    if not Pkm:
-                        raise ValueError('ERROR: Pkm is None.')
+
+                # Prova label = out_point - Pk  (y positiva)
+                label_candidate = point_add(out_point, point_mul(Pk, n - 1))
+
+                # Prova anche con la y negata dell'output (parità opposta)
+                neg_out_point   = point_mul(out_point, n - 1)
+                label_candidate_neg = point_add(neg_out_point, point_mul(Pk, n - 1))
+
+                found_label  = None
+                found_Pkm_pt = None
+
+                if label_candidate in labels_dict:
+                    found_label  = label_candidate
+                    found_Pkm_pt = point_add(Pk, label_candidate)
+                elif label_candidate_neg in labels_dict:
+                    found_label  = label_candidate_neg
+                    found_Pkm_pt = point_add(Pk, label_candidate_neg)
+
+                if found_label is not None and found_Pkm_pt is not None:
+                    m            = labels_dict[found_label]
+                    label_scalar = int_from_bytes(generate_label(b_scan_bytes, m))
+                    tweak_int    = (int_from_bytes(t_k) + label_scalar) % n
+
                     wallet.append({
-                        'pub_key': Pk_hex, 
-                        'priv_key_tweak': (t_k + bytes_from_point(label)).hex()
+                        'pub_key':        bytes_from_point(found_Pkm_pt).hex(),
+                        'priv_key_tweak': bytes_from_int(tweak_int).hex()
                     })
-                    # Remove output from outputs_to_check and rescan outputs_to_check with k++
                     outputs.remove(out)
-                    k += 1
+                    k      += 1
+                    matched = True
                     break
-                # If a label is not found, negate output and check a second time
-                else:
-                    neg_out = point_mul(out_point, n - 1)
-                    print(f'neg_out: {neg_out}')
-                    label_neg = point_add(neg_out, point_mul(Pk, n - 1))
-                    print(f'label_neg: {bytes_from_point(label_neg).hex()}')
-                    if label_neg in labels_list:
-                        Pkm = point_add(Pk, label_neg)
-                        if not Pkm:
-                            raise ValueError('ERROR: Pkm is None.') 
-                        wallet.append({
-                            'pub_key': Pk_hex, 
-                            'priv_key_tweak': (t_k + bytes_from_point(label_neg)).hex()
-                        })
-                        outputs.remove(out)
-                        k += 1
-                        break
-        else:
+
+        if not matched:
             break
+
     return wallet
 
 
+# ── spending key ──────────────────────────────────────────────────────────────
 
 def get_spending_key(bspend: int, tk: int, bscan: int, m: int, labels: bool = False) -> str:
-    '''
-    Recall that a silent payment output is of the form Bspend + tk·G + hashBIP0352/Label(ser256(bscan) || ser32(m))·G, where hashBIP0352/Label(ser256(bscan) || ser32(m))·G is an optional label. 
-    To spend a silent payment output:
-    - Let d = (bspend + tk + hashBIP0352/Label(ser256(bscan) || ser32(m))) mod n, where hashBIP0352/Label(ser256(bscan) || ser32(m)) is the optional label
-    - Spend the BIP341 output with the private key d
-    '''
+    """
+    Calcola la chiave privata completa per spendere un output Silent Payment.
+
+    d = (bspend + tk [+ label_hash]) mod n
+    """
     d = (bspend + tk) % n
     if labels:
         label_hash = generate_label(bytes_from_int(bscan), m)
-        print(f'label_hash: {label_hash}')
         d = (d + int_from_bytes(label_hash)) % n
-    print(f'tweak: {hex(d)}')
     return hex(d)
 
 
+# ── main receiving flow ───────────────────────────────────────────────────────
 
-# running the receiving process
-def receiving_run(vin: Optional[list[dict]] = None, outputs: Optional[list[str]] = None, key_material: Optional[dict] = None, labels: Optional[list] = None) -> Tuple[List[str], List[Dict]]:
-    print('receiver.py loading...') 
+def receiving_run(
+    vin: Optional[List[dict]] = None,
+    outputs: Optional[List[str]] = None,
+    key_material: Optional[dict] = None,
+    labels: Optional[List] = None
+) -> Tuple[List[str], List[Dict]]:
+    """
+    Flusso completo di ricezione:
+      1. Genera (o usa) le chiavi e l'indirizzo SP
+      2. Scansiona gli output
+      3. Verifica la firma Schnorr per ogni output trovato
+    """
     if vin is None or outputs is None:
         raise ValueError('vin and outputs are required and cannot be None')
+
     address, key_material = generate_sp_address(key_material, labels)
-    wallet = scan(vin, outputs, key_material, labels)
-    print(f'wallet: {wallet}')
-    msg = random_message()
+    wallet = scan(vin, list(outputs), key_material, labels)   # copia: scan modifica in-place
+
+    b_spend = int_from_hex(key_material['spend_priv_key'])
+    msg     = random_message()
+
     for output in wallet:
-        pub_key = bytes_from_hex(output['pub_key'])
-        full_private_key = output['priv_key_tweak']
-        sig = schnorr_sign(msg, full_private_key)
+        pub_key   = bytes_from_hex(output['pub_key'])
+        tweak_int = int_from_bytes(bytes_from_hex(output['priv_key_tweak']))
+
+        # chiave privata completa: d = (bspend + tweak) mod n
+        d   = (b_spend + tweak_int) % n
+        sig = schnorr_sign(msg, bytes_from_int(d).hex())
+
         if not schnorr_verify(msg, pub_key, sig):
             raise ValueError(f'ERROR: Invalid signature for pubkey {pub_key.hex()}.')
+
         output['signature'] = sig.hex()
-        print(f'sig: {sig.hex()}')
+
     return address, wallet
 
 
+# ── CLI ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -228,18 +357,21 @@ if __name__ == '__main__':
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument('--vin', required=False, help='List of input dicts (JSON string or path to JSON file)')
-    parser.add_argument('--outputs', required=False, help='List of output strings (JSON string or path to JSON file)')
+    parser.add_argument('--vin',          required=False, help='List of input dicts (JSON string or path to JSON file)')
+    parser.add_argument('--outputs',      required=False, help='List of output strings (JSON string or path to JSON file)')
     parser.add_argument('--key_material', required=False, help='Key material (JSON string or path to JSON file)')
-    parser.add_argument('--labels', required=False, help='List of integer labels (JSON string or path to JSON file)')
-    parser.add_argument('--network', required=False, default='mainnet', help='Network for address generation (default: mainnet)')
-    parser.add_argument('--version', required=False, type=int, default=0, help='Version for address generation (default: 0)')
-    parser.add_argument('--bspend', required=False, type=int, help='bspend (int) for spending')
-    parser.add_argument('--tk', required=False, type=int, help='tk (int) for spending')
-    parser.add_argument('--bscan', required=False, type=int, help='bscan (int) for spending')
-    parser.add_argument('--m', required=False, type=int, help='m (int) for spending')
-    parser.add_argument('--label', required=False, action='store_true', help='label (bool) for spending')
-    parser.add_argument('--function', choices=['run', 'scan', 'generate_sp_address', 'get_spending_key'], required=True, help='Function to execute')
+    parser.add_argument('--labels',       required=False, help='List of integer labels (JSON string or path to JSON file)')
+    parser.add_argument('--network',      required=False, default='mainnet', help='Network (default: mainnet)')
+    parser.add_argument('--version',      required=False, type=int, default=0, help='Version (default: 0)')
+    parser.add_argument('--bspend',       required=False, type=int)
+    parser.add_argument('--tk',           required=False, type=int)
+    parser.add_argument('--bscan',        required=False, type=int)
+    parser.add_argument('--m',            required=False, type=int)
+    parser.add_argument('--label',        required=False, action='store_true')
+    parser.add_argument('--function',
+        choices=['run', 'scan', 'generate_sp_address', 'get_spending_key'],
+        required=True
+    )
     args = parser.parse_args()
 
     def load_json_arg(arg):
@@ -251,28 +383,25 @@ if __name__ == '__main__':
         except (FileNotFoundError, OSError):
             return json.loads(arg)
 
-    vin = load_json_arg(args.vin) if args.vin else None
-    outputs = load_json_arg(args.outputs) if args.outputs else None
-    key_material = load_json_arg(args.key_material) if args.key_material else None
-    labels = load_json_arg(args.labels) if args.labels else None
-    network = args.network
-    version = args.version
+    vin          = load_json_arg(args.vin)
+    outputs      = load_json_arg(args.outputs)
+    key_material = load_json_arg(args.key_material)
+    labels       = load_json_arg(args.labels)
 
     if args.function == 'run':
         if vin is None or outputs is None:
             raise ValueError('vin and outputs are required for run')
-        result = run(vin, outputs, key_material, labels)
-        print(result)
+        print(receiving_run(vin, outputs, key_material, labels))
+
     elif args.function == 'scan':
         if vin is None or outputs is None or key_material is None:
             raise ValueError('vin, outputs, and key_material are required for scan')
-        result = scan(vin, outputs, key_material, labels)
-        print(result)
+        print(scan(vin, outputs, key_material, labels))
+
     elif args.function == 'generate_sp_address':
-        result = generate_sp_address(key_material, labels, network, version)
-        print(result)
+        print(generate_sp_address(key_material, labels, args.network, args.version))
+
     elif args.function == 'get_spending_key':
-        if args.bspend is None or args.tk is None or args.bscan is None or args.m is None:
-            raise ValueError('bspend, tk, bscan, and m are required for spending')
-        result = get_spending_key(args.bspend, args.tk, args.bscan, args.m, args.label)
-        print(result)
+        if any(v is None for v in [args.bspend, args.tk, args.bscan, args.m]):
+            raise ValueError('bspend, tk, bscan, and m are required for get_spending_key')
+        print(get_spending_key(args.bspend, args.tk, args.bscan, args.m, args.label))

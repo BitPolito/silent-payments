@@ -9,17 +9,20 @@ def decode_input():
     # return everything needed
     pass
 
-def get_transaction_type(txinwitness: str, scriptPubKey: str)  -> str: 
-    lpkh=len(scriptPubKey)-4
-    if scriptPubKey[:6]=="76a914" and scriptPubKey[lpkh:]=="88ac":
-        return "P2PKH"   
-    if scriptPubKey[:4]=="0014":
-        return "P2WPKH"   
-    if scriptPubKey[:4]=="5120":
+def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '') -> str:
+    lpkh = len(scriptPubKey) - 4
+    if scriptPubKey[:6] == "76a914" and scriptPubKey[lpkh:] == "88ac":
+        return "P2PKH"
+    if scriptPubKey[:4] == "0014":
+        return "P2WPKH"
+    if scriptPubKey[:4] == "5120":
         return "P2TR"
-    lsh=len(scriptPubKey)-2
-    if scriptPubKey[:4]=="a914" and scriptPubKey[lsh:]=="87" and txinwitness != "":
-        return "P2SH-P2WPKH"
+    lsh = len(scriptPubKey) - 2
+    if scriptPubKey[:4] == "a914" and scriptPubKey[lsh:] == "87" and txinwitness != "":
+        # P2SH-P2WPKH solo se il redeemScript è esattamente 0014<20byte>
+        if scriptSig[:6] == "160014" and len(scriptSig) == 46:
+            return "P2SH-P2WPKH"
+        return "Unknown"
     return "Unknown"
 
 def select_inputs(vin: List[dict]) -> List[dict]: 
@@ -31,39 +34,63 @@ def select_inputs(vin: List[dict]) -> List[dict]:
         print("DEBUG TX: ", tx)
         txinwitness = tx['txinwitness']
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
-        # check if input is a valid type transaction
-        type = get_transaction_type(txinwitness, scriptPubKey)
+        scriptSig = tx.get('scriptSig', '')
+        type = get_transaction_type(txinwitness, scriptPubKey, tx.get('scriptSig', ''))
         if type in valid_types: 
             valid_inputs.append(tx) 
     return valid_inputs
 
-def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]: 
-    scriptSig_bytes = bytes_from_hex(scriptSig)
-    
-    signature_length = scriptSig_bytes[0]
-    signature = scriptSig_bytes[1:1 + signature_length]
-    
-    pubkey_length = scriptSig_bytes[1 + signature_length]
-    public_key = scriptSig_bytes[2 + signature_length:2 + signature_length + pubkey_length]
+def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]:
+    script_bytes = bytes_from_hex(scriptSig)
+    pos = 0
+    first_pubkey = None
 
-    signature_hex = binascii.hexlify(signature).decode('utf-8')
-    public_key_hex = binascii.hexlify(public_key).decode('utf-8')
+    while pos < len(script_bytes):
+        opcode = script_bytes[pos]
+        pos += 1
 
-    tx_type = "Unknown"
-    
-    return tx_type, signature_hex, public_key_hex
+        if opcode == 0x00:
+            continue
+        if 0x01 <= opcode <= 0x4b:
+            push_len = opcode
+        elif opcode == 0x4c:
+            if pos >= len(script_bytes): break
+            push_len = script_bytes[pos]; pos += 1
+        elif opcode == 0x4d:
+            if pos + 1 >= len(script_bytes): break
+            push_len = int.from_bytes(script_bytes[pos:pos+2], 'little'); pos += 2
+        elif opcode == 0x4e:
+            if pos + 3 >= len(script_bytes): break
+            push_len = int.from_bytes(script_bytes[pos:pos+4], 'little'); pos += 4
+        else:
+            continue
 
+        if pos + push_len > len(script_bytes):
+            break
+
+        data = script_bytes[pos:pos + push_len]
+        pos += push_len
+
+        if len(data) == 33 and data[0] in (0x02, 0x03):
+            if first_pubkey is None:
+                first_pubkey = data  # prendi solo la prima
+
+    if first_pubkey is None:
+        return None, None, None
+
+    return 'Unknown', '', first_pubkey.hex()
 
 # outpoint (36 bytes): the COutPoint of an input (32-byte txid, least significant byte first || 4-byte vout, least significant byte first)
 def get_outpointL(vin: list[dict]) -> bytes:
     outpoint_list = []
     for tx in vin:
-        txid, vout = tx['txid'], tx['vout'] 
-        txid_bytes = bytes_from_hex(txid) 
+        txid, vout = tx['txid'], tx['vout']
+        txid_bytes = bytes_from_hex(txid)[::-1]  # ← reversa i byte: big→little-endian
         vout_bytes = vout.to_bytes(4, 'little')
         outpoint_list.append(txid_bytes + vout_bytes)
     outpointL = min(outpoint_list)
     return outpointL
+
 
 # ser32(i): serializes a 32-bit unsigned integer i as a 4-byte sequence, most significant byte first. 
 def ser32(i: int) -> bytes:
@@ -84,17 +111,21 @@ def generate_label(b_scan: bytes, m: int) -> bytes:
     # hashBIP0352/Label(ser256(bscan) || ser32(m)) 
     return tagged_hash('BIP0352/Label', ser256(int_from_bytes(b_scan)) + ser32(m))
 
-def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> List[Point]:
-    labels_list = [pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, 0)))]
+def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> dict:
+    """Ritorna {point: m} per tutti i label incluso m=0 (change)"""
+    result = {}
+    # sempre includi m=0 (change label)
+    m0_point = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, 0)))
+    result[m0_point] = 0
     if labels:
         for m in labels:
-            label_point = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, m)))
-            labels_list.append(label_point)
-    return labels_list
+            pt = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, m)))
+            result[pt] = m
+    return result
 
 # hashBIP0352/Inputs(outpointL || A) 
 def get_input_hash(inputs: List[dict], input_pubkey_sum: Point) -> bytes:
-    return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + bytes_from_point(input_pubkey_sum))
+    return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + serP(input_pubkey_sum))
 
 def decode_silent_payment_address(address: str, hrp: str = 'sp') -> Tuple:
     #from segwit_addr import decode
