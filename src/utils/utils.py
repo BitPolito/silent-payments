@@ -24,68 +24,109 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '
         return "Unknown"
     return "Unknown"
 
+
 def select_inputs(vin: List[dict]) -> List[dict]: 
     # Inputs For Shared Secret Derivation   
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
     valid_inputs = [] 
-    print("DEBUG VIN: ", vin)
     for tx in vin:
-        print("DEBUG TX: ", tx)
         txinwitness = tx['txinwitness']
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
-        scriptSig = tx.get('scriptSig', '')
-        type = get_transaction_type(txinwitness, scriptPubKey, tx.get('scriptSig', ''))
-        if type in valid_types: 
-            valid_inputs.append(tx) 
+        
+        # check if input is a valid type transaction
+        type = get_transaction_type(txinwitness, scriptPubKey)
+        if type in valid_types:
+            
+            # FIX: skip uncompressed keys and NUMS points for P2TR 
+            invalid_key = False
+            if type == "P2PKH":
+                
+                scriptSig = tx['scriptSig']
+                _, _, public_key_hex = decode_scriptSig(scriptSig)
+
+                if public_key_hex.startswith('04'):
+                    invalid_key = True 
+
+            elif type in ["P2WPKH", "P2SH-P2WPKH"]:
+                if txinwitness:
+                    _, pubkey_hex = decode_serialized_witness(txinwitness)
+                    
+                    if pubkey_hex.startswith('04') and len(pubkey_hex) >= 130:
+                        invalid_key = True
+            
+            elif type == "P2TR":
+
+                NUMS_H_HEX = "50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
+                
+                if txinwitness and NUMS_H_HEX in txinwitness:
+                    invalid_key = True
+            
+            if not invalid_key:
+                valid_inputs.append(tx)
+
     return valid_inputs
 
-def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]:
-    script_bytes = bytes_from_hex(scriptSig)
-    pos = 0
-    first_pubkey = None
+# FIX: new fn to decode the witness
+def decode_serialized_witness(witness_hex: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Decode a serialized txinwitness (es. P2WPKH) and extracts sign and pubkey.
+    Return a Tuple (signature_hex, pubkey_hex).
+    """
+    if not witness_hex:
+        return None, None
+        
+    try:
+        data = bytes_from_hex(witness_hex)
+        num_items = data[0]
+        
+        # P2WPKH has only 2 elements
+        if num_items != 2:
+            return None, None
+            
+        offset = 1
+        sig_len = data[offset]
+        offset += 1
+        sig = data[offset : offset + sig_len] 
+        offset += sig_len 
+        
+        pubkey_len = data[offset]
+        offset += 1
+        pubkey = data[offset : offset + pubkey_len]
+        
+        return sig.hex(), pubkey.hex()
+        
+    except Exception as e:
+        # Cattura eventuali errori se la stringa hex è malformata
+        print(f"Errore nel parsing del witness: {e}")
+        return None, None
 
-    while pos < len(script_bytes):
-        opcode = script_bytes[pos]
-        pos += 1
-        if opcode == 0x00:
-            continue
-        if 0x01 <= opcode <= 0x4b:
-            push_len = opcode
-        elif opcode == 0x4c:
-            if pos >= len(script_bytes): break
-            push_len = script_bytes[pos]; pos += 1
-        elif opcode == 0x4d:
-            if pos + 1 >= len(script_bytes): break
-            push_len = int.from_bytes(script_bytes[pos:pos+2], 'little'); pos += 2
-        elif opcode == 0x4e:
-            if pos + 3 >= len(script_bytes): break
-            push_len = int.from_bytes(script_bytes[pos:pos+4], 'little'); pos += 4
-        else:
-            continue
-        if pos + push_len > len(script_bytes):
-            break
-        data = script_bytes[pos:pos + push_len]
-        pos += push_len
+def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]: 
+    scriptSig_bytes = bytes_from_hex(scriptSig)
+    
+    signature_length = scriptSig_bytes[0]
+    signature = scriptSig_bytes[1:1 + signature_length]
+    
+    pubkey_length = scriptSig_bytes[1 + signature_length]
+    public_key = scriptSig_bytes[2 + signature_length:2 + signature_length + pubkey_length]
 
-        if len(data) == 33 and data[0] in (0x02, 0x03):
-            if first_pubkey is None:
-                first_pubkey = data 
-    if first_pubkey is None:
-        return None, None, None
+    signature_hex = binascii.hexlify(signature).decode('utf-8')
+    public_key_hex = binascii.hexlify(public_key).decode('utf-8')
 
-    return 'Unknown', '', first_pubkey.hex()
+    tx_type = "Unknown"
+    
+    return tx_type, signature_hex, public_key_hex
+
 
 # outpoint (36 bytes): the COutPoint of an input (32-byte txid, least significant byte first || 4-byte vout, least significant byte first)
 def get_outpointL(vin: list[dict]) -> bytes:
     outpoint_list = []
     for tx in vin:
-        txid, vout = tx['txid'], tx['vout']
-        txid_bytes = bytes_from_hex(txid)[::-1] 
+        txid, vout = tx['txid'], tx['vout'] 
+        txid_bytes = bytes_from_hex(txid)[::-1] # FIX: Convert to bytes and reverse for little-endian
         vout_bytes = vout.to_bytes(4, 'little')
         outpoint_list.append(txid_bytes + vout_bytes)
     outpointL = min(outpoint_list)
     return outpointL
-
 
 # ser32(i): serializes a 32-bit unsigned integer i as a 4-byte sequence, most significant byte first. 
 def ser32(i: int) -> bytes:
@@ -117,6 +158,7 @@ def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> dict:
     return result
 
 # hashBIP0352/Inputs(outpointL || A) 
+# FIX: serP(A) instead of bytes_from_point(A) to get 33 bytes
 def get_input_hash(inputs: List[dict], input_pubkey_sum: Point) -> bytes:
     return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + serP(input_pubkey_sum))
 
