@@ -10,6 +10,7 @@ pay attention to set up cwd correctly for reading .json files
 import json
 from send import sending_run
 from receive import receiving_run
+from collections import Counter
 
 
 def test_file_reading(file = None): 
@@ -76,7 +77,6 @@ def test(test_file = './test/test_vectors.json', test_id = None, test_type = Non
             rec_res = receiving_test(data=test_data)
             return send_res and rec_res
 
-
 def sending_test(data) -> bool:
     sending = data['sending'][0]
     sending_details = sending['given']
@@ -86,15 +86,25 @@ def sending_test(data) -> bool:
 
     # store variables
     vin = sending_details['vin']
-    recipients = sending_details['recipients'][0]
+    recipients = sending_details['recipients'] #FIX: [0] --> remove to test multiple recipients
 
     # run sending test
     result = sending_run(vin, recipients)
+	# FIX: per alcuni test più output possibli
+    expected_outputs_sets = expected_sending['outputs']
+    
+    print(f'Actual output: {result}')
 
-    expected_output = expected_sending['outputs'][0][0]
-
-    if result == expected_output:
-        print('Sendig test passed.')
+    # compare results with expected outputs, ignoring order
+    test_passed = False
+    for expected_outputs in expected_outputs_sets:
+        if Counter(result) == Counter(expected_outputs):
+            test_passed = True
+            print(f'Expected output: {expected_outputs}')
+            break
+            
+    if test_passed:
+        print('Sending test passed.')
         return True 
     else:
         print('Sending test failed.')
