@@ -34,14 +34,14 @@ def select_inputs(vin: List[dict]) -> List[dict]:
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
         
         # check if input is a valid type transaction
-        type = get_transaction_type(txinwitness, scriptPubKey)
+        scriptSig = tx['scriptSig']
+        type = get_transaction_type(txinwitness, scriptPubKey, scriptSig)
         if type in valid_types:
             
             # FIX: skip uncompressed keys and NUMS points for P2TR 
             invalid_key = False
             if type == "P2PKH":
                 
-                scriptSig = tx['scriptSig']
                 _, _, public_key_hex = decode_scriptSig(scriptSig)
 
                 if public_key_hex.startswith('04'):
