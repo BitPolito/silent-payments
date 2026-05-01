@@ -9,18 +9,21 @@ def decode_input():
     # return everything needed
     pass
 
-def get_transaction_type(txinwitness: str, scriptPubKey: str)  -> str: 
-    lpkh=len(scriptPubKey)-4
-    if scriptPubKey[:6]=="76a914" and scriptPubKey[lpkh:]=="88ac":
-        return "P2PKH"   
-    if scriptPubKey[:4]=="0014":
-        return "P2WPKH"   
-    if scriptPubKey[:4]=="5120":
+def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '') -> str:
+    lpkh = len(scriptPubKey) - 4
+    if scriptPubKey[:6] == "76a914" and scriptPubKey[lpkh:] == "88ac":
+        return "P2PKH"
+    if scriptPubKey[:4] == "0014":
+        return "P2WPKH"
+    if scriptPubKey[:4] == "5120":
         return "P2TR"
-    lsh=len(scriptPubKey)-2
-    if scriptPubKey[:4]=="a914" and scriptPubKey[lsh:]=="87" and txinwitness != "":
-        return "P2SH-P2WPKH"
+    lsh = len(scriptPubKey) - 2
+    if scriptPubKey[:4] == "a914" and scriptPubKey[lsh:] == "87" and txinwitness != "":
+        if scriptSig[:6] == "160014" and len(scriptSig) == 46:
+            return "P2SH-P2WPKH"
+        return "Unknown"
     return "Unknown"
+
 
 def select_inputs(vin: List[dict]) -> List[dict]: 
     # Inputs For Shared Secret Derivation   

@@ -115,26 +115,33 @@ def receiving_test(data) -> bool:
     receiving = data['receiving'][0]
     receiving_details = receiving['given']
     expected_receiving = receiving['expected']
-    print("Receiving details:", receiving_details)
-    print("Receiving expectation:", expected_receiving)
 
-    # store variables
     vin = receiving_details['vin']
-    outputs = receiving_details['outputs'] 
+    outputs = receiving_details['outputs']
     key_material = receiving_details['key_material']
     labels = receiving_details['labels']
 
-    # run receiving test
-    address_result = receiving_run(vin, outputs, key_material, labels)
+    addresses, wallet = receiving_run(vin, outputs, key_material, labels)
 
-    expected_addresses = expected_receiving['addresses'][0]
-    expected_outputs = expected_receiving['outputs'][0]
+    expected_addresses = expected_receiving['addresses']   # lista
+    expected_outputs = expected_receiving['outputs']       # lista di dict
+
+    addresses_ok = addresses == expected_addresses
     
-    if address_result == expected_addresses: # and outputs_result == expected_outputs:
+    # confronta pub_key e priv_key_tweak (la signature è random, non confrontabile)
+    outputs_ok = all(
+        any(w['pub_key'] == e['pub_key'] and w['priv_key_tweak'] == e['priv_key_tweak']
+            for w in wallet)
+        for e in expected_outputs
+    )
+
+    if addresses_ok and outputs_ok:
         print('Receiving test passed.')
-        return True 
+        return True
     else:
-        print('Receiving test failed.')
+        print(f'Receiving test failed.')
+        print(f'  addresses match: {addresses_ok}')
+        print(f'  outputs match:   {outputs_ok}')
         return False
 
 
