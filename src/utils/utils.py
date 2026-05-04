@@ -9,33 +9,107 @@ def decode_input():
     # return everything needed
     pass
 
-def get_transaction_type(txinwitness: str, scriptPubKey: str)  -> str: 
-    lpkh=len(scriptPubKey)-4
-    if scriptPubKey[:6]=="76a914" and scriptPubKey[lpkh:]=="88ac":
-        return "P2PKH"   
-    if scriptPubKey[:4]=="0014":
-        return "P2WPKH"   
-    if scriptPubKey[:4]=="5120":
+def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '') -> str:
+    lpkh = len(scriptPubKey) - 4
+    if scriptPubKey[:6] == "76a914" and scriptPubKey[lpkh:] == "88ac":
+        return "P2PKH"
+    if scriptPubKey[:4] == "0014":
+        return "P2WPKH"
+    if scriptPubKey[:4] == "5120":
         return "P2TR"
-    lsh=len(scriptPubKey)-2
-    if scriptPubKey[:4]=="a914" and scriptPubKey[lsh:]=="87" and txinwitness != "":
-        return "P2SH-P2WPKH"
+    lsh = len(scriptPubKey) - 2
+    if scriptPubKey[:4] == "a914" and scriptPubKey[lsh:] == "87" and txinwitness != "":
+        if scriptSig[:6] == "160014" and len(scriptSig) == 46:
+            return "P2SH-P2WPKH"
+        return "Unknown"
     return "Unknown"
 
-def select_inputs(vin: List[dict]) -> List[dict]: 
-    # Inputs For Shared Secret Derivation   
+#FIX: new fn to validate inputs
+def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
+    # Validation logic
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
-    valid_inputs = [] 
-    print("DEBUG VIN: ", vin)
     for tx in vin:
-        print("DEBUG TX: ", tx)
         txinwitness = tx['txinwitness']
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
+        
         # check if input is a valid type transaction
-        type = get_transaction_type(txinwitness, scriptPubKey)
-        if type in valid_types: 
-            valid_inputs.append(tx) 
+        scriptSig = tx['scriptSig']
+        type = get_transaction_type(txinwitness, scriptPubKey, scriptSig)
+        if type in valid_types:
+            
+            # FIX: skip uncompressed keys and NUMS points for P2TR 
+            invalid_key = False
+            if type == "P2PKH":
+                
+                _, _, public_key_hex = decode_scriptSig(scriptSig)
+
+                if public_key_hex.startswith('04'):
+                    invalid_key = True 
+
+            elif type in ["P2WPKH", "P2SH-P2WPKH"]:
+                if txinwitness:
+                    _, pubkey_hex = decode_serialized_witness(txinwitness)
+                    
+                    if pubkey_hex.startswith('04') and len(pubkey_hex) >= 130:
+                        invalid_key = True
+            
+            elif type == "P2TR":
+
+                NUMS_H_HEX = "50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
+                
+                if txinwitness and NUMS_H_HEX in txinwitness:
+                    invalid_key = True
+            
+            if invalid_key and tx in inputs:
+                inputs.remove(tx)
+    
+    return inputs
+
+def select_inputs(vin: List[dict]) -> List[dict]:
+    valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
+    valid_inputs = []
+    for tx in vin:
+        txinwitness = tx.get('txinwitness', '')
+        scriptPubKey = tx['prevout']['scriptPubKey']['hex']
+        scriptSig = tx.get('scriptSig', '')
+        type = get_transaction_type(txinwitness, scriptPubKey, scriptSig)
+        if type in valid_types:
+            valid_inputs.append(tx)
     return valid_inputs
+
+# FIX: new fn to decode the witness
+def decode_serialized_witness(witness_hex: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Decode a serialized txinwitness (es. P2WPKH) and extracts sign and pubkey.
+    Return a Tuple (signature_hex, pubkey_hex).
+    """
+    if not witness_hex:
+        return None, None
+        
+    try:
+        data = bytes_from_hex(witness_hex)
+        num_items = data[0]
+        
+        # P2WPKH has only 2 elements
+        if num_items != 2:
+            return None, None
+            
+        offset = 1
+        sig_len = data[offset]
+        offset += 1
+        sig = data[offset : offset + sig_len] 
+        offset += sig_len 
+        
+        pubkey_len = data[offset]
+        offset += 1
+        pubkey = data[offset : offset + pubkey_len]
+        
+        return sig.hex(), pubkey.hex()
+        
+    except Exception as e:
+        # Cattura eventuali errori se la stringa hex è malformata
+        print(f"Errore nel parsing del witness: {e}")
+        return None, None
 
 def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]: 
     scriptSig_bytes = bytes_from_hex(scriptSig)
@@ -59,7 +133,7 @@ def get_outpointL(vin: list[dict]) -> bytes:
     outpoint_list = []
     for tx in vin:
         txid, vout = tx['txid'], tx['vout'] 
-        txid_bytes = bytes_from_hex(txid) 
+        txid_bytes = bytes_from_hex(txid)[::-1] # FIX: Convert to bytes and reverse for little-endian
         vout_bytes = vout.to_bytes(4, 'little')
         outpoint_list.append(txid_bytes + vout_bytes)
     outpointL = min(outpoint_list)
@@ -84,17 +158,20 @@ def generate_label(b_scan: bytes, m: int) -> bytes:
     # hashBIP0352/Label(ser256(bscan) || ser32(m)) 
     return tagged_hash('BIP0352/Label', ser256(int_from_bytes(b_scan)) + ser32(m))
 
-def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> List[Point]:
-    labels_list = [pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, 0)))]
+def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> dict:
+    result = {}
+    m0_point = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, 0)))
+    result[m0_point] = 0
     if labels:
         for m in labels:
-            label_point = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, m)))
-            labels_list.append(label_point)
-    return labels_list
+            pt = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, m)))
+            result[pt] = m
+    return result
 
 # hashBIP0352/Inputs(outpointL || A) 
+# FIX: serP(A) instead of bytes_from_point(A) to get 33 bytes
 def get_input_hash(inputs: List[dict], input_pubkey_sum: Point) -> bytes:
-    return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + bytes_from_point(input_pubkey_sum))
+    return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + serP(input_pubkey_sum))
 
 def decode_silent_payment_address(address: str, hrp: str = 'sp') -> Tuple:
     #from segwit_addr import decode
@@ -114,8 +191,6 @@ def encode_silent_payment_address(B_scan: Point, B_m: Point, hrp: str = 'tsp', v
     return ret
 
 def create_labeled_silent_payment_address(b_scan: bytes, B_spend: Point, m: int, hrp: str = 'tsp', version: int = 0) -> str:
-    #from schnorr_lib import G, point_mul, point_add, pubkey_point_gen_from_int, int_from_bytes
-    #from utils import generate_label
     B_scan = pubkey_point_gen_from_int(int_from_bytes(b_scan))
     B_m = point_add(B_spend, point_mul(G, int_from_bytes(generate_label(b_scan, m))))
     if B_scan is None or B_m is None:

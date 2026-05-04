@@ -10,30 +10,41 @@ from utils.utils import *
 from utils.segwit_addr import *
 
 
-def create_outputs(inputs: list[dict], recipients: list[str]) -> list:
+def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -> list:
     # For each private key a_i corresponding to a BIP341 taproot output
     # check that the private key produces a point with an even Y coordinate and negate the private key if not
     keys = []
     for tx in inputs:
         a_i = int_from_hex(tx['private_key'])
         P = pubkey_point_gen_from_int(a_i)
-        if not has_even_y(P):
-            a_i = n - a_i
+        
+        txinwitness = tx.get('txinwitness', '')
+        scriptPubKey = tx['prevout']['scriptPubKey']['hex']
+        tx_type = get_transaction_type(txinwitness, scriptPubKey)
+        
+		# FIX: Negate only if the input is a taproot output, since for other types of inputs the private key is not used for shared secret derivation
+        if tx_type == 'P2TR':
+            if not has_even_y(P):
+                a_i = n - a_i
         keys.append(a_i)
 
     # let a = sum(a_i) ---> if a=0 fail
-    a = sum(keys)
+    # FIX: the sum with % n
+    a = sum(keys) % n
     if a == 0:
         raise ValueError('ERROR: zero key sum.')
     A = point_mul(G, a) 
 
     # let input_hash = hashBIP0352/Inputs(outpointL || A)
     # where outpointL is the smallest outpoint lexicographically used in the transaction and A = a·G
-    input_hash = get_input_hash(inputs, A)
+    
+    # FIX: outpointL is computed with the original vin --> now select inputs discard uncompressed keys
+    input_hash = get_input_hash(vin, A)
     print(f'input hash: {input_hash}')
     
     # Group receiver silent payment addresses by B_scan (e.g. each group consists of one B_scan and one or more B_m)
     sp_groups: dict[bytes, list[bytes]] = {}
+    print(f'recipients: {recipients}')
     for receip in recipients:
         B_scan, B_m = decode_silent_payment_address(receip)
         print(f'B_scan: {B_scan}')
@@ -43,20 +54,35 @@ def create_outputs(inputs: list[dict], recipients: list[str]) -> list:
         else:
             sp_groups[B_scan] = [B_m]
     print(f'SP groups: {sp_groups}')
+    
+	# Create one output for each B_m in each group as follows:
     outputs = []
     # For each group:
-    for B_scan, B_m_list in sp_groups.items(): 
+    for B_scan, B_m_list_bytes in sp_groups.items(): 
+        
+        print(f'DEBUG Processing group with B_scan: {B_scan} and B_m_list_bytes: {B_m_list_bytes}')
         # Let ecdh_shared_secret = input_hash·a·Bscan
-        print(f'B_scan: {lift_x_even_y(B_scan)}')
-        print(int_from_bytes(input_hash) * a)
-        print(int_from_bytes(input_hash))
-        print(a)
-        ecdh_shared_secret = point_mul(lift_x_even_y(B_scan), int_from_bytes(input_hash) * a)
-        print(ecdh_shared_secret)
+        print(f'DEBUG B_scan: {point_from_bytes(B_scan)}')
+        #print(int_from_bytes(input_hash) * a)
+        #print(int_from_bytes(input_hash))
+        #print(a)
+        scalar = (int_from_bytes(input_hash) * a) % n
+        ecdh_shared_secret = point_mul(point_from_bytes(B_scan), scalar)
+        #print(ecdh_shared_secret)
+
+
+        # FIX: divido in punti perche devo ordinare solo rispetto la X
+        B_m_points = []
+        for b_m_bytes in B_m_list_bytes:
+            B_m_points.append(point_from_bytes(b_m_bytes))
+        
+        # FIX: the list is lexicographically sorted 
+        B_m_points.sort()
+
         # Let k = 0
         k = int(0) 
         # For each B_m in the group: 
-        for B_m in B_m_list:           
+        for B_m in B_m_points:           
             # Let tk = hashBIP0352/SharedSecret(serP(ecdh_shared_secret) || ser32(k))
             t_k = int_from_bytes(tagged_hash('BIP0352/SharedSecret', serP(ecdh_shared_secret) + ser32(k)))
             # If tk is not valid tweak, i.e., if tk = 0 or tk is larger or equal to the secp256k1 group order, fail
@@ -64,7 +90,7 @@ def create_outputs(inputs: list[dict], recipients: list[str]) -> list:
                 raise ValueError('ERROR: wrong tweak value.') 
             
             # Let Pmn = Bm + tk·G
-            P_mn = point_add(lift_x_even_y(B_m), point_mul(G, t_k))
+            P_mn = point_add(B_m, point_mul(G, t_k))
             # Encode Pmn as a BIP341 taproot output
             taproot_output = bytes_from_point(P_mn).hex()
             outputs.append(taproot_output)
@@ -79,7 +105,10 @@ def create_outputs(inputs: list[dict], recipients: list[str]) -> list:
 def sending_run(vin: list[dict], recipients: list[str]) -> list[str]:
     print(f'sender is loading...') 
     inputs = select_inputs(vin)
+    inputs = validate_inputs(inputs, vin)
+    if not inputs:
+        return []
     print(f'selected {len(inputs)} valid inputs: {inputs}')
-    outputs = create_outputs(inputs, recipients)
+    outputs = create_outputs(vin, inputs, recipients)
     return outputs
 

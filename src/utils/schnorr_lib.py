@@ -109,6 +109,31 @@ def lift_x_even_y(b: bytes) -> Optional[Point]:
     else:
         return x(P), y(P) if y(P) % 2 == 0 else p - y(P)
 
+# FIX: Get a point from bytes, checking that the y coordinate is even. 
+def point_from_bytes(b: bytes) -> Optional[Point]:
+    """
+    Decodes a SEC1 compressed public key (33 bytes) into a Point.
+    """
+    if len(b) != 33:
+        return None
+    
+    prefix = b[0]
+    x_bytes = b[1:]
+    
+    # Use lift_x_square_y on the 32-byte x coordinate
+    P = lift_x_square_y(x_bytes)
+    if P is None:
+        return None
+        
+    x_coord, y_coord = P
+    
+    if prefix == 2:  # 0x02 indicates an even y-coordinate
+        return (x_coord, y_coord if y_coord % 2 == 0 else p - y_coord)
+    elif prefix == 3:  # 0x03 indicates an odd y-coordinate
+        return (x_coord, y_coord if y_coord % 2 != 0 else p - y_coord)
+    else:
+        return None
+
 
 # Get hash digest with SHA256
 def sha256(b: bytes) -> bytes:

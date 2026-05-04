@@ -10,6 +10,7 @@ pay attention to set up cwd correctly for reading .json files
 import json
 from send import sending_run
 from receive import receiving_run
+from collections import Counter
 
 
 def test_file_reading(file = None): 
@@ -76,7 +77,6 @@ def test(test_file = './test/test_vectors.json', test_id = None, test_type = Non
             rec_res = receiving_test(data=test_data)
             return send_res and rec_res
 
-
 def sending_test(data) -> bool:
     sending = data['sending'][0]
     sending_details = sending['given']
@@ -86,15 +86,25 @@ def sending_test(data) -> bool:
 
     # store variables
     vin = sending_details['vin']
-    recipients = sending_details['recipients'][0]
+    recipients = sending_details['recipients'] #FIX: [0] --> remove to test multiple recipients
 
     # run sending test
     result = sending_run(vin, recipients)
+	# FIX: per alcuni test più output possibli
+    expected_outputs_sets = expected_sending['outputs']
+    
+    print(f'Actual output: {result}')
 
-    expected_output = expected_sending['outputs'][0][0]
-
-    if result == expected_output:
-        print('Sendig test passed.')
+    # compare results with expected outputs, ignoring order
+    test_passed = False
+    for expected_outputs in expected_outputs_sets:
+        if Counter(result) == Counter(expected_outputs):
+            test_passed = True
+            print(f'Expected output: {expected_outputs}')
+            break
+            
+    if test_passed:
+        print('Sending test passed.')
         return True 
     else:
         print('Sending test failed.')
@@ -105,26 +115,33 @@ def receiving_test(data) -> bool:
     receiving = data['receiving'][0]
     receiving_details = receiving['given']
     expected_receiving = receiving['expected']
-    print("Receiving details:", receiving_details)
-    print("Receiving expectation:", expected_receiving)
 
-    # store variables
     vin = receiving_details['vin']
-    outputs = receiving_details['outputs'] 
+    outputs = receiving_details['outputs']
     key_material = receiving_details['key_material']
     labels = receiving_details['labels']
 
-    # run receiving test
-    address_result = receiving_run(vin, outputs, key_material, labels)
+    addresses, wallet = receiving_run(vin, outputs, key_material, labels)
 
-    expected_addresses = expected_receiving['addresses'][0]
-    expected_outputs = expected_receiving['outputs'][0]
+    expected_addresses = expected_receiving['addresses']   # lista
+    expected_outputs = expected_receiving['outputs']       # lista di dict
+
+    addresses_ok = addresses == expected_addresses
     
-    if address_result == expected_addresses: # and outputs_result == expected_outputs:
+    # confronta pub_key e priv_key_tweak (la signature è random, non confrontabile)
+    outputs_ok = all(
+        any(w['pub_key'] == e['pub_key'] and w['priv_key_tweak'] == e['priv_key_tweak']
+            for w in wallet)
+        for e in expected_outputs
+    )
+
+    if addresses_ok and outputs_ok:
         print('Receiving test passed.')
-        return True 
+        return True
     else:
-        print('Receiving test failed.')
+        print(f'Receiving test failed.')
+        print(f'  addresses match: {addresses_ok}')
+        print(f'  outputs match:   {outputs_ok}')
         return False
 
 
