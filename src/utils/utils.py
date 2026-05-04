@@ -65,6 +65,7 @@ def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
     
     return inputs
 
+
 def select_inputs(vin: List[dict]) -> List[dict]:
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
     valid_inputs = []
