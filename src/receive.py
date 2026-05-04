@@ -40,10 +40,34 @@ def _pubkey_point_from_input(tx: dict):
     tx_type      = get_transaction_type(txinwitness, scriptPubKey, tx.get('scriptSig', ''))
 
     if tx_type == 'P2PKH':
-        _, _, pubkey_hex = decode_scriptSig(tx['scriptSig'])
-        if pubkey_hex is None:
+        script_bytes = bytes_from_hex(tx['scriptSig'])
+        items = []
+        pos = 0
+        while pos < len(script_bytes):
+            opcode = script_bytes[pos]
+            pos += 1
+            if opcode == 0x00:
+                items.append(b'')
+            elif 0x01 <= opcode <= 0x4b:
+                items.append(script_bytes[pos:pos + opcode])
+                pos += opcode
+            elif opcode == 0x4c:
+                push_len = script_bytes[pos]; pos += 1
+                items.append(script_bytes[pos:pos + push_len])
+                pos += push_len
+            elif opcode == 0x4d:
+                push_len = int.from_bytes(script_bytes[pos:pos+2], 'little'); pos += 2
+                items.append(script_bytes[pos:pos + push_len])
+                pos += push_len
+    
+        # Prendi il primo elemento che sia una compressed pubkey valida (33 bytes, prefix 02/03)
+        raw = None
+        for item in items:
+            if len(item) == 33 and item[0] in (0x02, 0x03):
+                raw = item
+                break
+        if raw is None:
             return None
-        raw = bytes_from_hex(pubkey_hex)
 
     elif tx_type in ('P2WPKH', 'P2SH-P2WPKH'):
         if isinstance(txinwitness, list):
@@ -51,12 +75,14 @@ def _pubkey_point_from_input(tx: dict):
         else:
             wit_bytes = bytes_from_hex(txinwitness)
             pos = 0
-            n_items = wit_bytes[pos]; pos += 1
+            num_items = wit_bytes[pos]; pos += 1
             items = []
-            for _ in range(n_items):
+            for _ in range(num_items):
                 item_len = wit_bytes[pos]; pos += 1
                 items.append(wit_bytes[pos:pos + item_len])
                 pos += item_len
+        if not items:
+            return None
         raw = items[-1]
 
     elif tx_type == 'P2TR':
@@ -65,35 +91,44 @@ def _pubkey_point_from_input(tx: dict):
         else:
             wit_bytes = bytes_from_hex(txinwitness)
             pos = 0
-            n_items = wit_bytes[pos]; pos += 1
+            num_items = wit_bytes[pos]; pos += 1
             items = []
-            for _ in range(n_items):
+            for _ in range(num_items):
                 item_len = wit_bytes[pos]; pos += 1
                 items.append(wit_bytes[pos:pos + item_len])
                 pos += item_len
-        if items and items[-1][0:1] == b'\x50':
+        if not items:
+            return None
+        # Rimuovi annex se presente (inizia con 0x50)
+        if items[-1][0:1] == b'\x50':
             items = items[:-1]
+        if not items:
+            return None
 
         NUMS = bytes_from_hex('50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0')
 
         if len(items) == 1:
+            # key-path spend: pubkey dallo scriptPubKey
             return lift_x_even_y(bytes_from_hex(scriptPubKey[4:]))
         else:
+            # script-path spend: internal key dal control block
             control_block = items[-1]
             internal_key  = control_block[1:33]
             if internal_key == NUMS:
-                return None  # NUMS point → skip
+                return None
             return lift_x_even_y(internal_key)
 
     else:
-        return None 
-    if len(raw) != 33 or raw[0] not in (0x02, 0x03):
         return None
 
+    # P2PKH, P2WPKH, P2SH-P2WPKH: verifica compressed key e ricostruisce il punto
+    if len(raw) != 33 or raw[0] not in (0x02, 0x03):
+        return None
     point = lift_x_even_y(raw[1:])
-    if raw[0] == 0x03 and has_even_y(point):
-        return point_mul(point, n - 1)
-    if raw[0] == 0x02 and not has_even_y(point):
+    if point is None:
+        return None
+    if raw[0] == 0x03:
+        # odd-y: neghiamo
         return point_mul(point, n - 1)
     return point
 # ── address generation ────────────────────────────────────────────────────────
@@ -132,6 +167,7 @@ def scan(
     labels: Optional[List[int]] = None
 ) -> List[Dict]:
     inputs = select_inputs(vin)
+    
     print(f'DEBUG inputs count: {len(inputs)}')
     for tx in inputs:
         print(f'  vout={tx["vout"]} type={get_transaction_type(tx.get("txinwitness",""), tx["prevout"]["scriptPubKey"]["hex"], tx.get("scriptSig",""))}')    
@@ -154,7 +190,6 @@ def scan(
         return []  
     # ── 2. input_hash = hash_BIP0352/Inputs(outpointL || serP(A)) ────────────
     input_hash = get_input_hash(inputs, A)
-
     # ── 3. ecdh_shared_secret = input_hash · bscan · A ───────────────────────
     b_scan_int        = int_from_hex(key_material['scan_priv_key'])
     b_scan_bytes      = bytes_from_int(b_scan_int)
@@ -168,12 +203,28 @@ def scan(
     print(f'outpointL (inputs): {get_outpointL(inputs).hex()}')
     print(f'input_hash: {input_hash.hex()}')
     print(f't_k[0]: {create_tweak(ecdh_shared_secret, 0).hex()}')
-
+    
+    for i, (tx, pt) in enumerate(zip(valid_inputs, pubkeys)):
+        print(f'  input {i} pubkey: {serP(pt).hex()}')
+    
+    A_check = None
+    for i, pt in enumerate(pubkeys):
+        A_check = point_add(A_check, pt)
+        print(f'  after adding input {i}: {serP(A_check).hex()}')
+        
     if not ecdh_shared_secret:
         raise ValueError('ERROR: ecdh_shared_secret is None.')
     labels_dict = compute_labels(b_scan_bytes, labels)
 
     B_spend = pubkey_point_gen_from_int(int_from_hex(key_material['spend_priv_key']))
+    
+    
+    t_k0 = create_tweak(ecdh_shared_secret, 0)
+    Pk0 = point_add(B_spend, point_mul(G, int_from_bytes(t_k0)))
+    print(f'Pk0 computed: {bytes_from_point(Pk0).hex()}')
+    print(f'Pk0 expected: 4612cdbf845c66c7511d70aab4d9aed11e49e48cdb8d799d787101cdd0d53e4f')
+    print(f'outputs: {outputs}')
+    
     wallet  = []
     k       = 0
     while True:
