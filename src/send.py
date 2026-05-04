@@ -105,6 +105,7 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
 def sending_run(vin: list[dict], recipients: list[str]) -> list[str]:
     print(f'sender is loading...') 
     inputs = select_inputs(vin)
+    inputs = validate_inputs(inputs, vin)
     if not inputs:
         return []
     print(f'selected {len(inputs)} valid inputs: {inputs}')

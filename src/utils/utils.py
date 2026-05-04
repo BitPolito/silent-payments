@@ -24,11 +24,10 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '
         return "Unknown"
     return "Unknown"
 
-
-def select_inputs(vin: List[dict]) -> List[dict]: 
-    # Inputs For Shared Secret Derivation   
+#FIX: new fn to validate inputs
+def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
+    # Validation logic
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
-    valid_inputs = [] 
     for tx in vin:
         txinwitness = tx['txinwitness']
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
@@ -61,9 +60,21 @@ def select_inputs(vin: List[dict]) -> List[dict]:
                 if txinwitness and NUMS_H_HEX in txinwitness:
                     invalid_key = True
             
-            if not invalid_key:
-                valid_inputs.append(tx)
+            if invalid_key and tx in inputs:
+                inputs.remove(tx)
+    
+    return inputs
 
+def select_inputs(vin: List[dict]) -> List[dict]:
+    valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
+    valid_inputs = []
+    for tx in vin:
+        txinwitness = tx.get('txinwitness', '')
+        scriptPubKey = tx['prevout']['scriptPubKey']['hex']
+        scriptSig = tx.get('scriptSig', '')
+        type = get_transaction_type(txinwitness, scriptPubKey, scriptSig)
+        if type in valid_types:
+            valid_inputs.append(tx)
     return valid_inputs
 
 # FIX: new fn to decode the witness
