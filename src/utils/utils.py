@@ -25,45 +25,16 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '
     return "Unknown"
 
 
-def select_inputs(vin: List[dict]) -> List[dict]: 
-    # Inputs For Shared Secret Derivation   
+def select_inputs(vin: List[dict]) -> List[dict]:
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
-    valid_inputs = [] 
+    valid_inputs = []
     for tx in vin:
-        txinwitness = tx['txinwitness']
+        txinwitness = tx.get('txinwitness', '')
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
-        
-        # check if input is a valid type transaction
-        type = get_transaction_type(txinwitness, scriptPubKey)
+        scriptSig = tx.get('scriptSig', '')
+        type = get_transaction_type(txinwitness, scriptPubKey, scriptSig)
         if type in valid_types:
-            
-            # FIX: skip uncompressed keys and NUMS points for P2TR 
-            invalid_key = False
-            if type == "P2PKH":
-                
-                scriptSig = tx['scriptSig']
-                _, _, public_key_hex = decode_scriptSig(scriptSig)
-
-                if public_key_hex.startswith('04'):
-                    invalid_key = True 
-
-            elif type in ["P2WPKH", "P2SH-P2WPKH"]:
-                if txinwitness:
-                    _, pubkey_hex = decode_serialized_witness(txinwitness)
-                    
-                    if pubkey_hex.startswith('04') and len(pubkey_hex) >= 130:
-                        invalid_key = True
-            
-            elif type == "P2TR":
-
-                NUMS_H_HEX = "50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
-                
-                if txinwitness and NUMS_H_HEX in txinwitness:
-                    invalid_key = True
-            
-            if not invalid_key:
-                valid_inputs.append(tx)
-
+            valid_inputs.append(tx)
     return valid_inputs
 
 # FIX: new fn to decode the witness
