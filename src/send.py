@@ -10,9 +10,23 @@ from utils.utils import *
 from utils.segwit_addr import *
 
 
-def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -> list:
-    # For each private key a_i corresponding to a BIP341 taproot output
-    # check that the private key produces a point with an even Y coordinate and negate the private key if not
+def create_sp_groups(recipients: list[str]) -> dict[bytes, list[bytes]]:
+    '''Group receiver silent payment addresses by B_scan (e.g. each group consists of one B_scan and one or more B_m).'''
+    sp_groups: dict[bytes, list[bytes]] = {}
+    print(f'recipients: {recipients}')
+    for receip in recipients:
+        B_scan, B_m = decode_silent_payment_address(receip)
+        print(f'B_scan: {B_scan}')
+        print(f'B_m: {B_m}')
+        if B_scan in sp_groups:
+            sp_groups[B_scan].append(B_m)
+        else:
+            sp_groups[B_scan] = [B_m]
+    print(f'SP groups: {sp_groups}')
+    return sp_groups
+
+def generate_a_A_from_inputs(inputs: list[dict]) -> tuple[int, bytes]:
+    '''Generate the scalar a and the point A = a·G from the private keys of the inputs.'''
     keys = []
     for tx in inputs:
         a_i = int_from_hex(tx['private_key'])
@@ -27,32 +41,22 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
                 a_i = n - a_i
         keys.append(a_i)
 
-    # let a = sum(a_i) ---> if a=0 fail
     a = sum(keys) % n
     if a == 0:
         raise ValueError('ERROR: zero key sum.')
-    A = point_mul(G, a) 
+    A = point_mul(G, a)
+    return a, A
 
-    # let input_hash = hashBIP0352/Inputs(outpointL || A)
-    # where outpointL is the smallest outpoint lexicographically used in the transaction and A = a·G
-    
+def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -> list:
+    '''Create one output for each B_m in each group.'''
+  
+    a, A = generate_a_A_from_inputs(inputs)
+
     input_hash = get_input_hash(vin, A)
     print(f'input hash: {input_hash}')
     
-    # Group receiver silent payment addresses by B_scan (e.g. each group consists of one B_scan and one or more B_m)
-    sp_groups: dict[bytes, list[bytes]] = {}
-    print(f'recipients: {recipients}')
-    for receip in recipients:
-        B_scan, B_m = decode_silent_payment_address(receip)
-        print(f'B_scan: {B_scan}')
-        print(f'B_m: {B_m}')
-        if B_scan in sp_groups:
-            sp_groups[B_scan].append(B_m)
-        else:
-            sp_groups[B_scan] = [B_m]
-    print(f'SP groups: {sp_groups}')
+    sp_groups = create_sp_groups(recipients)
     
-	# Create one output for each B_m in each group as follows:
     outputs = []
     # For each group:
     for B_scan, B_m_list_bytes in sp_groups.items(): 
@@ -97,6 +101,7 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
 
 
 def sending_run(vin: list[dict], recipients: list[str]) -> list[str]:
+    '''Main function for the sending phase. It takes as input the list of inputs and the list of recipients and returns the list of outputs.'''
     print(f'sender is loading...') 
     inputs = select_inputs(vin)
     inputs = validate_inputs(inputs, vin)

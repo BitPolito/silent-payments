@@ -17,15 +17,17 @@ import os
 from typing import Tuple, List
 
 def hmac_sha512(key: bytes, data: bytes) -> bytes:
-    return hmac.new(key, data, hashlib.sha512).digest() # CHECK: generare 64 bytes ma sotto è specificato 32
-
+    '''Computes HMAC-SHA512 of the given data using the provided key.'''
+    return hmac.new(key, data, hashlib.sha512).digest()
 
 def derive_hardened_key(master_key: bytes, index: int) -> bytes:
+    '''Derives a hardened key from the master key using the given index.'''
     index_bytes = index.to_bytes(4, byteorder='big')
-    return hmac_sha512(master_key, b'\x00' + master_key + index_bytes) # [:32]
+    return hmac_sha512(master_key, b'\x00' + master_key + index_bytes)
 
 
 def generate_hardened_keys() -> dict:
+    '''Generates a pair of hardened keys for scan and spend.'''
     master_key = os.urandom(32)  # 32 bytes 
     scan_private_key = derive_hardened_key(master_key, 1)  # m/1'
     spend_private_key = derive_hardened_key(master_key, 0)  # m/0'

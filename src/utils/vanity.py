@@ -3,6 +3,7 @@ from receive import generate_sp_address
 from typing import Tuple, List
 
 def get_sp_vanity_address(vanity_string: str) -> Tuple[List[str], dict]:
+    '''Generates a BIP352 Silent Payment address with a vanity string. It takes as input the vanity string to search for in the address.'''
     while True:
         address, key_material = generate_sp_address()
         print(f"Address: {address}")
