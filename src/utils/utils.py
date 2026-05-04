@@ -24,7 +24,6 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '
         return "Unknown"
     return "Unknown"
 
-#FIX: new fn to validate inputs
 def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
     # Validation logic
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
@@ -37,7 +36,6 @@ def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
         type = get_transaction_type(txinwitness, scriptPubKey, scriptSig)
         if type in valid_types:
             
-            # FIX: skip uncompressed keys and NUMS points for P2TR 
             invalid_key = False
             if type == "P2PKH":
                 
@@ -78,7 +76,6 @@ def select_inputs(vin: List[dict]) -> List[dict]:
             valid_inputs.append(tx)
     return valid_inputs
 
-# FIX: new fn to decode the witness
 def decode_serialized_witness(witness_hex: str) -> Tuple[Optional[str], Optional[str]]:
     """
     Decode a serialized txinwitness (es. P2WPKH) and extracts sign and pubkey.
@@ -134,7 +131,7 @@ def get_outpointL(vin: list[dict]) -> bytes:
     outpoint_list = []
     for tx in vin:
         txid, vout = tx['txid'], tx['vout'] 
-        txid_bytes = bytes_from_hex(txid)[::-1] # FIX: Convert to bytes and reverse for little-endian
+        txid_bytes = bytes_from_hex(txid)[::-1]
         vout_bytes = vout.to_bytes(4, 'little')
         outpoint_list.append(txid_bytes + vout_bytes)
     outpointL = min(outpoint_list)
@@ -170,12 +167,10 @@ def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> dict:
     return result
 
 # hashBIP0352/Inputs(outpointL || A) 
-# FIX: serP(A) instead of bytes_from_point(A) to get 33 bytes
 def get_input_hash(inputs: List[dict], input_pubkey_sum: Point) -> bytes:
     return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + serP(input_pubkey_sum))
 
 def decode_silent_payment_address(address: str, hrp: str = 'sp') -> Tuple:
-    #from segwit_addr import decode
     _, data = decode(hrp, address)
     if data is None: 
         raise ValueError('ERROR: Invalid data.')

@@ -22,14 +22,12 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
         scriptPubKey = tx['prevout']['scriptPubKey']['hex']
         tx_type = get_transaction_type(txinwitness, scriptPubKey)
         
-		# FIX: Negate only if the input is a taproot output, since for other types of inputs the private key is not used for shared secret derivation
         if tx_type == 'P2TR':
             if not has_even_y(P):
                 a_i = n - a_i
         keys.append(a_i)
 
     # let a = sum(a_i) ---> if a=0 fail
-    # FIX: the sum with % n
     a = sum(keys) % n
     if a == 0:
         raise ValueError('ERROR: zero key sum.')
@@ -38,7 +36,6 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
     # let input_hash = hashBIP0352/Inputs(outpointL || A)
     # where outpointL is the smallest outpoint lexicographically used in the transaction and A = a·G
     
-    # FIX: outpointL is computed with the original vin --> now select inputs discard uncompressed keys
     input_hash = get_input_hash(vin, A)
     print(f'input hash: {input_hash}')
     
@@ -70,13 +67,10 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
         ecdh_shared_secret = point_mul(point_from_bytes(B_scan), scalar)
         #print(ecdh_shared_secret)
 
-
-        # FIX: divido in punti perche devo ordinare solo rispetto la X
         B_m_points = []
         for b_m_bytes in B_m_list_bytes:
             B_m_points.append(point_from_bytes(b_m_bytes))
-        
-        # FIX: the list is lexicographically sorted 
+         
         B_m_points.sort()
 
         # Let k = 0
