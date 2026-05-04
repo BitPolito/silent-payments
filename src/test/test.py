@@ -86,11 +86,10 @@ def sending_test(data) -> bool:
 
     # store variables
     vin = sending_details['vin']
-    recipients = sending_details['recipients'] #FIX: [0] --> remove to test multiple recipients
+    recipients = sending_details['recipients']
 
     # run sending test
     result = sending_run(vin, recipients)
-	# FIX: per alcuni test più output possibli
     expected_outputs_sets = expected_sending['outputs']
     
     print(f'Actual output: {result}')

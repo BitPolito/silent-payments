@@ -109,7 +109,6 @@ def lift_x_even_y(b: bytes) -> Optional[Point]:
     else:
         return x(P), y(P) if y(P) % 2 == 0 else p - y(P)
 
-# FIX: Get a point from bytes, checking that the y coordinate is even. 
 def point_from_bytes(b: bytes) -> Optional[Point]:
     """
     Decodes a SEC1 compressed public key (33 bytes) into a Point.
