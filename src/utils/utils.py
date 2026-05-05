@@ -5,11 +5,8 @@ from typing import Tuple, Optional, List
 import hashlib
 import os
 
-def decode_input():
-    # return everything needed
-    pass
-
 def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '') -> str:
+    '''Determines the type of a transaction input based on its scriptPubKey and txinwitness.'''
     lpkh = len(scriptPubKey) - 4
     if scriptPubKey[:6] == "76a914" and scriptPubKey[lpkh:] == "88ac":
         return "P2PKH"
@@ -25,6 +22,7 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '
     return "Unknown"
 
 def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
+    '''Validates the inputs by checking their types and removing any invalid ones'''
     # Validation logic
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
     for tx in vin:
@@ -65,6 +63,7 @@ def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
 
 
 def select_inputs(vin: List[dict]) -> List[dict]:
+    '''Selects the inputs to be used in the transaction.'''
     valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
     valid_inputs = []
     for tx in vin:
@@ -77,10 +76,7 @@ def select_inputs(vin: List[dict]) -> List[dict]:
     return valid_inputs
 
 def decode_serialized_witness(witness_hex: str) -> Tuple[Optional[str], Optional[str]]:
-    """
-    Decode a serialized txinwitness (es. P2WPKH) and extracts sign and pubkey.
-    Return a Tuple (signature_hex, pubkey_hex).
-    """
+    '''Decode a serialized txinwitness (es. P2WPKH) and extracts sign and pubkey. Return a Tuple (signature_hex, pubkey_hex).'''
     if not witness_hex:
         return None, None
         
@@ -109,7 +105,8 @@ def decode_serialized_witness(witness_hex: str) -> Tuple[Optional[str], Optional
         print(f"Errore nel parsing del witness: {e}")
         return None, None
 
-def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]: 
+def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]:
+    '''Decode a scriptSig (es. P2PKH) and extracts sign and pubkey. Return a Tuple (tx_type, signature_hex, pubkey_hex).'''
     scriptSig_bytes = bytes_from_hex(scriptSig)
     
     signature_length = scriptSig_bytes[0]
@@ -128,6 +125,7 @@ def decode_scriptSig(scriptSig: str) -> Tuple[str, str, str]:
 
 # outpoint (36 bytes): the COutPoint of an input (32-byte txid, least significant byte first || 4-byte vout, least significant byte first)
 def get_outpointL(vin: list[dict]) -> bytes:
+    '''Returns the smallest outpoint lexicographically used in the transaction.'''
     outpoint_list = []
     for tx in vin:
         txid, vout = tx['txid'], tx['vout'] 
@@ -137,26 +135,26 @@ def get_outpointL(vin: list[dict]) -> bytes:
     outpointL = min(outpoint_list)
     return outpointL
 
-# ser32(i): serializes a 32-bit unsigned integer i as a 4-byte sequence, most significant byte first. 
 def ser32(i: int) -> bytes:
+    '''Serializes a 32-bit unsigned integer i as a 4-byte sequence, most significant byte first.'''
     return i.to_bytes(4, 'big') 
 
-# ser256(p): serializes the integer p as a 32-byte sequence, most significant byte first.
 def ser256(p: int) -> bytes:
+    '''Serializes the integer p as a 32-byte sequence, most significant byte first.'''
     return p.to_bytes(32, 'big')
 
-# serP(P): serializes the coordinate pair P = (x,y) as a byte sequence using SEC1's compressed form: 
-# (0x02 or 0x03) || ser256(x), where the header byte depends on the parity of the omitted Y coordinate.
 def serP(P: Point) -> bytes: 
+    '''Serializes a point P as a byte sequence using SEC1's compressed form: (0x02 or 0x03) || ser256(x), where the header byte depends on the parity of the omitted Y coordinate.'''
     x_bytes = ser256(int_from_bytes(bytes_from_point(P)))
     prefix = b'\x02' if has_even_y(P) else b'\x03' # Determine the parity of y to choose the prefix
     return prefix + x_bytes 
 
 def generate_label(b_scan: bytes, m: int) -> bytes:
-    # hashBIP0352/Label(ser256(bscan) || ser32(m)) 
+    '''Generates a label for a given b_scan and m using the formula: hashBIP0352/Label(ser256(bscan) || ser32(m)) '''
     return tagged_hash('BIP0352/Label', ser256(int_from_bytes(b_scan)) + ser32(m))
 
 def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> dict:
+    '''Computes the labels for a given b_scan and a list of m values. Returns a dictionary mapping points to their corresponding m values.'''
     result = {}
     m0_point = pubkey_point_gen_from_int(int_from_bytes(generate_label(b_scan, 0)))
     result[m0_point] = 0
@@ -168,9 +166,11 @@ def compute_labels(b_scan: bytes, labels: Optional[List[int]]) -> dict:
 
 # hashBIP0352/Inputs(outpointL || A) 
 def get_input_hash(inputs: List[dict], input_pubkey_sum: Point) -> bytes:
+    '''Computes the input hash using the formula: hashBIP0352/Inputs(outpointL || A)'''
     return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + serP(input_pubkey_sum))
 
 def decode_silent_payment_address(address: str, hrp: str = 'sp') -> Tuple:
+    '''Decodes a silent payment address and returns the B_scan and B_spend points.'''
     _, data = decode(hrp, address)
     if data is None: 
         raise ValueError('ERROR: Invalid data.')
@@ -179,6 +179,7 @@ def decode_silent_payment_address(address: str, hrp: str = 'sp') -> Tuple:
     return B_scan, B_spend
 
 def encode_silent_payment_address(B_scan: Point, B_m: Point, hrp: str = 'tsp', version: int = 0) -> str:
+    '''Encodes a silent payment address from the given B_scan and B_m points.'''
     if B_scan is None or B_m is None:
         raise ValueError('ERROR: Invalid data.')
     ret = bech32_encode(hrp, [version] + convertbits(serP(B_scan) + serP(B_m), 8, 5), Encoding.BECH32M)
@@ -187,6 +188,7 @@ def encode_silent_payment_address(B_scan: Point, B_m: Point, hrp: str = 'tsp', v
     return ret
 
 def create_labeled_silent_payment_address(b_scan: bytes, B_spend: Point, m: int, hrp: str = 'tsp', version: int = 0) -> str:
+    '''Creates a labeled silent payment address from the given b_scan, B_spend, and m values.'''
     B_scan = pubkey_point_gen_from_int(int_from_bytes(b_scan))
     B_m = point_add(B_spend, point_mul(G, int_from_bytes(generate_label(b_scan, m))))
     if B_scan is None or B_m is None:
@@ -195,9 +197,11 @@ def create_labeled_silent_payment_address(b_scan: bytes, B_spend: Point, m: int,
     return labeled_address
 
 def random_message() -> bytes:
+    '''Generates a random message for signing.'''
     return hashlib.sha256(os.urandom(32)).digest()
 
 def create_tweak(ecdh_shared_secret: Point, k: int) -> bytes:
+    '''Creates a tweak for signing using the formula: hashBIP0352/SharedSecret(serP(ecdh_shared_secret) || ser32(k))'''
     tk = tagged_hash('BIP0352/SharedSecret', serP(ecdh_shared_secret) + ser32(k))
     if int_from_bytes(tk) == 0 or int_from_bytes(tk) >= n:
         raise ValueError('ERROR: tweak not valid.')

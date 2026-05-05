@@ -14,43 +14,51 @@ G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
 Point = Tuple[int, int]
 
 
-# Get bytes from an int
+
 def bytes_from_int(a: int) -> bytes:
+    '''Get bytes from an int'''
     return a.to_bytes(32, byteorder="big")
 
 
-# Get bytes from a hex
+
 def bytes_from_hex(a: str) -> bytes:
+    '''Get bytes from a hex string'''
     return unhexlify(a)
 
 
-# Get bytes from a point
+
 def bytes_from_point(P: Point) -> bytes:
+    '''Get bytes from a point P: Tuple[int, int]'''
     return bytes_from_int(x(P))
 
 
-# Get an int from bytes
+
 def int_from_bytes(b: bytes) -> int:
+    '''Get an int from bytes'''
     return int.from_bytes(b, byteorder="big")
 
 
-# Get an int from hex
+
 def int_from_hex(a: str) -> int:
+    '''Get an int from a hex string'''
     return int.from_bytes(unhexlify(a), byteorder="big")
 
 
-# Get x coordinate from a point
+
 def x(P: Point) -> int:
+    '''Get x coordinate from a point P: Tuple[int, int]'''
     return P[0]
 
 
-# Get y coordinate from a point
+
 def y(P: Point) -> int:
+    '''Get y coordinate from a point P: Tuple[int, int]'''
     return P[1]
 
 
-# Point addition
+
 def point_add(P1: Optional[Point], P2: Optional[Point]) -> Optional[Point]:
+    '''Add two points P1 and P2 on the elliptic curve. Returns the resulting point or None if the result is the point at infinity.'''
     if P1 is None:
         return P2
     if P2 is None:
@@ -65,8 +73,9 @@ def point_add(P1: Optional[Point], P2: Optional[Point]) -> Optional[Point]:
     return x3, (lam * (x(P1) - x3) - y(P1)) % p
 
 
-# Point multiplication
+
 def point_mul(P: Optional[Point], d: int) -> Optional[Point]:
+    '''Multiply a point P by an integer d. Returns the resulting point or None if the result is the point at infinity.'''
     R = None
     for i in range(256):
         if (d >> i) & 1:
@@ -74,24 +83,29 @@ def point_mul(P: Optional[Point], d: int) -> Optional[Point]:
         P = point_add(P, P)
     return R
 
-# Tagged hash function as per BIP0340
+
+
 def tagged_hash(tag: str, msg: bytes) -> bytes:
+    '''Computes a tagged hash using the formula: SHA256(SHA256(tag) || SHA256(tag) || msg)'''
     tag_hash = hashlib.sha256(tag.encode()).digest()
     return hashlib.sha256(tag_hash + tag_hash + msg).digest()
 
 
-# Check if a point is at infinity
+
 def is_infinity(P: Optional[Point]) -> bool:
+    '''Checks if a point P is the point at infinity. Returns True if P is None, False otherwise.'''
     return P is None
 
 
-# Get xor of bytes
+
 def xor_bytes(b0: bytes, b1: bytes) -> bytes:
+    '''Returns the byte-wise XOR of two byte strings b0 and b1.'''
     return bytes(a ^ b for (a, b) in zip(b0, b1))
 
 
 # Get a point from bytes
 def lift_x_square_y(b: bytes) -> Optional[Point]:
+    '''Given a 32-byte sequence b, returns a point P on the elliptic curve such that x(P) = b. If no such point exists, returns None.'''
     x = int_from_bytes(b)
     if x >= p:
         return None
@@ -103,6 +117,7 @@ def lift_x_square_y(b: bytes) -> Optional[Point]:
 
 
 def lift_x_even_y(b: bytes) -> Optional[Point]:
+    '''Given a 32-byte sequence b, returns a point P on the elliptic curve such that x(P) = b and y(P) is even. If no such point exists, returns None.'''
     P = lift_x_square_y(b)
     if P is None:
         return None
@@ -110,42 +125,42 @@ def lift_x_even_y(b: bytes) -> Optional[Point]:
         return x(P), y(P) if y(P) % 2 == 0 else p - y(P)
 
 def point_from_bytes(b: bytes) -> Optional[Point]:
-    """
-    Decodes a SEC1 compressed public key (33 bytes) into a Point.
-    """
+    '''Decodes a SEC1 compressed public key (33 bytes) into a Point.'''
     if len(b) != 33:
         return None
     
     prefix = b[0]
     x_bytes = b[1:]
     
-    # Use lift_x_square_y on the 32-byte x coordinate
     P = lift_x_square_y(x_bytes)
     if P is None:
         return None
         
     x_coord, y_coord = P
     
-    if prefix == 2:  # 0x02 indicates an even y-coordinate
+    if prefix == 2:
         return (x_coord, y_coord if y_coord % 2 == 0 else p - y_coord)
-    elif prefix == 3:  # 0x03 indicates an odd y-coordinate
+    elif prefix == 3:
         return (x_coord, y_coord if y_coord % 2 != 0 else p - y_coord)
     else:
         return None
 
 
-# Get hash digest with SHA256
+
 def sha256(b: bytes) -> bytes:
+    '''Returns the SHA256 hash of the input bytes b.'''
     return hashlib.sha256(b).digest()
 
 
-# Check if an int is square
+
 def is_square(a: int) -> bool:
+    '''Checks if an integer a is a square'''
     return int(pow(a, (p - 1) // 2, p)) == 1
 
 
-# Check if a point has square y coordinate
+
 def has_square_y(P: Optional[Point]) -> bool:
+    '''Check if a point has square y coordinate'''
     infinity = is_infinity(P)
     if infinity:
         return False
@@ -153,20 +168,23 @@ def has_square_y(P: Optional[Point]) -> bool:
     return is_square(y(P))
 
 
-# Check if a point has even y coordinate
+
 def has_even_y(P: Point) -> bool:
+    '''Check if a point has even y coordinate'''
     return y(P) % 2 == 0
 
 
-# Generate public key from an int
+
 def pubkey_gen_from_int(seckey: int) -> bytes:
+    '''Generate public key from an int'''
     P = point_mul(G, seckey)
     assert P is not None
     return bytes_from_point(P)
 
 
-# Generate public key from a hex
+
 def pubkey_gen_from_hex(seckey: str) -> bytes:
+    '''Generate public key from a hex'''
     d0 = int_from_hex(seckey)
     if not (1 <= d0 <= n - 1):
         raise ValueError(
@@ -176,15 +194,17 @@ def pubkey_gen_from_hex(seckey: str) -> bytes:
     return bytes_from_point(P)
 
 
-# Generate public key (as a point) from an int
+
 def pubkey_point_gen_from_int(seckey: int) -> Point:
+    '''Generate public key (as a point) from an int'''
     P = point_mul(G, seckey)
     assert P is not None 
     return P
 
 
-# Generate auxiliary random of 32 bytes
+
 def get_aux_rand() -> bytes:
+    '''Generate auxiliary random of 32 bytes'''
     return os.urandom(32)
 
 
@@ -193,23 +213,27 @@ def get_int_R_from_sig(sig: bytes) -> int:
     return int_from_bytes(sig[0:32])
 
 
-# Extract s int value from signature 
+
 def get_int_s_from_sig(sig: bytes) -> int:
+    '''Extract s int value from signature'''
     return int_from_bytes(sig[32:64])
 
 
-# Extract R_x bytes from signature 
+
 def get_bytes_R_from_sig(sig: bytes) -> bytes:
+    '''Extract R_x bytes from signature'''
     return sig[0:32]
 
 
-# Extract s bytes from signature 
+
 def get_bytes_s_from_sig(sig: bytes) -> bytes:
+    '''Extract s bytes from signature'''
     return sig[32:64]
 
 
-# Generate Schnorr signature
+
 def schnorr_sign(msg: bytes, privateKey: str) -> bytes:
+    '''Generates a Schnorr signature for a given message and private key.'''
     if len(msg) != 32:
         raise ValueError('The message must be a 32-byte array.')
     d0 = int_from_hex(privateKey)
@@ -234,8 +258,9 @@ def schnorr_sign(msg: bytes, privateKey: str) -> bytes:
     return sig
 
 
-# Verify Schnorr signature
+
 def schnorr_verify(msg: bytes, pubkey: bytes, sig: bytes) -> bool:
+    '''Verifies a Schnorr signature for a given message, public key, and signature.'''
     if len(msg) != 32:
         raise ValueError('The message must be a 32-byte array.')
     if len(pubkey) != 32:

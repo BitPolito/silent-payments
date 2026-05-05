@@ -81,8 +81,8 @@ def sending_test(data) -> bool:
     sending = data['sending'][0]
     sending_details = sending['given']
     expected_sending = sending['expected']
-    print("Sending details:", sending_details)
-    print("Sending expectation:", expected_sending)
+    #print("Sending details:", sending_details)
+    #print("Sending expectation:", expected_sending)
 
     # store variables
     vin = sending_details['vin']
