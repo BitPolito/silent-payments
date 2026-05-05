@@ -13,16 +13,16 @@ from utils.segwit_addr import *
 def create_sp_groups(recipients: list[str]) -> dict[bytes, list[bytes]]:
     '''Group receiver silent payment addresses by B_scan (e.g. each group consists of one B_scan and one or more B_m).'''
     sp_groups: dict[bytes, list[bytes]] = {}
-    print(f'recipients: {recipients}')
+    #print(f'recipients: {recipients}')
     for receip in recipients:
         B_scan, B_m = decode_silent_payment_address(receip)
-        print(f'B_scan: {B_scan}')
-        print(f'B_m: {B_m}')
+        #print(f'B_scan: {B_scan}')
+        #print(f'B_m: {B_m}')
         if B_scan in sp_groups:
             sp_groups[B_scan].append(B_m)
         else:
             sp_groups[B_scan] = [B_m]
-    print(f'SP groups: {sp_groups}')
+    #print(f'SP groups: {sp_groups}')
     return sp_groups
 
 def generate_a_A_from_inputs(inputs: list[dict]) -> tuple[int, bytes]:
@@ -53,7 +53,7 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
     a, A = generate_a_A_from_inputs(inputs)
 
     input_hash = get_input_hash(vin, A)
-    print(f'input hash: {input_hash}')
+    #print(f'input hash: {input_hash}')
     
     sp_groups = create_sp_groups(recipients)
     
@@ -61,9 +61,9 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
     # For each group:
     for B_scan, B_m_list_bytes in sp_groups.items(): 
         
-        print(f'DEBUG Processing group with B_scan: {B_scan} and B_m_list_bytes: {B_m_list_bytes}')
+        #print(f'DEBUG Processing group with B_scan: {B_scan} and B_m_list_bytes: {B_m_list_bytes}')
         # Let ecdh_shared_secret = input_hash·a·Bscan
-        print(f'DEBUG B_scan: {point_from_bytes(B_scan)}')
+        #print(f'DEBUG B_scan: {point_from_bytes(B_scan)}')
         #print(int_from_bytes(input_hash) * a)
         #print(int_from_bytes(input_hash))
         #print(a)
@@ -102,12 +102,12 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
 
 def sending_run(vin: list[dict], recipients: list[str]) -> list[str]:
     '''Main function for the sending phase. It takes as input the list of inputs and the list of recipients and returns the list of outputs.'''
-    print(f'sender is loading...') 
+    #print(f'sender is loading...') 
     inputs = select_inputs(vin)
     inputs = validate_inputs(inputs, vin)
     if not inputs:
         return []
-    print(f'selected {len(inputs)} valid inputs: {inputs}')
+    #print(f'selected {len(inputs)} valid inputs: {inputs}')
     outputs = create_outputs(vin, inputs, recipients)
     return outputs
 
