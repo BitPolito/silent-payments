@@ -1,0 +1,36 @@
+[package]
+name = "vanity"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "vanity"
+crate-type = ["cdylib"] 
+
+[dependencies]
+# Python bindings
+pyo3 = { version = "0.21", features = ["extension-module"] }
+
+# Parallelismo
+rayon = "1.8"
+
+# Randomness 
+rand = "0.8"
+
+# Crypto (secp256k1)
+secp256k1 = { version = "0.28", features = ["rand"] }
+
+# Encoding (Bech32 / segwit)
+bech32 = "0.9"
+
+# Utility
+hex = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true          
+codegen-units = 1  
+panic = "abort"   
+
+[features]
+default = []
