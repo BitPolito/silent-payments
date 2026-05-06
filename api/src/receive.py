@@ -1,7 +1,7 @@
 import argparse
 import json
 import logging
-from utils.utils import (
+from api.src.utils.utils import (
     encode_silent_payment_address,
     create_labeled_silent_payment_address,
     generate_label,
@@ -14,7 +14,7 @@ from utils.utils import (
     get_outpointL,
     serP,
 )
-from utils.schnorr_lib import (
+from api.src.utils.schnorr_lib import (
     n,
     G,
     bytes_from_hex,
@@ -30,7 +30,7 @@ from utils.schnorr_lib import (
     schnorr_sign,
     schnorr_verify,
 )
-from utils.hardened_keys import generate_hardened_keys
+from api.src.utils.hardened_keys import generate_hardened_keys
 from typing import Tuple, List, Optional, Dict
 
 logger = logging.getLogger(__name__)

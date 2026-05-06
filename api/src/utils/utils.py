@@ -1,5 +1,5 @@
-from utils.schnorr_lib import *
-from utils.segwit_addr import bech32_encode, convertbits, Encoding, decode
+from api.src.utils.schnorr_lib import *
+from api.src.utils.segwit_addr import bech32_encode, convertbits, Encoding, decode
 import binascii
 from typing import Tuple, Optional, List
 import hashlib

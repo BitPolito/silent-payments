@@ -8,8 +8,8 @@ pay attention to set up cwd correctly for reading .json files
 '''
 
 import json
-from send import sending_run
-from receive import receiving_run
+from api.src.send import sending_run
+from api.src.receive import receiving_run
 from collections import Counter
 
 
