@@ -9,7 +9,7 @@ import argparse
 import logging
 import json
 
-from api.src.utils.schnorr_lib import (
+from core.utils.schnorr_lib import (
     G, 
     n, 
     int_from_hex, 
@@ -22,7 +22,7 @@ from api.src.utils.schnorr_lib import (
     pubkey_point_gen_from_int,
     has_even_y,
 )
-from api.src.utils.utils import (
+from core.utils.utils import (
     get_transaction_type, 
 	get_input_hash, 
 	select_inputs, 
