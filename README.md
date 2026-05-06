@@ -44,7 +44,8 @@ silent-payments/
 ### Running the tests
 Execute tests running
 ```bash
-python3 test.py
+cd api
+python3 -m core.test.test
 ```
 and follow the instructions.
 
@@ -56,7 +57,9 @@ This is something we plan to add in a future version.
 ### Generate a Silent-Payments vanity address
 Perform a brute-force search for a vanity address:
 ```bash
-python3 vanity.py your_vanity_string
+cd api
+
+python3 -m core.utils.vanity your_vanity_string
 ```
 
 ### Future works
@@ -65,3 +68,25 @@ Silent Payments offer a powerful privacy feature for Bitcoin by allowing recipie
 In a real-world scenario, the recipient must scan every Taproot output to check if it's addressed to them. This process becomes resource-intensive, especially without the help of a full node. So far, our implementation does not connect to a Bitcoin node, but future work will likely require exploring how to integrate one.
 Relying on a full node would let us maintain an index of Taproot outputs and scan them efficiently, but it also introduces practical concerns — such as node synchronization, bandwidth usage, and managing access to raw blockchain data. According to some estimates, under heavy usage, this could mean ~100 kB per block (up to 450 MB/month), while current conditions suggest a more modest 30–50 MB/month.
 Understanding whether this scanning can be done independently — or needs lightweight alternatives or external infrastructure — will be crucial to making Silent Payments truly usable at scale.
+
+### webapp
+
+Install node 20
+```bash
+
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+source ~/.bashrc
+nvm install 20
+nvm use 20
+```
+
+Resfresh node_modules
+
+```bash
+rm -rf node_modules 
+
+package-lock.json
+npm install
+npm run dev
+```
