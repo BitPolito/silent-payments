@@ -174,3 +174,4 @@ cython_debug/
 .pypirc
 
 vanity/target/
+vanity/Cargo.lock
