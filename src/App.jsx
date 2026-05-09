@@ -93,35 +93,86 @@ function TestList() {
 				
 				{testFinished && testResults.test_id === index && (
 					testType === "send" ? (
-						<VStack align="start" spacing={1} bg="gray.50" p={2} borderRadius="md">
+						<VStack align="start" spacing={3} bg="gray.50" p={4} borderRadius="md" w="full">
+							<Text fontSize="md" fontWeight="bold" color={testResults.test_passed ? "green.600" : "red.600"}>
+								Send Test Result: {testResults.test_passed ? 'Passed' : 'Failed'} 
+								{testResults.test_id === 25 ? ' ; Tester detected zero key sum' : ''}
+							</Text>
 
-							<Text fontSize="sm" color="black.500">
-								Send Test Result: {testResults.test_passed ? 'Passed' : 'Failed'}
-							</Text>
-							<Text fontSize="sm" color="black.500">
-								Output: {JSON.stringify(testResults.outputs)}
-							</Text>
-							<Text fontSize="sm" color="black.500">
-								Expected: {JSON.stringify(testResults.expected_outputs)}
-							</Text>
+							{/* Ciclo su tutti gli expected_outputs */}
+							{testResults.expected_outputs && testResults.expected_outputs.map((expectedOutput, index) => {
+								// Recupero l'output ricevuto corrispondente tramite l'indice
+								const receivedOutput = testResults.outputs ? testResults.outputs[index] : null;
+
+								return (
+									<VStack 
+										key={index} 
+										align="start" 
+										spacing={1} 
+										bg="white" 
+										p={3} 
+										borderRadius="md" 
+										borderWidth="1px" 
+										borderColor="gray.200"
+										w="full"
+									>
+										<Text fontSize="sm" fontWeight="semibold" color="gray.700">
+											Output #{index + 1}
+										</Text>
+										<Text fontSize="sm" color="gray.600">
+											Received: {receivedOutput ? JSON.stringify(receivedOutput) : 'N/A'}
+										</Text>
+										<Text fontSize="sm" color="gray.600">
+											Expected: {JSON.stringify(expectedOutput)}
+										</Text>
+									</VStack>
+								);
+							})}
 						</VStack>
 					) : (
-						<VStack align="start" spacing={1} bg="gray.50" p={2} borderRadius="md">
-							<Text fontSize="sm" color="black.500">
+
+						<VStack align="start" spacing={3} bg="gray.50" p={4} borderRadius="md" w="full">
+							<Text fontSize="md" fontWeight="bold" color={testResults.test_passed ? "green.600" : "red.600"}>
 								Receive Test Result: {testResults.test_passed ? 'Passed' : 'Failed'}
 							</Text>
-							<Text fontSize="sm" color="black.500">
-								Received private key tweak: {JSON.stringify(testResults.outputs[0].priv_key_tweak)}
-							</Text>
-							<Text fontSize="sm" color="black.500">
-								Expected private key tweak: {JSON.stringify(testResults.expected_outputs[0].priv_key_tweak)}
-							</Text>
-							<Text fontSize="sm" color="black.500">
-								Received public key: {JSON.stringify(testResults.outputs[0].pub_key)}
-							</Text>
-							<Text fontSize="sm" color="black.500">
-								Expected public key: {JSON.stringify(testResults.expected_outputs[0].pub_key)}
-							</Text>
+
+							{/* Ciclo su tutti gli expected_outputs */}
+							{testResults.expected_outputs && testResults.expected_outputs.map((expectedOutput, index) => {
+								// Recupero l'output ricevuto corrispondente basandomi sull'indice
+								const receivedOutput = testResults.outputs ? testResults.outputs[index] : null;
+
+								return (
+									<VStack 
+										key={index} // La key è obbligatoria in React quando si usa .map()
+										align="start" 
+										spacing={1} 
+										bg="white" 
+										p={3} 
+										borderRadius="md" 
+										borderWidth="1px" 
+										borderColor="gray.200"
+										w="full"
+									>
+										<Text fontSize="sm" fontWeight="semibold" color="gray.700">
+											Output #{index + 1}
+										</Text>
+
+										<Text fontSize="sm" color="gray.600">
+											Received private key tweak: {receivedOutput ? JSON.stringify(receivedOutput.priv_key_tweak) : 'N/A'}
+										</Text>
+										<Text fontSize="sm" color="gray.600">
+											Expected private key tweak: {JSON.stringify(expectedOutput.priv_key_tweak)}
+										</Text>
+										
+										<Text fontSize="sm" color="gray.600" mt={2}>
+											Received public key: {receivedOutput ? JSON.stringify(receivedOutput.pub_key) : 'N/A'}
+										</Text>
+										<Text fontSize="sm" color="gray.600">
+											Expected public key: {JSON.stringify(expectedOutput.pub_key)}
+										</Text>
+									</VStack>
+								);
+							})}
 						</VStack>
 					)
 				)}

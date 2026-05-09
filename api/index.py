@@ -49,7 +49,21 @@ def single_test_send(test_id):
 	recipients = sending_details['recipients']
 
 	expected_outputs_sets = expected_sending['outputs']
-	outputs = sending_run(vin, recipients)
+
+	try:
+		outputs = sending_run(vin, recipients)
+	except Exception as e:
+		if (isinstance(e, ValueError) and 'zero key sum' in str(e)):
+			test_passed = True
+			return jsonify({
+				"message": f"Single test send endpoint with ID {test_id}",
+				"expected_outputs": expected_outputs_sets,
+				"outputs": [],
+				"test_passed": test_passed,
+				"test_id": test_id
+			})
+		raise ValueError(f'Error occurred while running sending test: {str(e)}')
+
 	test_passed = False
 
 	for excpected_outputs in expected_outputs_sets:
@@ -60,9 +74,16 @@ def single_test_send(test_id):
 	else:
 		raise ValueError('Test failed: outputs do not match any expected set.')
 
+	aligned_outputs = []
+	for expected_output in right_expected_outputs:
+		for output in outputs:
+			if output == expected_output:
+				aligned_outputs.append(output)
+				break
+
 	return jsonify({
 		"expected_outputs": right_expected_outputs,
-		"outputs": outputs,
+		"outputs": aligned_outputs,
 		"test_passed": test_passed,
 		"test_id": test_id
 	})
@@ -97,6 +118,13 @@ def single_test_receive(test_id):
 		for e in expected_outputs
 	)
 
+	aligned_wallet = []
+	for expected_output in expected_outputs:
+		for output in wallet:
+			if output['pub_key'] == expected_output['pub_key'] and output['priv_key_tweak'] == expected_output['priv_key_tweak']:
+				aligned_wallet.append(output)
+				break
+
 	if addresses_ok and outputs_ok:
 		test_passed = True
 	else:
@@ -105,9 +133,9 @@ def single_test_receive(test_id):
 	return jsonify({
 		"message": f"Single test receive endpoint with ID {test_id}",
 		"expected_addresses": expected_addresses,
-		"expected_outputs": expected_outputs,
 		"addresses": addresses,
-		"outputs": wallet,
+		"expected_outputs": expected_outputs,
+		"outputs": aligned_wallet,
 		"test_passed": test_passed,
 		"test_id": test_id
 	})

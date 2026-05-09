@@ -92,14 +92,14 @@ def sending_test(data) -> bool:
     result = sending_run(vin, recipients)
     expected_outputs_sets = expected_sending['outputs']
     
-    print(f'Actual output: {result}')
+    #print(f'Actual output: {result}')
 
     # compare results with expected outputs, ignoring order
     test_passed = False
     for expected_outputs in expected_outputs_sets:
         if Counter(result) == Counter(expected_outputs):
             test_passed = True
-            print(f'Expected output: {expected_outputs}')
+            #print(f'Expected output: {expected_outputs}')
             break
             
     if test_passed:
