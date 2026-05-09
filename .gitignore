@@ -175,3 +175,5 @@ cython_debug/
 
 vanity/target/
 vanity/Cargo.lock
+
+*.csv
