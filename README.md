@@ -65,9 +65,11 @@ python3 ./vanity/target/release/vanity "your_vanity_string"
 
 Command line option:
 
-**--mode**: select mode from prefix, suffix and contains (default contains) 
-**--threads**: select threads number (0 is max threads) Only for rust implementation
-**--python-only**: execute the python version
+**--mode**: select mode from prefix, suffix and contains (default contains).
+
+**--threads**: select threads number (0 is max threads) Only for rust implementation.
+
+**--python-only**: execute the python version.
 
 
 ### Future works
