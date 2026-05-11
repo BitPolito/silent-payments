@@ -12,13 +12,6 @@ pub struct VanityResult {
     pub attempts:     u64,
 }
 
-/// Single-threaded search loop with fixed-scan-key optimisation.
-///
-/// Strategy:
-///   1. Generate one scan keypair at thread startup  → 1 EC mul, amortised over all iterations.
-///   2. Each iteration: generate only a new spend key → 1 EC mul instead of 2.
-///
-/// Expected speedup: ~2x vs the naive double-keygen approach.
 pub fn search_loop(
     matcher: &Matcher,
     hrp:     &str,
@@ -27,10 +20,10 @@ pub fn search_loop(
 ) -> Option<VanityResult> {
     let secp: Secp256k1<All> = Secp256k1::new();
 
-    // One scan key fixed for the lifetime of this thread's search.
-    let initial   = generate_keypair(&secp);
-    let scan_sk   = SecretKey::from_slice(&initial.scan_priv).unwrap();
-    let scan_pub  = initial.scan_pub;
+    let scan_km  = generate_keypair(&secp);
+    let scan_sk  = SecretKey::from_slice(&scan_km.scan_priv)
+        .expect("generate_keypair always produces a valid secret key");
+    let scan_pub = scan_km.scan_pub;
 
     let mut attempts: u64 = 0;
 

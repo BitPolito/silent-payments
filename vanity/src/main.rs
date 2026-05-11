@@ -1,12 +1,3 @@
-/// Standalone CLI for vanity Silent Payment address generation.
-///
-/// Usage:
-///   vanity <pattern> [--threads N] [--mode contains|prefix|suffix] [--testnet]
-///
-/// Example:
-///   vanity cafe --threads 8
-///   vanity dead --mode prefix
-
 use std::time::Instant;
 use vanity::matcher::{Matcher, MatchMode};
 use vanity::parallel::find_vanity_address_full;

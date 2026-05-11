@@ -1,8 +1,3 @@
-/// BIP-352 Silent Payment address encoding.
-///
-/// Correct length: 2 (hrp) + 1 (sep) + 1 (ver) + ceil(66*8/5) (data) + 6 (checksum)
-///               = 2 + 1 + 1 + 106 + 6 = 116 characters.
-
 use secp256k1::PublicKey;
 
 pub fn encode_sp_address(

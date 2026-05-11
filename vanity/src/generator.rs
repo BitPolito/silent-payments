@@ -10,7 +10,6 @@ pub struct KeyMaterial {
 }
 
 /// Generate a completely fresh keypair (scan + spend).
-/// Used once at startup to produce the fixed scan key per thread.
 pub fn generate_keypair(secp: &Secp256k1<All>) -> KeyMaterial {
     let scan_priv  = random_secret_key(&mut rand::thread_rng());
     let spend_priv = random_secret_key(&mut rand::thread_rng());
@@ -24,14 +23,6 @@ pub fn generate_keypair(secp: &Secp256k1<All>) -> KeyMaterial {
     }
 }
 
-/// Hot path: reuse a fixed scan key, regenerate only the spend key.
-///
-/// Each thread calls this in a tight loop.  Since B_scan = scan_priv * G is
-/// computed once per thread (not per iteration), we halve the number of EC
-/// scalar multiplications and roughly double throughput.
-///
-/// Security: the scan key is public in the address anyway, so fixing it per
-/// thread search session introduces no additional risk.
 pub fn generate_spend_only(
     secp:      &Secp256k1<All>,
     scan_priv: &SecretKey,
