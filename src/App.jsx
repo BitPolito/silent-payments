@@ -3,7 +3,8 @@ import bitpolitologo from './assets/bitpolito-logo-dark.png'
 import bull_head from './assets/icon-bitpolito-bull-head.png'
 import { Box, VStack, HStack, Button } from '@chakra-ui/react'
 import { useState } from 'react'
-import TestModal from './Tests.jsx'
+import TestModal from './scenes/Tests'
+import SpVanity from './scenes/SpVanity'
 
 function AnimatedButton({ children, action }) {
   return (
@@ -36,6 +37,7 @@ function AnimatedButton({ children, action }) {
 function App() {
 
 	const [showTest, setShowTests] = useState(false)
+	const [showVanity, setShowVanity] = useState(false)
 
     return (
     <Routes>
@@ -76,7 +78,7 @@ function App() {
 							Run tests
 						</AnimatedButton>
 						
-						<AnimatedButton action={() => {console.log("Generating address...");}}>
+						<AnimatedButton action={() => setShowVanity(!showVanity)}>
 							Generate address
 						</AnimatedButton>
 
@@ -86,6 +88,10 @@ function App() {
 				<TestModal
 					isOpen={showTest}
 					onClose={() => setShowTests(false)}
+				/>
+				<SpVanity
+					isOpen={showVanity}
+					onClose={() => setShowVanity(false)}
 				/>
 
             </Box>

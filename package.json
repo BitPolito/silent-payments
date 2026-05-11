@@ -6,7 +6,8 @@
   "scripts": {
     "dev:frontend": "vite",
     "dev:backend": "cd api && ./venv/bin/flask --app index run -p 5328",
-    "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+	"dev:rust": "cd api/vanity && cargo build --release",
+    "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:rust\"",
     "build": "vite build",
     "preview": "vite preview"
   },

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Box, VStack, HStack, Text, Button, Input, Spinner, Separator } from '@chakra-ui/react';
 
 export default function TestModal({ isOpen, onClose }) {
-    // --- STATI DELLA MODALE ---
+    
+	// --- STATES ---
     const [testType, setTestType] = useState('send');
     const [testId, setTestId] = useState('');
     
@@ -19,13 +20,13 @@ export default function TestModal({ isOpen, onClose }) {
 				fetch('/api/get_all_tests')
 				.then((response) => response.json())
 				.then((data) => {
-				const testArray = data["TEST LIST"]; 
-				setTests(testArray);
-				setLoading(false);
-				})
-				.catch((error) => {
-				console.error("Errore durante il recupero dei test:", error);
-				setLoading(false);
+					const testArray = data["TEST LIST"]; 
+					setTests(testArray);
+					setLoading(false);
+					})
+					.catch((error) => {
+					console.error("Errore durante il recupero dei test:", error);
+					setLoading(false);
 				});
             };
             fetchTests();
@@ -38,39 +39,36 @@ export default function TestModal({ isOpen, onClose }) {
     }, [isOpen]);
 
 	const handleSendTest = async (testId) => {
-		console.log(`Esecuzione Send Test per ID: ${testId}...`);
 		
 		setLoading(true);
 		fetch(`/api/single_test/send/${testId}`)
 			.then(response => response.json())
 			.then(data => {
-			console.log(`Risultato Send Test ${testId}:`, data);
-			setTestType("send");
-			setTestResults(data);
-			setTestFinished(true);
-			setLoading(false);
+				setTestType("send");
+				setTestResults(data);
+				setTestFinished(true);
+				setLoading(false);
 			})
 			.catch(error => {console.error("Errore Send Test:", error); setTestFinished(true); setLoading(false);});
 	};
 
 	const handleReceiveTest = async (testId) => {
-		console.log(`Esecuzione Receive Test per ID: ${testId}...`);
 		setLoading(true);
 
 		fetch(`/api/single_test/receive/${testId}`)
 			.then(response => response.json())
 			.then(data => {
-			console.log(`Risultato Receive Test ${testId}:`, data);
-			setTestType("receive");
-			setTestResults(data);
-			setTestFinished(true);
-			setLoading(false);
+				setTestType("receive");
+				setTestResults(data);
+				setTestFinished(true);
+				setLoading(false);
 			})
 			.catch(error => {console.error("Errore Receive Test:", error); setTestFinished(true); setLoading(false);});
 	};
 
     const executeTestFromInput = () => {
         const id = parseInt(testId);
+
         if (isNaN(id)) return;
         
         if (testType === 'send') {
@@ -155,7 +153,7 @@ export default function TestModal({ isOpen, onClose }) {
                             ) : (
                                 <VStack align="stretch" gap={2}>
                                     {tests.map((t) => (
-                                        <HStack key={t.id} justify="space-between" p={2} bg="white" borderRadius="sm" borderWidth="1px">
+                                        <HStack key={t} justify="space-between" p={2} bg="white" borderRadius="sm" borderWidth="1px">
                                             <Text fontSize="sm" fontWeight="medium">ID: {t}</Text>
                                         </HStack>
                                     ))}
@@ -171,7 +169,7 @@ export default function TestModal({ isOpen, onClose }) {
 						<Spinner size="xl" color="#001CE0" borderWidth="4px" />
 						<Text color="gray.500" mt={4}>Executing test...</Text>
 					</VStack>
-				) : testId === 'invalid' ? ( // Questa condizione deve stare PRIMA di testFinished
+				) : testId === 'invalid' ? (
 					<HStack py={10} justify="center" bg="red.50" borderRadius="md" border="1px dashed" borderColor="red.300">
 						<Text color="red.500" fontWeight="bold"> Invalid test ID (Must be between 0 and 25)</Text>
 					</HStack>
@@ -207,41 +205,59 @@ export default function TestModal({ isOpen, onClose }) {
 								<Box key={index} w="full">
 									<VStack 
 										align="start" 
-										gap={1} 
+										gap={2} 
 										bg="white" 
-										p={3} 
+										p={4} 
 										borderRadius="md" 
 										borderWidth="1px" 
 										borderColor="gray.200" 
 										w="full"
 									>
-										<Text fontSize="sm" fontWeight="semibold" color="gray.700">
+										<Text fontSize="sm" fontWeight="bold" color="blue.600">
 											Output #{index + 1}
 										</Text>
 
 										{testType === "send" ? (
-											<VStack align="start" gap={1}>
-												<Text fontSize="sm" color="gray.600">
-													Received: {receivedOutput ? JSON.stringify(receivedOutput) : 'N/A'}
-												</Text>
-												<Text fontSize="sm" color="gray.600">
-													Expected: {JSON.stringify(expectedOutput)}
-												</Text>
+											<VStack align="start" gap={2} w="full">
+												<Box w="full">
+													<Text fontSize="xs" fontWeight="bold" color="gray.500">Received:</Text>
+													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
+														{receivedOutput ? JSON.stringify(receivedOutput) : 'N/A'}
+													</Text>
+												</Box>
+												<Box w="full">
+													<Text fontSize="xs" fontWeight="bold" color="gray.500">Expected:</Text>
+													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
+														{JSON.stringify(expectedOutput)}
+													</Text>
+												</Box>
 											</VStack>
 										) : (
-											<VStack align="start" gap={1}>
-												<Text fontSize="sm" color="gray.600">
-													Received public key: {receivedOutput ? receivedOutput.pub_key : 'N/A'}
-												</Text>
-												<Text fontSize="sm" color="gray.600">
-													Expected public key: {expectedOutput.pub_key}
-												</Text>
-												<Text fontSize="sm" color="gray.600">
-													Received private key tweak: {receivedOutput ? receivedOutput.priv_key_tweak : 'N/A'}
-												</Text>
-												<Text fontSize="sm" color="gray.600">
-													Expected private key tweak: {expectedOutput.priv_key_tweak}
-												</Text>
+											<VStack align="start" gap={2} w="full">
+												<Box w="full">
+													<Text fontSize="xs" fontWeight="bold" color="gray.500">Received public key:</Text>
+													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
+														{receivedOutput ? receivedOutput.pub_key : 'N/A'}
+													</Text>
+												</Box>
+												<Box w="full">
+													<Text fontSize="xs" fontWeight="bold" color="gray.500">Expected public key:</Text>
+													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
+														{expectedOutput.pub_key}
+													</Text>
+												</Box>
+												<Box w="full">
+													<Text fontSize="xs" fontWeight="bold" color="gray.500">Received private key tweak:</Text>
+													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
+														{receivedOutput ? receivedOutput.priv_key_tweak : 'N/A'}
+													</Text>
+												</Box>
+												<Box w="full">
+													<Text fontSize="xs" fontWeight="bold" color="gray.500">Expected private key tweak:</Text>
+													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
+														{expectedOutput.priv_key_tweak}
+													</Text>
+												</Box>
 											</VStack>
 										)}
 									</VStack>

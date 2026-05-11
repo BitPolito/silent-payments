@@ -1,9 +1,11 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 import json
 from core.send import sending_run
 from core.receive import receiving_run
+from core.utils.vanity_python import get_sp_vanity_address
 from collections import Counter
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -34,7 +36,7 @@ def get_all_tests():
 		return jsonify({"error": str(e)}), 500
 
 @app.route('/single_test/send/<int:test_id>', methods=['GET'])
-def single_test_send(test_id):
+def single_test_send(test_id: int):
 	data = load_json_arg(TEST_FILE)
 	if data is None:
 		raise ValueError('test_data problem')
@@ -89,7 +91,7 @@ def single_test_send(test_id):
 	})
 
 @app.route('/single_test/receive/<int:test_id>', methods=['GET'])
-def single_test_receive(test_id):
+def single_test_receive(test_id: int):
 	data = load_json_arg(TEST_FILE)
 	if data is None:
 		raise ValueError('test_data problem')
@@ -139,3 +141,33 @@ def single_test_receive(test_id):
 		"test_passed": test_passed,
 		"test_id": test_id
 	})
+
+# Vanity address endpoint
+@app.route('/vanity_address/<string:pattern>/<string:mode>/<int:threads>/<int:testnet>/<int:force_python>', methods=['GET'])
+def vanity_address(
+	pattern: 		str, 
+	mode: 			str = "contains", 
+	threads: 		int = 0, 
+	testnet: 		int = 0, 
+	force_python: 	int = 0
+):
+	print(f"Generating vanity address with pattern={pattern}, mode={mode}, threads_num={threads}, testnet={testnet}, force_python={force_python}")
+	try:
+		t0 = time.perf_counter()
+		addresses, key_material = get_sp_vanity_address(
+			vanity_string=pattern,
+			mode=mode,
+			num_threads=threads,
+			testnet=testnet,
+			force_python=force_python
+		)
+		
+		elapsed = time.perf_counter() - t0
+		return jsonify({
+			"message": "Vanity address generated successfully",
+			"addresses": addresses,
+			"key_material": key_material,
+			"elapsed": elapsed	
+		})
+	except Exception as e:
+		return jsonify({"error": str(e)}), 500
