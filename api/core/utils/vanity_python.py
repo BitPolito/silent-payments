@@ -20,6 +20,7 @@ import argparse
 import ctypes
 import sys
 import time
+import qrcode
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -71,6 +72,19 @@ def _fix_python_path():
                 sys.path.insert(0, src_dir)
             return
         candidate = candidate.parent
+        
+def generate_qrcode(sp_address, output_file="silent_payment_qr.png"):
+    qr = qrcode.QRCode(
+        version=None, 
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(sp_address)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    img.save(output_file)
+
 
 # ---------------------------------------------------------------------------
 # ctypes bindings
@@ -129,6 +143,7 @@ def _rust_vanity(
     try:
         r = ptr.contents
         address    = r.address.decode()
+        generate_qrcode(address)
         scan_priv  = r.scan_priv.decode()
         spend_priv = r.spend_priv.decode()
     finally:
