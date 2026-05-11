@@ -17,18 +17,6 @@ use std::os::raw::{c_char, c_int, c_ulonglong};
 
 use crate::parallel::find_vanity_address_full;
 use crate::matcher::{Matcher, MatchMode};
-
-/// Opaque result handle returned to the caller.
-///
-/// Layout (all fields are null-terminated C strings):
-/// ```c
-/// typedef struct {
-///     char *address;       // bech32m SP address
-///     char *scan_priv;     // scan  private key, lowercase hex (64 chars)
-///     char *spend_priv;    // spend private key, lowercase hex (64 chars)
-///     unsigned long long attempts;
-/// } VanityFfiResult;
-/// ```
 #[repr(C)]
 pub struct VanityFfiResult {
     pub address:    *mut c_char,
@@ -48,9 +36,7 @@ pub struct VanityFfiResult {
 /// # Returns
 /// A heap-allocated `VanityFfiResult`.  Free with `vanity_free_result`.
 /// Returns NULL on invalid input (e.g. NULL pattern).
-///
-/// # Safety
-/// `pattern` must be a valid null-terminated C string for the duration of the call.
+
 #[no_mangle]
 pub unsafe extern "C" fn vanity_find(
     pattern:     *const c_char,
@@ -93,11 +79,6 @@ pub unsafe extern "C" fn vanity_find(
     Box::into_raw(out)
 }
 
-/// Free a `VanityFfiResult` previously returned by `vanity_find`.
-///
-/// # Safety
-/// `ptr` must be a pointer returned by `vanity_find` and must not have been
-/// freed already.
 #[no_mangle]
 pub unsafe extern "C" fn vanity_free_result(ptr: *mut VanityFfiResult) {
     if ptr.is_null() {
@@ -110,11 +91,6 @@ pub unsafe extern "C" fn vanity_free_result(ptr: *mut VanityFfiResult) {
     if !r.spend_priv.is_null() { drop(CString::from_raw(r.spend_priv)); }
 }
 
-/// Free a raw C string returned by this library (currently unused externally,
-/// but provided for completeness).
-///
-/// # Safety
-/// `ptr` must be a pointer returned by this library.
 #[no_mangle]
 pub unsafe extern "C" fn vanity_free_string(ptr: *mut c_char) {
     if !ptr.is_null() {
