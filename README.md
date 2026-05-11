@@ -40,6 +40,10 @@ silent-payments/
    ```bash
    pip install -r requirements.txt
    ```
+4. Install Rust and Cargo (only for vanity address)
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
 
 ### Running the tests
 Execute tests running
@@ -71,6 +75,18 @@ Command line option:
 
 **--python-only**: execute the python version.
 
+Rust implementation benchmark and test:
+```bash
+cd vanity
+cargo bench
+```
+All results are also displyed in vanity/target/criterion
+
+```bash
+cd vanity
+cargo test
+```
+You can find the tests in vanity/tests/integration_tests.rs 
 
 ### Future works
 
