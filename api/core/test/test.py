@@ -8,8 +8,8 @@ pay attention to set up cwd correctly for reading .json files
 '''
 
 import json
-from send import sending_run
-from receive import receiving_run
+from core.send import sending_run
+from core.receive import receiving_run
 from collections import Counter
 
 
@@ -17,7 +17,7 @@ def test_file_reading(file = None):
     # read test file
     try: 
         if file is None:
-            file = './test/test_vectors.json'
+            file = './core/test/test_vectors.json'
         with open(file, 'r') as f:
             print('Reading file...')
             test_data = json.load(f)
@@ -30,14 +30,14 @@ def test_file_reading(file = None):
         return None
 
 
-def test(test_file = './test/test_vectors.json', test_id = None, test_type = None) -> bool:
+def test(test_file = './core/test/test_vectors.json', test_id = None, test_type = None) -> bool:
     # read the test file 
     test_data = test_file_reading(test_file)
     if test_data is None:
         raise ValueError('test_data problem')
     
     # print the test list
-    test_list = test_file_reading(file='./test/test_list.json')
+    test_list = test_file_reading(file='./core/test/test_list.json')
     if test_list is None:
         raise ValueError('test_list problem')
     print(json.dumps(test_list['TEST LIST'], indent=4)) 
@@ -92,14 +92,14 @@ def sending_test(data) -> bool:
     result = sending_run(vin, recipients)
     expected_outputs_sets = expected_sending['outputs']
     
-    print(f'Actual output: {result}')
+    #print(f'Actual output: {result}')
 
     # compare results with expected outputs, ignoring order
     test_passed = False
     for expected_outputs in expected_outputs_sets:
         if Counter(result) == Counter(expected_outputs):
             test_passed = True
-            print(f'Expected output: {expected_outputs}')
+            #print(f'Expected output: {expected_outputs}')
             break
             
     if test_passed:
