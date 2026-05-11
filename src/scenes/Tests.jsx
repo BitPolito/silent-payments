@@ -220,13 +220,13 @@ export default function TestModal({ isOpen, onClose }) {
 										{testType === "send" ? (
 											<VStack align="start" gap={2} w="full">
 												<Box w="full">
-													<Text fontSize="xs" fontWeight="bold" color="gray.500">Received:</Text>
-													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
+													<Text fontSize="sm" fontWeight="bold" color="gray.700">Received:</Text>
+													<Text fontSize="sm" color="gray.600" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
 														{receivedOutput ? JSON.stringify(receivedOutput) : 'N/A'}
 													</Text>
 												</Box>
 												<Box w="full">
-													<Text fontSize="xs" fontWeight="bold" color="gray.500">Expected:</Text>
+													<Text fontSize="sm" fontWeight="bold" color="gray.700">Expected:</Text>
 													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
 														{JSON.stringify(expectedOutput)}
 													</Text>
@@ -235,25 +235,25 @@ export default function TestModal({ isOpen, onClose }) {
 										) : (
 											<VStack align="start" gap={2} w="full">
 												<Box w="full">
-													<Text fontSize="xs" fontWeight="bold" color="gray.500">Received public key:</Text>
+													<Text fontSize="sm" fontWeight="bold" color="gray.700">Received public key:</Text>
 													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
 														{receivedOutput ? receivedOutput.pub_key : 'N/A'}
 													</Text>
 												</Box>
 												<Box w="full">
-													<Text fontSize="xs" fontWeight="bold" color="gray.500">Expected public key:</Text>
+													<Text fontSize="sm" fontWeight="bold" color="gray.700">Expected public key:</Text>
 													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
 														{expectedOutput.pub_key}
 													</Text>
 												</Box>
 												<Box w="full">
-													<Text fontSize="xs" fontWeight="bold" color="gray.500">Received private key tweak:</Text>
+													<Text fontSize="sm" fontWeight="bold" color="gray.700">Received private key tweak:</Text>
 													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
 														{receivedOutput ? receivedOutput.priv_key_tweak : 'N/A'}
 													</Text>
 												</Box>
 												<Box w="full">
-													<Text fontSize="xs" fontWeight="bold" color="gray.500">Expected private key tweak:</Text>
+													<Text fontSize="sm" fontWeight="bold" color="gray.700">Expected private key tweak:</Text>
 													<Text fontSize="sm" color="gray.700" wordBreak="break-all" bg="gray.50" p={2} borderRadius="md" fontFamily="monospace">
 														{expectedOutput.priv_key_tweak}
 													</Text>
