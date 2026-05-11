@@ -57,10 +57,24 @@ This is something we plan to add in a future version.
 ### Generate a Silent-Payments vanity address
 Perform a brute-force search for a vanity address:
 ```bash
+python3 src/utils/vanity_python.py "your_vanity_string"
+```
+Or directly from rust binary:
+```bash
+python3 ./vanity/target/release/vanity "your_vanity_string"
 cd api
 
 python3 -m core.utils.vanity your_vanity_string
 ```
+
+Command line option:
+
+**--mode**: select mode from prefix, suffix and contains (default contains).
+
+**--threads**: select threads number (0 is max threads) Only for rust implementation.
+
+**--python-only**: execute the python version.
+
 
 ### Future works
 

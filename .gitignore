@@ -205,3 +205,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+vanity/target/
+vanity/Cargo.lock
+
+*.csv
