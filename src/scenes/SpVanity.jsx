@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, VStack, HStack, Text, Button, Input, Spinner, Separator, Select, Checkbox } from '@chakra-ui/react';
+import iconDownload from '../assets/icon-download.png'
 
 export default function SpVanity({ isOpen, onClose }) {
 
@@ -107,47 +108,47 @@ export default function SpVanity({ isOpen, onClose }) {
 
 		<VStack gap={6} align="stretch">
 			<Text fontSize="2xl" fontWeight="bold" color="#001CE0" textAlign="center">
-			Generate your vanity address
+				Generate your vanity address
 			</Text>
 
 			<HStack w="full">
-			<Input
-				type="text"
-				placeholder="Enter the pattern (Required)"
-				value={pattern}
-				onChange={(e) => setPattern(e.target.value)}
-				flex="1"
-			/>
-			<Button
-				bg="#001CE0"
-				color="white"
-				_hover={{ bg: "#0014a8" }}
-				onClick={handleVanityTest}
-				disabled={loading || pattern.trim() === ""}
-			>
-				Generate
-			</Button>
+				<Input
+					type="text"
+					placeholder="Enter the pattern (Required)"
+					value={pattern}
+					onChange={(e) => setPattern(e.target.value)}
+					flex="1"
+				/>
+				<Button
+					bg="#001CE0"
+					color="white"
+					_hover={{ bg: "#0014a8" }}
+					onClick={handleVanityTest}
+					disabled={loading || pattern.trim() === ""}
+				>
+					Generate
+				</Button>
 			</HStack>
 
 			<HStack w="full" gap={4} align="flex-start">
 			<Box flex="1">
-			<Text fontSize="sm" color="gray.600" mb={1}>Mode</Text>
-			<select 
-				value={mode} 
-				onChange={(e) => setMode(e.target.value)}
-				style={{
-				width: '100%',
-				padding: '8px',
-				borderRadius: '6px',
-				border: '1px solid #E2E8F0',
-				backgroundColor: 'white',
-				height: '40px'
-				}}
-			>
-				<option value="contains">Contains</option>
-				<option value="startswith">Starts With</option>
-				<option value="endswith">Ends With</option>
-			</select>
+				<Text fontSize="sm" color="gray.600" mb={1}>Mode</Text>
+				<select 
+					value={mode} 
+					onChange={(e) => setMode(e.target.value)}
+					style={{
+					width: '100%',
+					padding: '8px',
+					borderRadius: '6px',
+					border: '1px solid #E2E8F0',
+					backgroundColor: 'white',
+					height: '40px'
+					}}
+				>
+					<option value="contains">Contains</option>
+					<option value="startswith">Starts With</option>
+					<option value="endswith">Ends With</option>
+				</select>
 			</Box>
 
 			<Box flex="1">
@@ -187,10 +188,12 @@ export default function SpVanity({ isOpen, onClose }) {
 			<Separator />
 
 			{loading ? (
+
 			<VStack py={10}>
 				<Spinner size="xl" color="#001CE0" borderWidth="4px" />
 				<Text color="gray.500" mt={4}>Executing test...</Text>
 			</VStack>
+
 			) : (
 			testFinished && testResults && (
 				<VStack align="start" gap={4} bg="gray.50" p={4} borderRadius="md" w="full" position="relative">
@@ -307,6 +310,11 @@ export default function SpVanity({ isOpen, onClose }) {
 										size="lg"
 										variant="solid"
 									>
+										<img 
+											src={iconDownload} 
+											alt="download icon" 
+											style={{ width: '20px', height: '20px', marginRight: '2px' }} 
+										/>
 										Download Qr Code
 									</Button>
 								</Box>
