@@ -114,9 +114,7 @@ nvm use 20
 Resfresh node_modules
 
 ```bash
-rm -rf node_modules 
-
-package-lock.json
+rm -rf node_modules package-lock.json
 npm install
 npm run dev
 ```
