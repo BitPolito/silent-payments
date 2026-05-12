@@ -19,14 +19,14 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-TEST_FILE = "./core/test/test_vectors.json"
-TEST_LIST = "./core/test/test_list.json"
+TEST_FILE = "test_vectors.json"
+TEST_LIST = "test_list.json"
 
 def load_json_arg(arg):
 	if arg is None:
 		return None
 	try:
-		with open(arg, 'r') as f:
+		with open(arg, 'r', encoding='utf-8') as f:
 			return json.load(f)
 	except (FileNotFoundError, OSError):
 		return json.loads(arg)
@@ -38,7 +38,9 @@ def index():
 @app.route('/api/get_all_tests', methods=['GET'])
 def get_all_tests():
 	try:
-		with open(TEST_LIST, 'r') as f:
+		base_dir = os.path.dirname(os.path.abspath(__file__))
+		json_path = os.path.join(base_dir, 'core', 'test', TEST_LIST)
+		with open(json_path, 'r', encoding='utf-8') as f:
 			test_list_data = json.load(f)
 		return jsonify(test_list_data)
 	except Exception as e:
@@ -46,7 +48,10 @@ def get_all_tests():
 
 @app.route('/api/single_test/send/<int:test_id>', methods=['GET'])
 def single_test_send(test_id: int):
-	data = load_json_arg(TEST_FILE)
+	base_dir = os.path.dirname(os.path.abspath(__file__))
+
+	json_path = os.path.join(base_dir, 'core', 'test', TEST_FILE)
+	data = load_json_arg(json_path)
 	if data is None:
 		raise ValueError('test_data problem')
 	
@@ -101,7 +106,10 @@ def single_test_send(test_id: int):
 
 @app.route('/api/single_test/receive/<int:test_id>', methods=['GET'])
 def single_test_receive(test_id: int):
-	data = load_json_arg(TEST_FILE)
+	base_dir = os.path.dirname(os.path.abspath(__file__))
+	
+	json_path = os.path.join(base_dir, 'core', 'test', TEST_FILE)
+	data = load_json_arg(json_path)
 	if data is None:
 		raise ValueError('test_data problem')
 	
