@@ -178,6 +178,7 @@ def generate_sp_address(
     labels: Optional[List[int]] = None,
     network: str = 'mainnet',
     version: int = 0,
+    qr_code: bool = False
 ) -> Tuple[List[str], dict]:
     """
     Derive one or more Silent Payment addresses from a set of key material.
@@ -226,13 +227,13 @@ def generate_sp_address(
             sp_addresses.append(
                 create_labeled_silent_payment_address(b_scan, B_spend, m, hrp, version)
             )
-
-    from utils.vanity_python import generate_qrcode
-    generate_qrcode(
-        sp_addresses[0],
-        scan_priv=b_scan.hex(),
-        spend_priv=b_spend.hex(),
-    )
+    if qr_code:
+        from utils.vanity_python import generate_qrcode
+        generate_qrcode(
+            sp_addresses[0],
+            scan_priv=b_scan.hex(),
+            spend_priv=b_spend.hex(),
+        )
 
     return sp_addresses, key_material
 
