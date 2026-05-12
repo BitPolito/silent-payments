@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd api/vanity && cargo build --bin vanity_bench --quiet --release && cd ../.. && npm run build",
+  "buildCommand": "cd api/vanity && cargo build --bin vanity --quiet --release && cd ../.. && npm run build",
   "functions": {
     "api/index.py": {
       "includeFiles": "api/bin/**"
