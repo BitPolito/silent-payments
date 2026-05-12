@@ -207,6 +207,7 @@ dist-ssr
 
 vanity/target/
 vanity/Cargo.lock
+api/vanity/Cargo.lock
 
 *.csv
 
