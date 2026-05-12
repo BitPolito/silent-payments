@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "api/bin/**"
+    }
+  }
+}
