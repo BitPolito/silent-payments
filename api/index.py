@@ -35,7 +35,7 @@ def load_json_arg(arg):
 def index():
 	return jsonify({"message": "Hello, World!"})
 
-@app.route('/get_all_tests', methods=['GET'])
+@app.route('/api/get_all_tests', methods=['GET'])
 def get_all_tests():
 	try:
 		with open(TEST_LIST, 'r') as f:
@@ -44,7 +44,7 @@ def get_all_tests():
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
 
-@app.route('/single_test/send/<int:test_id>', methods=['GET'])
+@app.route('/api/single_test/send/<int:test_id>', methods=['GET'])
 def single_test_send(test_id: int):
 	data = load_json_arg(TEST_FILE)
 	if data is None:
@@ -99,7 +99,7 @@ def single_test_send(test_id: int):
 		"test_id": test_id
 	})
 
-@app.route('/single_test/receive/<int:test_id>', methods=['GET'])
+@app.route('/api/single_test/receive/<int:test_id>', methods=['GET'])
 def single_test_receive(test_id: int):
 	data = load_json_arg(TEST_FILE)
 	if data is None:
@@ -152,7 +152,7 @@ def single_test_receive(test_id: int):
 	})
 
 # Vanity address endpoint
-@app.route('/vanity_address/<string:pattern>/<string:mode>/<int:threads>/<int:testnet>/<int:force_python>', methods=['GET'])
+@app.route('/api/vanity_address/<string:pattern>/<string:mode>/<int:threads>/<int:testnet>/<int:force_python>', methods=['GET'])
 def vanity_address(
 	pattern: 		str, 
 	mode: 			str = "contains", 
@@ -183,7 +183,7 @@ def vanity_address(
 	
 
 # Qr endpoint
-@app.route('/qr_code', methods=['GET'])
+@app.route('/api/qr_code', methods=['GET'])
 def qr_code():
 	try :
 		file_path = "./silent_payment_qr.png"
