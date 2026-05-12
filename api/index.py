@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 import json
 from core.send import sending_run
@@ -151,7 +151,7 @@ def vanity_address(
 	testnet: 		int = 0, 
 	force_python: 	int = 0
 ):
-	print(f"Generating vanity address with pattern={pattern}, mode={mode}, threads_num={threads}, testnet={testnet}, force_python={force_python}")
+	print(f"Generating vanity address with pattern={pattern}, mode={mode}, threads_num={threads}, testnet={testnet}, force_python={force_python}", flush=True)
 	try:
 		t0 = time.perf_counter()
 		addresses, key_material = get_sp_vanity_address(
@@ -169,5 +169,21 @@ def vanity_address(
 			"key_material": key_material,
 			"elapsed": elapsed	
 		})
+	except Exception as e:
+		return jsonify({"error": str(e)}), 500
+	
+
+# Qr endpoint
+@app.route('/qr_code', methods=['GET'])
+def qr_code():
+	try :
+		file_path = "./silent_payment_qr.png"
+    
+		return send_file(
+			file_path,
+			mimetype='image/png',
+			as_attachment=True,
+			download_name='silent_payment_qr.png'
+		)
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
