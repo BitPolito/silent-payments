@@ -2,7 +2,7 @@
 BIP-352 Silent Payment vanity address generator.
 
 Two backends:
-1. Rust FFI (fast)        — libvanity.so via ctypes
+1. Rust binary (fast)     — subprocess vanity binary
 2. Pure Python (fallback) — loop su generate_sp_address da receive.py
 
 CLI:
@@ -17,18 +17,17 @@ API:
 from __future__ import annotations
 
 import argparse
-import ctypes
+import subprocess
 import sys
 import time
 import qrcode
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-# ---------------------------------------------------------------------------
-# Locate shared library — risale l'albero fino a trovare vanity/
-# ---------------------------------------------------------------------------
 
-_LIB_NAMES = ["libvanity.so", "vanity.dll", "libvanity.dylib"]
+# ---------------------------------------------------------------------------
+# Locate binary — cerca api/bin/vanity o target/release/vanity
+# ---------------------------------------------------------------------------
 
 def _find_repo_root() -> Path:
     """Risale le directory a partire da questo file cercando la cartella vanity/."""
@@ -41,29 +40,25 @@ def _find_repo_root() -> Path:
 
 _REPO_ROOT = _find_repo_root()
 
-_SEARCH_DIRS = [
-    _REPO_ROOT / "vanity" / "target" / "release",
-    _REPO_ROOT / "vanity" / "target" / "debug",
-    Path(__file__).parent,
-]
-
-def _find_lib() -> Optional[Path]:
-    for d in _SEARCH_DIRS:
-        for name in _LIB_NAMES:
-            p = d / name
-            if p.exists():
-                return p
+def _find_bin() -> Optional[Path]:
+    """Cerca il binario vanity."""
+    candidates = [
+        Path(__file__).resolve().parent.parent.parent / "bin" / "vanity",  # api/bin/vanity su Vercel
+        _REPO_ROOT / "vanity" / "target" / "release" / "vanity",           # locale
+        _REPO_ROOT / "bin" / "vanity",
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
     return None
+
 
 # ---------------------------------------------------------------------------
 # Fix sys.path per il fallback Python
-# Aggiunge src/ al path in modo che `from receive import ...` funzioni
-# indipendentemente da dove viene eseguito lo script.
 # ---------------------------------------------------------------------------
 
 def _fix_python_path():
     """Assicura che src/ sia nel sys.path per importare receive e utils."""
-    # Cerca la directory src/ risalendo l'albero
     candidate = Path(__file__).resolve().parent
     for _ in range(8):
         if (candidate / "receive.py").exists():
@@ -72,10 +67,11 @@ def _fix_python_path():
                 sys.path.insert(0, src_dir)
             return
         candidate = candidate.parent
-        
+
+
 def generate_qrcode(sp_address, output_file="silent_payment_qr.png"):
     qr = qrcode.QRCode(
-        version=None, 
+        version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
         box_size=10,
         border=4,
@@ -87,68 +83,47 @@ def generate_qrcode(sp_address, output_file="silent_payment_qr.png"):
 
 
 # ---------------------------------------------------------------------------
-# ctypes bindings
-# ---------------------------------------------------------------------------
-
-class _VanityFfiResult(ctypes.Structure):
-    _fields_ = [
-        ("address",    ctypes.c_char_p),
-        ("scan_priv",  ctypes.c_char_p),
-        ("spend_priv", ctypes.c_char_p),
-        ("attempts",   ctypes.c_ulonglong),
-    ]
-
-def _load_lib() -> Optional[ctypes.CDLL]:
-    lib_path = _find_lib()
-    if lib_path is None:
-        return None
-    try:
-        lib = ctypes.CDLL(str(lib_path))
-        lib.vanity_find.restype  = ctypes.POINTER(_VanityFfiResult)
-        lib.vanity_find.argtypes = [
-            ctypes.c_char_p,
-            ctypes.c_int,
-            ctypes.c_int,
-            ctypes.c_int,
-        ]
-        lib.vanity_free_result.restype  = None
-        lib.vanity_free_result.argtypes = [ctypes.POINTER(_VanityFfiResult)]
-        return lib
-    except OSError:
-        return None
-
-_LIB: Optional[ctypes.CDLL] = _load_lib()
-
-_MODE_MAP = {"contains": 0, "prefix": 1, "suffix": 2}
-
-# ---------------------------------------------------------------------------
-# Rust backend
+# Rust binary backend
 # ---------------------------------------------------------------------------
 
 def _rust_vanity(
     pattern:     str,
-    mode:        str  = "contains",
-    num_threads: int  = 0,
+    mode:        str = "contains",
+    num_threads: int = 0,
     testnet:     bool = False,
 ) -> Tuple[List[str], dict]:
-    assert _LIB is not None
-    ptr = _LIB.vanity_find(
-        pattern.encode(),
-        ctypes.c_int(_MODE_MAP.get(mode, 0)),
-        ctypes.c_int(num_threads),
-        ctypes.c_int(1 if testnet else 0),
-    )
-    if not ptr:
-        raise RuntimeError("vanity_find returned NULL")
+    bin_path = _find_bin()
+    if bin_path is None:
+        raise RuntimeError(
+            "Binario vanity non trovato.\n"
+            f"Cerca in: {[str(p) for p in [Path(__file__).resolve().parent.parent.parent / 'bin' / 'vanity', _REPO_ROOT / 'vanity' / 'target' / 'release' / 'vanity']]}\n"
+            "Per buildare: cd api/vanity && cargo build --release"
+        )
+
+    cmd = [str(bin_path), pattern, "--mode", mode, "--threads", str(num_threads)]
+    if testnet:
+        cmd.append("--testnet")
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"vanity fallito (exit {result.returncode}): {result.stderr}")
+
+    output = {}
+    for line in result.stdout.splitlines():
+        if ": " in line:
+            key, _, value = line.partition(": ")
+            output[key.strip()] = value.strip()
+
     try:
-        r = ptr.contents
-        address    = r.address.decode()
-        generate_qrcode(address)
-        scan_priv  = r.scan_priv.decode()
-        spend_priv = r.spend_priv.decode()
-    finally:
-        _LIB.vanity_free_result(ptr)
+        address    = output["address"]
+        scan_priv  = output["scan_priv"]
+        spend_priv = output["spend_priv"]
+    except KeyError as e:
+        raise RuntimeError(f"Output inatteso dal binario vanity, campo mancante: {e}\nOutput: {result.stdout}")
+
+    generate_qrcode(address)
     return [address], {"scan_priv_key": scan_priv, "spend_priv_key": spend_priv}
+
 
 # ---------------------------------------------------------------------------
 # Pure-Python fallback
@@ -182,6 +157,7 @@ def _python_vanity(
             print(f"[python fallback] trovato dopo {attempts} tentativi", file=sys.stderr)
             return addresses, key_material
 
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -207,7 +183,7 @@ def get_sp_vanity_address(
     testnet : bool
         Usa HRP 'tsp' invece di 'sp'.
     force_python : bool
-        Forza il fallback Python anche se libvanity.so è disponibile.
+        Forza il fallback Python anche se il binario è disponibile.
 
     Returns
     -------
@@ -215,17 +191,17 @@ def get_sp_vanity_address(
         addresses[0] è l'indirizzo trovato.
         key_material ha 'scan_priv_key' e 'spend_priv_key' come hex.
     """
-    if _LIB is not None and not force_python:
+    bin_path = _find_bin()
+
+    if bin_path is not None and not force_python:
         return _rust_vanity(vanity_string, mode, num_threads, testnet)
 
-    if _LIB is None and not force_python:
-        print(
-            "[vanity] libvanity.so non trovata — uso il fallback Python.\n"
-            f"         Cerca in: {[str(d) for d in _SEARCH_DIRS]}\n"
-            "         Per usare Rust: cd vanity && cargo build --release",
-            file=sys.stderr,
-        )
+    print(
+        "[vanity] binario non trovato — uso il fallback Python.",
+        file=sys.stderr,
+    )
     return _python_vanity(vanity_string, mode, testnet)
+
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -242,8 +218,8 @@ if __name__ == "__main__":
     parser.add_argument("--python-only", action="store_true")
     args = parser.parse_args()
 
-    backend = "python" if (args.python_only or _LIB is None) else "rust"
-    print(f"[vanity] backend: {backend}  |  lib: {_find_lib()}", file=sys.stderr)
+    backend = "python" if (args.python_only or _find_bin() is None) else "rust"
+    print(f"[vanity] backend: {backend}  |  bin: {_find_bin()}", file=sys.stderr)
 
     t0 = time.perf_counter()
     addresses, key_material = get_sp_vanity_address(
