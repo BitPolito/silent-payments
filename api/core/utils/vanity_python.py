@@ -21,6 +21,7 @@ import subprocess
 import sys
 import time
 import qrcode
+import json
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -68,15 +69,23 @@ def _fix_python_path():
             return
         candidate = candidate.parent
 
+def generate_qrcode(sp_address, output_file="/tmp/silent_payment_qr.png", scan_priv=None, spend_priv=None):
+    if scan_priv and spend_priv:
+        data = json.dumps({
+            "address":    sp_address,
+            "scan_priv":  scan_priv,
+            "spend_priv": spend_priv,
+        }, separators=(',', ':')) 
+    else:
+        data = sp_address
 
-def generate_qrcode(sp_address, output_file="/tmp/silent_payment_qr.png"):
     qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
         box_size=10,
         border=4,
     )
-    qr.add_data(sp_address)
+    qr.add_data(data)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
     img.save(output_file)
@@ -121,7 +130,7 @@ def _rust_vanity(
     except KeyError as e:
         raise RuntimeError(f"Output inatteso dal binario vanity, campo mancante: {e}\nOutput: {result.stdout}")
 
-    generate_qrcode(address)
+    generate_qrcode(address, scan_priv=scan_priv, spend_priv=spend_priv)
     return [address], {"scan_priv_key": scan_priv, "spend_priv_key": spend_priv}
 
 
