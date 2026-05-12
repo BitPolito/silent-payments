@@ -1,5 +1,6 @@
 {
-  "buildCommand": "cd api/vanity && cargo build --bin vanity --quiet --release && cd ../.. && npm run build",
+  "framework": null,
+  "buildCommand": "cargo build --manifest-path api/vanity/Cargo.toml --bin vanity --release --quiet && cp api/vanity/target/release/vanity api/bin/vanity && npm run build",
   "functions": {
     "api/index.py": {
       "includeFiles": "api/bin/**"
