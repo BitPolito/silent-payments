@@ -178,10 +178,10 @@ def generate_sp_address(
     labels: Optional[List[int]] = None,
     network: str = 'mainnet',
     version: int = 0,
+    qr_code: bool = False
 ) -> Tuple[List[str], dict]:
     """
     Derive one or more Silent Payment addresses from a set of key material.
-
     If no key material is provided, a fresh pair of hardened BIP-32 keys is
     generated automatically. The first address in the returned list is always
     the base (unlabeled) address. If ``labels`` is supplied, one additional
@@ -210,18 +210,34 @@ def generate_sp_address(
         b_scan  = bytes_from_hex(key_material['scan_priv_key'])
         b_spend = bytes_from_hex(key_material['spend_priv_key'])
 
+    # Normalizza a bytes in ogni caso
+    if isinstance(b_scan, str):
+        b_scan = bytes_from_hex(b_scan)
+    if isinstance(b_spend, str):
+        b_spend = bytes_from_hex(b_spend)
+
     B_scan  = pubkey_point_gen_from_int(int_from_bytes(b_scan))
     B_spend = pubkey_point_gen_from_int(int_from_bytes(b_spend))
-    hrp = 'sp' if network == 'mainnet' else 'tsp'
 
+    hrp = 'sp' if network == 'mainnet' else 'tsp'
     sp_addresses = [encode_silent_payment_address(B_scan, B_spend, hrp, version)]
+
     if labels:
         for m in labels:
             sp_addresses.append(
                 create_labeled_silent_payment_address(b_scan, B_spend, m, hrp, version)
             )
+    if qr_code:
+        from utils.vanity_python import generate_qrcode
+        generate_qrcode(
+            sp_addresses[0],
+            scan_priv=b_scan.hex(),
+            spend_priv=b_spend.hex(),
+        )
 
     return sp_addresses, key_material
+
+
 
 
 def scan(
