@@ -204,6 +204,7 @@ dist-ssr
 *.sln
 *.sw?
 
+api/vanity/target
 vanity/Cargo.lock
 api/vanity/Cargo.lock
 
