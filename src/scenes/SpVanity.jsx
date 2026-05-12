@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Box, VStack, HStack, Text, Button, Input, Spinner, Separator, Select, Checkbox } from '@chakra-ui/react';
 import iconDownload from '../assets/icon-download.png'
+import bull_head from '../assets/icon-bitpolito-bull-head.png'
+import { BiDockBottom } from 'react-icons/bi';
+import { jsPDF } from 'jspdf';
 
 export default function SpVanity({ isOpen, onClose }) {
 
@@ -45,6 +48,54 @@ export default function SpVanity({ isOpen, onClose }) {
 		.finally(
 			setIsDownloading(false)
 		)
+	}
+
+	const handleDownloadResults = () => {
+		const doc = new jsPDF()
+
+		doc.setFontSize(18);
+		doc.addImage(bull_head, "PNG", 14, 10, 40, 40);
+		
+		doc.setFont("helvetica", "bold");
+		doc.text("Results", 14, 60);
+
+		let posY = 70;
+
+		const drawData = (label, value) => {
+			
+			doc.setFontSize(10); 
+			doc.setFont("helvetica", "bold");
+			doc.setTextColor(74, 85, 104); 
+			doc.text(`${label}:`, 14, posY);
+
+			posY += 5;
+
+			doc.setFontSize(10);
+			doc.setFont("courier", "normal"); 
+			doc.setTextColor(113, 128, 150);
+
+			const maxBoxWidth = 180; 
+			const padding = 6;
+		
+			const splitText = doc.splitTextToSize(String(value), maxBoxWidth - (padding * 2));
+
+			const lineHeight = 5;
+			const boxHeight = (splitText.length * lineHeight) + (padding * 2);
+
+			doc.setFillColor(247, 250, 252);
+			doc.roundedRect(14, posY, maxBoxWidth, boxHeight, 2, 2, 'F');
+
+			doc.text(splitText, 14 + padding, posY + padding + 3.5);
+
+			posY += boxHeight + 10; 
+		};
+
+		drawData("Vanity Address", testResults.addresses[0]);
+		drawData("Spend Private Key", testResults.key_material.spend_priv_key);
+		drawData("Scan Private Key", testResults.key_material.scan_priv_key);
+
+		doc.save("Address_Results.pdf");
+
 	}
 
 	const handleVanityTest = async () => {
@@ -114,7 +165,7 @@ export default function SpVanity({ isOpen, onClose }) {
 			<HStack w="full">
 				<Input
 					type="text"
-					placeholder="Enter the pattern (Required)"
+					placeholder="Enter the pattern"
 					value={pattern}
 					onChange={(e) => setPattern(e.target.value)}
 					flex="1"
@@ -130,68 +181,13 @@ export default function SpVanity({ isOpen, onClose }) {
 				</Button>
 			</HStack>
 
-			<HStack w="full" gap={4} align="flex-start">
-			<Box flex="1">
-				<Text fontSize="sm" color="gray.600" mb={1}>Mode</Text>
-				<select 
-					value={mode} 
-					onChange={(e) => setMode(e.target.value)}
-					style={{
-					width: '100%',
-					padding: '8px',
-					borderRadius: '6px',
-					border: '1px solid #E2E8F0',
-					backgroundColor: 'white',
-					height: '40px'
-					}}
-				>
-					<option value="contains">Contains</option>
-					<option value="startswith">Starts With</option>
-					<option value="endswith">Ends With</option>
-				</select>
-			</Box>
-
-			<Box flex="1">
-				<Text fontSize="sm" color="gray.600" mb={1}>Threads (0 means all cores)</Text>
-				<Input
-				type="number"
-				min={1}
-				value={threads}
-				onChange={(e) => setThreads(parseInt(e.target.value) || 1)}
-				/>
-			</Box>
-
-			{ /*<VStack flex="1" align="start" justify="center" mt={6} gap={2}>
-				<label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-					<input 
-					type="checkbox"
-					checked={testnet === 1} 
-					onChange={(e) => setTestnet(e.target.checked ? 1 : 0)}
-					style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-					/>
-					<Text as="span">Testnet</Text>
-				</label>
-				
-				<label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-					<input 
-					type="checkbox"
-					checked={forcePython === 1} 
-					onChange={(e) => setForcePython(e.target.checked ? 1 : 0)}
-					style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-					/>
-					<Text as="span">Force Python</Text>
-				</label>
-			</VStack> */}
-
-			</HStack>
-
 			<Separator />
 
 			{loading ? (
 
 			<VStack py={10}>
 				<Spinner size="xl" color="#001CE0" borderWidth="4px" />
-				<Text color="gray.500" mt={4}>Executing test...</Text>
+				<Text color="gray.500" mt={4}>Generating address...</Text>
 			</VStack>
 
 			) : (
@@ -298,25 +294,45 @@ export default function SpVanity({ isOpen, onClose }) {
 
 								<Box 
 									position="relative"
-									left={170}
+									left={55}
 									zIndex={10}
 								>
-									<Button
-										onClick={handleDownloadQr}
-										loading={isDownloading}
-										loadingText="Downloading..."
-										backgroundColor={"#001CE0"}
-										color="white"
-										size="lg"
-										variant="solid"
-									>
-										<img 
-											src={iconDownload} 
-											alt="download icon" 
-											style={{ width: '20px', height: '20px', marginRight: '2px' }} 
-										/>
-										Download Qr Code
-									</Button>
+									<HStack gap={5}>
+										<Button
+											onClick={handleDownloadQr}
+											loading={isDownloading}
+											loadingText="Downloading..."
+											backgroundColor={"#001CE0"}
+											color="white"
+											size="lg"
+											variant="solid"
+										>
+											<img 
+												src={iconDownload} 
+												alt="download icon" 
+												style={{ width: '20px', height: '20px', marginRight: '2px' }} 
+											/>
+											Download Qr Code
+										</Button>
+
+										<Button
+											onClick={handleDownloadResults}
+											loading={isDownloading}
+											loadingText="Downloading..."
+											backgroundColor={"#001CE0"}
+											color="white"
+											size="lg"
+											variant="solid"
+										>
+											<img 
+												src={iconDownload} 
+												alt="download icon" 
+												style={{ width: '20px', height: '20px', marginRight: '2px' }} 
+											/>
+											Download Results
+										</Button>
+
+									</HStack>
 								</Box>
 
 						</VStack>

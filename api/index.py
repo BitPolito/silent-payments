@@ -11,7 +11,7 @@ from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 import json
 from core.send import sending_run
-from core.receive import receiving_run
+from core.receive import receiving_run, generate_sp_address
 from core.utils.vanity_python import get_sp_vanity_address
 from collections import Counter
 import time
@@ -189,6 +189,24 @@ def vanity_address(
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
 	
+
+@app.route('/api/get_sp_address', methods=['GET'])
+def get_sp_address():
+	try:
+		t0 = time.perf_counter()
+		addresses, key_material = generate_sp_address(
+			qr_code=True
+		)
+		
+		elapsed = time.perf_counter() - t0
+		return jsonify({
+			"message": "SP address generated successfully",
+			"addresses": addresses,
+			"key_material": key_material,
+			"elapsed": elapsed	
+		})
+	except Exception as e:
+		return jsonify({"error": str(e)}), 500
 
 # Qr endpoint
 @app.route('/api/qr_code', methods=['GET'])
