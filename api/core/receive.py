@@ -30,6 +30,7 @@ from core.utils.schnorr_lib import (
     schnorr_sign,
     schnorr_verify,
 )
+from core.utils.vanity_python import generate_qrcode
 from core.utils.hardened_keys import generate_hardened_keys
 from typing import Tuple, List, Optional, Dict
 
@@ -228,7 +229,6 @@ def generate_sp_address(
                 create_labeled_silent_payment_address(b_scan, B_spend, m, hrp, version)
             )
     if qr_code:
-        from utils.vanity_python import generate_qrcode
         generate_qrcode(
             sp_addresses[0],
             scan_priv=b_scan.hex(),

@@ -192,12 +192,17 @@ def vanity_address(
 
 @app.route('/api/get_sp_address', methods=['GET'])
 def get_sp_address():
+
 	try:
 		t0 = time.perf_counter()
 		addresses, key_material = generate_sp_address(
 			qr_code=True
 		)
-		
+		key_material["scan_priv_key"]= key_material["scan_priv_key"].hex()
+		key_material["spend_priv_key"]= key_material["spend_priv_key"].hex()
+
+		# print(f"address: {addresses[0]}, keys: {key_material}", flush=True)
+
 		elapsed = time.perf_counter() - t0
 		return jsonify({
 			"message": "SP address generated successfully",

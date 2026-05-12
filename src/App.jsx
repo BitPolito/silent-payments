@@ -4,7 +4,7 @@ import bull_head from './assets/icon-bitpolito-bull-head.png'
 import { Box, VStack, HStack, Button } from '@chakra-ui/react'
 import { useState } from 'react'
 import TestModal from './scenes/Tests'
-import SpVanity from './scenes/SpVanity'
+import GenerateAddr from './scenes/GenerateAddr'
 
 function AnimatedButton({ children, action }) {
   return (
@@ -37,7 +37,8 @@ function AnimatedButton({ children, action }) {
 function App() {
 
 	const [showTest, setShowTests] = useState(false)
-	const [showVanity, setShowVanity] = useState(false)
+	const [ShowAddr, setShowAddr] = useState(false)
+	const [isVanity, setIsVanity] = useState(false)
 
     return (
     <Routes>
@@ -77,9 +78,13 @@ function App() {
 						<AnimatedButton action={() => {setShowTests(true);}}>
 							Run tests
 						</AnimatedButton>
-						
-						<AnimatedButton action={() => setShowVanity(!showVanity)}>
+
+						<AnimatedButton action={() => {setShowAddr(true); setIsVanity(false)}}>
 							Generate address
+						</AnimatedButton>
+
+						<AnimatedButton action={() => {setShowAddr(true); setIsVanity(true)}}>
+							Generate vanity address
 						</AnimatedButton>
 
                 	</HStack>
@@ -89,9 +94,10 @@ function App() {
 					isOpen={showTest}
 					onClose={() => setShowTests(false)}
 				/>
-				<SpVanity
-					isOpen={showVanity}
-					onClose={() => setShowVanity(false)}
+				<GenerateAddr
+					isOpen={ShowAddr}
+					onClose={() => setShowAddr(false)}
+					isVanity={isVanity}
 				/>
 
             </Box>

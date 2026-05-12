@@ -5,7 +5,7 @@ import bull_head from '../assets/icon-bitpolito-bull-head.png'
 import { BiDockBottom } from 'react-icons/bi';
 import { jsPDF } from 'jspdf';
 
-export default function SpVanity({ isOpen, onClose }) {
+export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 
 	const [loading, setLoading] = useState(false);
 	const [testFinished, setTestFinished] = useState(false);
@@ -18,6 +18,36 @@ export default function SpVanity({ isOpen, onClose }) {
 	const [forcePython, setForcePython] = useState(0);
 
 	const [isDownloading, setIsDownloading] = useState(false)
+
+
+	useEffect(() => {
+		if (!isVanity && isOpen) {
+			const fetchAddr = () => { 
+				setLoading(true);
+				fetch('/api/get_sp_address')
+				.then(async response => {
+					if (!response.ok) {
+						const errorText = await response.text();
+						throw new Error(`Server failed with status ${response.status}: ${errorText}`);
+					}
+					return response.json();
+				})
+				.then(data => {
+					setTestResults(data);
+				})
+				.catch(error => {
+					console.log("Error while fetching: ", error);
+					setLoading(false);
+					setTestFinished(true);
+				})
+				.finally(() => {
+					setLoading(false);
+					setTestFinished(true);
+				})
+			}
+			fetchAddr();
+		}	
+	}, [isVanity, isOpen]) 
 
 	if (!isOpen) return null;
 
@@ -90,7 +120,7 @@ export default function SpVanity({ isOpen, onClose }) {
 			posY += boxHeight + 10; 
 		};
 
-		drawData("Vanity Address", testResults.addresses[0]);
+		drawData("Address", testResults.addresses[0]);
 		drawData("Spend Private Key", testResults.key_material.spend_priv_key);
 		drawData("Scan Private Key", testResults.key_material.scan_priv_key);
 
@@ -109,7 +139,6 @@ export default function SpVanity({ isOpen, onClose }) {
 				return response.json();
 			})
 			.then(data => {
-				console.log(data);
 				setTestResults(data);
 				setPattern("");
 			})
@@ -159,27 +188,31 @@ export default function SpVanity({ isOpen, onClose }) {
 
 		<VStack gap={6} align="stretch">
 			<Text fontSize="2xl" fontWeight="bold" color="#001CE0" textAlign="center">
-				Generate your vanity address
+				{isVanity ? "Generate your vanity address" : "Generate your silent payment address"}
 			</Text>
 
-			<HStack w="full">
-				<Input
-					type="text"
-					placeholder="Enter the pattern"
-					value={pattern}
-					onChange={(e) => setPattern(e.target.value)}
-					flex="1"
-				/>
-				<Button
-					bg="#001CE0"
-					color="white"
-					_hover={{ bg: "#0014a8" }}
-					onClick={handleVanityTest}
-					disabled={loading || pattern.trim() === ""}
-				>
-					Generate
-				</Button>
-			</HStack>
+			{isVanity && (
+				<HStack w="full">
+					<Input
+						type="text"
+						placeholder="Enter the pattern"
+						value={pattern}
+						onChange={(e) => setPattern(e.target.value)}
+						flex="1"
+					/>
+					<Button
+						bg="#001CE0"
+						color="white"
+						_hover={{ bg: "#0014a8" }}
+						onClick={handleVanityTest}
+						disabled={loading || pattern.trim() === ""}
+					>
+						Generate
+					</Button>
+				</HStack>
+
+			)}
+
 
 			<Separator />
 
@@ -198,21 +231,21 @@ export default function SpVanity({ isOpen, onClose }) {
 					<Text fontSize="sm" color="gray.500" fontWeight="medium">
 						Elapsed time: {testResults.elapsed ? `${testResults.elapsed.toFixed(3)} s` : "N/A"}
 					</Text>
-
-					<Button
-					position="absolute"
-					top={1}
-					right={1}
-					size="sm"
-					variant="ghost"
-					onClick={() => {
-						setTestResults(null);
-						setTestFinished(false);
-					}}
-					>
-					X
-					</Button>
-
+					{isVanity && (
+						<Button
+						position="absolute"
+						top={1}
+						right={1}
+						size="sm"
+						variant="ghost"
+						onClick={() => {
+							setTestResults(null);
+							setTestFinished(false);
+						}}
+						>
+						X
+						</Button>
+					)}
 				</HStack>
 
 
@@ -256,38 +289,39 @@ export default function SpVanity({ isOpen, onClose }) {
 
 							{testResults.key_material && (
 							<>
+
 								<Box w="full">
-								<Text fontSize="sm" fontWeight="bold" color="gray.700">
-									Scan Private Key:
-								</Text>
-								<Text
-									fontSize="sm"
-									color="gray.600"
-									wordBreak="break-all"
-									bg="gray.50"
-									p={2}
-									borderRadius="md"
-									fontFamily="monospace"
-								>
-									{testResults.key_material.scan_priv_key}
-								</Text>
+									<Text fontSize="sm" fontWeight="bold" color="gray.700">
+										Spend Private Key:
+									</Text>
+									<Text
+										fontSize="sm"
+										color="gray.600"
+										wordBreak="break-all"
+										bg="gray.50"
+										p={2}
+										borderRadius="md"
+										fontFamily="monospace"
+									>
+										{testResults.key_material.spend_priv_key}
+									</Text>
 								</Box>
 
 								<Box w="full">
-								<Text fontSize="sm" fontWeight="bold" color="gray.700">
-									Spend Private Key:
-								</Text>
-								<Text
-									fontSize="sm"
-									color="gray.600"
-									wordBreak="break-all"
-									bg="gray.50"
-									p={2}
-									borderRadius="md"
-									fontFamily="monospace"
-								>
-									{testResults.key_material.spend_priv_key}
-								</Text>
+									<Text fontSize="sm" fontWeight="bold" color="gray.700">
+										Scan Private Key:
+									</Text>
+									<Text
+										fontSize="sm"
+										color="gray.600"
+										wordBreak="break-all"
+										bg="gray.50"
+										p={2}
+										borderRadius="md"
+										fontFamily="monospace"
+									>
+										{testResults.key_material.scan_priv_key}
+									</Text>
 								</Box>
 							</>
 							)}
