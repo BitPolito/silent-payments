@@ -1,3 +1,12 @@
+import os
+import sys
+
+# 1. Aggiungi la cartella 'api' ai percorsi dove Python cerca i moduli
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+
 from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 import json
