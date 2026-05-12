@@ -1,8 +1,18 @@
 {
-  "buildCommand": "cd api/vanity && cargo build --bin vanity_bench --quiet --release && cd ../.. && npm run build",
   "functions": {
-    "api/index.py": {
-      "includeFiles": "api/bin/**"
+    "api/**/*.py": {
+      "includeFiles": "api/bin/**",
+      "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ]
 }
