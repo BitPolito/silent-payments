@@ -69,7 +69,7 @@ def _fix_python_path():
         candidate = candidate.parent
 
 
-def generate_qrcode(sp_address, output_file="silent_payment_qr.png"):
+def generate_qrcode(sp_address, output_file="/tmp/silent_payment_qr.png"):
     qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,

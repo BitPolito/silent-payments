@@ -194,7 +194,7 @@ def vanity_address(
 @app.route('/api/qr_code', methods=['GET'])
 def qr_code():
 	try :
-		file_path = "./silent_payment_qr.png"
+		file_path = "/tmp/silent_payment_qr.png"
     
 		return send_file(
 			file_path,
