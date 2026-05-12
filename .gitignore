@@ -210,3 +210,5 @@ vanity/Cargo.lock
 api/vanity/Cargo.lock
 
 *.csv
+
+silent_payment_qr.png
