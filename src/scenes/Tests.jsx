@@ -104,7 +104,7 @@ export default function TestModal({ isOpen, onClose }) {
                     </Text>
 
                     <HStack gap={4}>
-                        <Box as="select" value={testType} onChange={(e) => setTestType(e.target.value)}
+                        <Box as="select" value={testType} onChange={(e) => {setTestType(e.target.value); setTestFinished(false)}}
                              p={2} borderWidth="1px" borderRadius="md" borderColor="gray.300" flex="1"
                         >
                             <option value="send">Send Test</option>

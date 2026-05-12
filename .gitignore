@@ -77,7 +77,6 @@ docs/_build/
 
 # PyBuilder
 .pybuilder/
-target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -205,8 +204,11 @@ dist-ssr
 *.sln
 *.sw?
 
-vanity/target/
+api/vanity/target
 vanity/Cargo.lock
 api/vanity/Cargo.lock
+api/vanity/target
 
 *.csv
+
+silent_payment_qr.png

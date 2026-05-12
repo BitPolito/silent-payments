@@ -1,4 +1,13 @@
-from flask import Flask, jsonify
+import os
+import sys
+
+# 1. Aggiungi la cartella 'api' ai percorsi dove Python cerca i moduli
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+
+from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 import json
 from core.send import sending_run
@@ -10,14 +19,14 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-TEST_FILE = "./core/test/test_vectors.json"
-TEST_LIST = "./core/test/test_list.json"
+TEST_FILE = "test_vectors.json"
+TEST_LIST = "test_list.json"
 
 def load_json_arg(arg):
 	if arg is None:
 		return None
 	try:
-		with open(arg, 'r') as f:
+		with open(arg, 'r', encoding='utf-8') as f:
 			return json.load(f)
 	except (FileNotFoundError, OSError):
 		return json.loads(arg)
@@ -26,18 +35,23 @@ def load_json_arg(arg):
 def index():
 	return jsonify({"message": "Hello, World!"})
 
-@app.route('/get_all_tests', methods=['GET'])
+@app.route('/api/get_all_tests', methods=['GET'])
 def get_all_tests():
 	try:
-		with open(TEST_LIST, 'r') as f:
+		base_dir = os.path.dirname(os.path.abspath(__file__))
+		json_path = os.path.join(base_dir, 'core', 'test', TEST_LIST)
+		with open(json_path, 'r', encoding='utf-8') as f:
 			test_list_data = json.load(f)
 		return jsonify(test_list_data)
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
 
-@app.route('/single_test/send/<int:test_id>', methods=['GET'])
+@app.route('/api/single_test/send/<int:test_id>', methods=['GET'])
 def single_test_send(test_id: int):
-	data = load_json_arg(TEST_FILE)
+	base_dir = os.path.dirname(os.path.abspath(__file__))
+
+	json_path = os.path.join(base_dir, 'core', 'test', TEST_FILE)
+	data = load_json_arg(json_path)
 	if data is None:
 		raise ValueError('test_data problem')
 	
@@ -90,9 +104,12 @@ def single_test_send(test_id: int):
 		"test_id": test_id
 	})
 
-@app.route('/single_test/receive/<int:test_id>', methods=['GET'])
+@app.route('/api/single_test/receive/<int:test_id>', methods=['GET'])
 def single_test_receive(test_id: int):
-	data = load_json_arg(TEST_FILE)
+	base_dir = os.path.dirname(os.path.abspath(__file__))
+	
+	json_path = os.path.join(base_dir, 'core', 'test', TEST_FILE)
+	data = load_json_arg(json_path)
 	if data is None:
 		raise ValueError('test_data problem')
 	
@@ -143,7 +160,7 @@ def single_test_receive(test_id: int):
 	})
 
 # Vanity address endpoint
-@app.route('/vanity_address/<string:pattern>/<string:mode>/<int:threads>/<int:testnet>/<int:force_python>', methods=['GET'])
+@app.route('/api/vanity_address/<string:pattern>/<string:mode>/<int:threads>/<int:testnet>/<int:force_python>', methods=['GET'])
 def vanity_address(
 	pattern: 		str, 
 	mode: 			str = "contains", 
@@ -151,7 +168,7 @@ def vanity_address(
 	testnet: 		int = 0, 
 	force_python: 	int = 0
 ):
-	print(f"Generating vanity address with pattern={pattern}, mode={mode}, threads_num={threads}, testnet={testnet}, force_python={force_python}")
+	print(f"Generating vanity address with pattern={pattern}, mode={mode}, threads_num={threads}, testnet={testnet}, force_python={force_python}", flush=True)
 	try:
 		t0 = time.perf_counter()
 		addresses, key_material = get_sp_vanity_address(
@@ -169,5 +186,21 @@ def vanity_address(
 			"key_material": key_material,
 			"elapsed": elapsed	
 		})
+	except Exception as e:
+		return jsonify({"error": str(e)}), 500
+	
+
+# Qr endpoint
+@app.route('/api/qr_code', methods=['GET'])
+def qr_code():
+	try :
+		file_path = "/tmp/silent_payment_qr.png"
+    
+		return send_file(
+			file_path,
+			mimetype='image/png',
+			as_attachment=True,
+			download_name='silent_payment_qr.png'
+		)
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
