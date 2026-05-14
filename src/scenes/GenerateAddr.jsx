@@ -16,6 +16,7 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 	const [threads, setThreads] = useState(0);
 	const [testnet, setTestnet] = useState(0);
 	const [forcePython, setForcePython] = useState(0);
+	const [error, setError] = useState("")
 
 	const [isDownloading, setIsDownloading] = useState(false)
 
@@ -50,6 +51,11 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 	}, [isVanity, isOpen]) 
 
 	if (!isOpen) return null;
+
+	const isBech32m = (s) => {
+		const pattern = /^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/;
+		return pattern.test(s.toLowerCase());
+	}
 
 	const handleDownloadQr = async () => {
 		setIsDownloading(true);
@@ -164,6 +170,7 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 		setTestnet(0);
 		setThreads(0);
 		setIsDownloading(false);
+		setError("");
 		onClose();
 	}
 
@@ -197,7 +204,16 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 						type="text"
 						placeholder="Enter the pattern"
 						value={pattern}
-						onChange={(e) => setPattern(e.target.value)}
+						onChange={(e) => {
+							setTestFinished(false);
+							if (!isBech32m(e.target.value))
+								setError("Invalid pattern: unaccepted characters in pattern")
+							else if (e.target.value.length > 4)
+								setError("Invalid pattern: too long pattern")
+							else
+								setError("")
+								setPattern(e.target.value)
+						}}
 						flex="1"
 					/>
 					<Button
@@ -205,7 +221,7 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 						color="white"
 						_hover={{ bg: "#0014a8" }}
 						onClick={handleVanityTest}
-						disabled={loading || pattern.trim() === ""}
+						disabled={loading || pattern.trim() === "" || error !== ""}
 					>
 						Generate
 					</Button>
@@ -213,6 +229,9 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 
 			)}
 
+			{isVanity && (
+				<Text color="gray.500" fontSize="2xm">Accepted characers: qpzry9x8gf2tvdw0s3jn54khce6mua7l</Text>
+			)}
 
 			<Separator />
 
@@ -223,6 +242,10 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 				<Text color="gray.500" mt={4}>Generating address...</Text>
 			</VStack>
 
+			) : error !== '' ? (
+					<HStack py={10} justify="center" bg="red.50" borderRadius="md" border="1px dashed" borderColor="red.300">
+						<Text color="red.500" fontWeight="bold"> {error} </Text>
+					</HStack>
 			) : (
 			testFinished && testResults && (
 				<VStack align="start" gap={4} bg="gray.50" p={4} borderRadius="md" w="full" position="relative">
