@@ -24,6 +24,7 @@ import qrcode
 import json
 from pathlib import Path
 from typing import List, Tuple, Optional
+import re
 
 
 # ---------------------------------------------------------------------------
@@ -53,6 +54,9 @@ def _find_bin() -> Optional[Path]:
             return p
     return None
 
+def is_bech32m(s: str) -> bool:
+    pattern = r'^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$'
+    return bool(re.fullmatch(pattern, s.lower()))
 
 # ---------------------------------------------------------------------------
 # Fix sys.path per il fallback Python
@@ -200,6 +204,10 @@ def get_sp_vanity_address(
         addresses[0] è l'indirizzo trovato.
         key_material ha 'scan_priv_key' e 'spend_priv_key' come hex.
     """
+    if not is_bech32m(vanity_string):
+        print("String not valid for Bech32m encoding")
+        return
+    
     bin_path = _find_bin()
 
     if bin_path is not None and not force_python:
