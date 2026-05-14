@@ -207,7 +207,7 @@ export default function GenerateAddr({ isOpen, onClose, isVanity }) {
 						onChange={(e) => {
 							setTestFinished(false);
 							if (!isBech32m(e.target.value))
-								setError("Invalid pattern: unaccepted characters in pattern")
+								setError("Invalid pattern: unaccepted characters")
 							else if (e.target.value.length > 4)
 								setError("Invalid pattern: too long pattern")
 							else
