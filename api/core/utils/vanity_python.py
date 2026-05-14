@@ -204,8 +204,8 @@ def get_sp_vanity_address(
         addresses[0] è l'indirizzo trovato.
         key_material ha 'scan_priv_key' e 'spend_priv_key' come hex.
     """
-    if is_bech32m(vanity_string):
-        print("Stringa valida Bech32m")
+    if not is_bech32m(vanity_string):
+        print("String not valid for Bech32m encoding")
         return
     
     bin_path = _find_bin()
