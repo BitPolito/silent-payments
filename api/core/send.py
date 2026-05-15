@@ -184,8 +184,8 @@ if __name__ == '__main__':
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument('--filename',          required=False, help='filename of the JSON file containing the test data')
-    parser.add_argument('--test_id',      required=False, help='Test number of the test to run (0-25)')
+    parser.add_argument('--filename',          required=True, help='filename of the JSON file containing the test data')
+    parser.add_argument('--test_id',      required=True, help='Test number of the test to run (0-25)')
     parser.add_argument('--debug',        required=False, action='store_true', help='Enable debug logging')
     args = parser.parse_args()
 
@@ -194,14 +194,9 @@ if __name__ == '__main__':
         format='%(levelname)s %(name)s: %(message)s',
     )
 
-    def load_json_arg(arg):
-        if arg is None:
-            return None
-        try:
-            with open(arg, 'r') as f:
-                return json.load(f)
-        except (FileNotFoundError, OSError):
-            return json.loads(arg)
+    def load_json_arg(filepath):
+        with open(filepath, 'r') as file:
+            return json.load(file)
 
     data = load_json_arg(args.filename)
     if data is None:
