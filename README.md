@@ -117,7 +117,7 @@ You can find the tests in vanity/tests/integration_tests.rs
 
 ### Webapp
 
-The webapp has been deployad on Vercel at: https://silent-payments.vercel.app/
+The webapp has been deployed on Vercel at: https://silent-payments.vercel.app/
 
 Install node 20
 ```bash
