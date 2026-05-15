@@ -84,14 +84,15 @@ Select the "test.ipynb" from you folders and execute all the send and receive te
 ### Generate a Silent-Payments vanity address
 Perform a brute-force search for a vanity address:
 ```bash
-python3 src/utils/vanity_python.py "your_vanity_string"
+cd api
+python3 -m core.utils.vanity your_vanity_string
 ```
+
 Or directly from rust binary:
 ```bash
 python3 ./vanity/target/release/vanity "your_vanity_string"
-cd api
 
-python3 -m core.utils.vanity your_vanity_string
+
 ```
 
 Command line option:
@@ -116,6 +117,8 @@ You can find the tests in vanity/tests/integration_tests.rs
 
 ### Webapp
 
+The webapp has been deployad on Vercel at: https://silent-payments.vercel.app/
+
 Install node 20
 ```bash
 
@@ -133,15 +136,8 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
-Launch the webapp locally with https://localhost:5173
+Launch the webapp locally at https://localhost:5173
 
 ```bash
 npm run dev
 ```
-
-### Future works
-
-Silent Payments offer a powerful privacy feature for Bitcoin by allowing recipients to derive unique addresses per transaction without interacting with the sender or publishing any extra data on-chain. However, this design introduces a key technical challenge: scanning the blockchain to detect incoming payments.
-In a real-world scenario, the recipient must scan every Taproot output to check if it's addressed to them. This process becomes resource-intensive, especially without the help of a full node. So far, our implementation does not connect to a Bitcoin node, but future work will likely require exploring how to integrate one.
-Relying on a full node would let us maintain an index of Taproot outputs and scan them efficiently, but it also introduces practical concerns — such as node synchronization, bandwidth usage, and managing access to raw blockchain data. According to some estimates, under heavy usage, this could mean ~100 kB per block (up to 450 MB/month), while current conditions suggest a more modest 30–50 MB/month.
-Understanding whether this scanning can be done independently — or needs lightweight alternatives or external infrastructure — will be crucial to making Silent Payments truly usable at scale.
