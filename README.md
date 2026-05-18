@@ -44,11 +44,13 @@ silent-payments/
    ```
 2. Create a virtual environment (optional but recommended):
    ```bash
+   cd api
    python3 -m venv venv
    source venv/bin/activate 
    ```
 3. Install dependencies:
    ```bash
+   cd api
    pip install -r requirements.txt
    ```
 4. Install Rust and Cargo (only for vanity address)
@@ -85,13 +87,12 @@ Select the "test.ipynb" from you folders and execute all the send and receive te
 Perform a brute-force search for a vanity address:
 ```bash
 cd api
-python3 -m core.utils.vanity your_vanity_string
+python3 -m core.utils.vanity_python your_vanity_string
 ```
 
 Or directly from rust binary:
 ```bash
 python3 ./vanity/target/release/vanity "your_vanity_string"
-
 
 ```
 
@@ -136,7 +137,7 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
-Launch the webapp locally at https://localhost:5173
+Launch the webapp locally at http://localhost:5173
 
 ```bash
 npm run dev
