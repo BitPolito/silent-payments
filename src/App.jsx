@@ -12,9 +12,8 @@ import ProtocolDemoModal from './scenes/ProtocolDemo'
 
 const BIP352_URL = 'https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki'
 
-/** Brand SVG on solid buttons (invert in dark mode). */
 function StoryIcon({ src, className = 'h-4 w-4 shrink-0' }) {
-  return <img src={src} alt="" className={`${className} object-contain dark:brightness-0 dark:invert`} aria-hidden />
+  return <img src={src} alt="" className={`sp-icon-blue ${className}`} aria-hidden />
 }
 
 export default function App() {
@@ -81,7 +80,7 @@ export default function App() {
               rel="noopener noreferrer"
               className="sp-btn-solid inline-flex items-center gap-2 text-sm"
             >
-              <BpIcon src={STORY.share} className="h-4 w-4 shrink-0" />
+              <BpIcon src={STORY.share} className="h-4 w-4 shrink-0 text-inherit" />
               {tr('bipCta')}
             </a>
             <a
@@ -113,7 +112,7 @@ export default function App() {
                 setAddrTab('random')
                 setShowAddr(true)
               }}
-              icon={<BpIcon src={ICON.key} className="h-5 w-5" />}
+              icon={<BpIcon src={ICON.key} className="h-5 w-5 text-inherit" />}
             />
             <ActionCard
               title={tr('cardVanity')}
@@ -122,7 +121,7 @@ export default function App() {
                 setAddrTab('vanity')
                 setShowAddr(true)
               }}
-              icon={<BpIcon src={ICON.crown} className="h-5 w-5" />}
+              icon={<BpIcon src={ICON.crown} className="h-5 w-5 text-inherit" />}
             />
           </div>
         </section>

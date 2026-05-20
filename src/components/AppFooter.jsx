@@ -24,8 +24,7 @@ const socialBtnClass =
 
 const socialIconSlotClass = 'inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center'
 
-const socialIconClass =
-  'block h-full w-full object-contain opacity-90 dark:brightness-0 dark:invert'
+const socialIconClass = 'sp-icon-blue block h-full w-full opacity-90'
 
 function CircleLink({ href, label, children }) {
   return (
@@ -74,7 +73,7 @@ export default function AppFooter() {
             />
             <p className="inline-flex flex-wrap items-center justify-center gap-x-1.5 text-center text-sm font-semibold text-bp-blue dark:text-bp-canvas">
               <span>{tr('footerMadeWith')}</span>
-              <BpIcon src={ICON.heart} className="h-[18px] w-[18px] text-bp-blue dark:text-bp-canvas" />
+              <BpIcon src={ICON.heart} className="h-[18px] w-[18px]" />
               <span className="whitespace-nowrap">{tr('footerBy')}</span>
             </p>
           </div>
@@ -84,7 +83,7 @@ export default function AppFooter() {
               <SocialLink key={item.href} {...item} />
             ))}
             <CircleLink href="mailto:info@bitpolito.it" label="info@bitpolito.it">
-              <BpIcon src={ICON.email} className="h-[18px] w-[18px] text-bp-blue dark:text-bp-canvas" />
+              <BpIcon src={ICON.email} className="h-[18px] w-[18px]" />
             </CircleLink>
             {SOCIAL_RIGHT.map((item) => (
               <SocialLink key={item.href} {...item} />

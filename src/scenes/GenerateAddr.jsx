@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { jsPDF } from 'jspdf'
 import { ICON } from '../assets/icons'
 import BpIcon from '../components/BpIcon'
 import Bech32Alphabet from '../components/Bech32Alphabet'
@@ -7,10 +6,12 @@ import CopyableText from '../components/CopyableText'
 import DownloadAction from '../components/DownloadAction'
 import Collapsible from '../components/protocol/Collapsible'
 import ModalShell from '../components/ModalShell'
+import AmbientOverlay from '../components/AmbientOverlay'
 import { useApiOnline } from '../hooks/useApiOnline'
 import { useVanityLimits } from '../hooks/useVanityLimits'
 import { useLocale } from '../i18n/LocaleContext'
 import { fetchSpAddress, fetchVanityAddress, formatApiError } from '../utils/api'
+import { buildAndSaveGenBackupPdf } from '../utils/genBackupPdf'
 import { normalizeGenResponse, qrImageUrl } from '../utils/normalizeGen'
 import {
   DEFAULT_VANITY_PATTERN,
@@ -21,6 +22,8 @@ import {
   vanityContainsPreview,
   vanityPatternRange,
 } from '../utils/bech32m'
+import { resolveVanityFx } from '../utils/vanityFx'
+import { preloadFxAssets } from '../fx/presets'
 
 const alertIcon = '/bitpolito/alert.svg'
 
@@ -62,6 +65,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
   const [testnet, setTestnet] = useState(false)
   const [error, setError] = useState('')
   const [patternError, setPatternError] = useState('')
+  const [fxPreset, setFxPreset] = useState(/** @type {import('../fx/presets').FxPresetId | null} */ (null))
   const abortRef = useRef(/** @type {AbortController | null} */ (null))
   const patternRef = useRef(/** @type {HTMLInputElement | null} */ (null))
 
@@ -72,6 +76,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
     setGenResult(null)
     setLoading(false)
     setError('')
+    setFxPreset(null)
   }, [])
 
   useEffect(() => {
@@ -88,7 +93,12 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
       setPatternError('')
       setGenResult(null)
       setLoading(false)
+      setFxPreset(null)
     }
+  }, [open])
+
+  useEffect(() => {
+    if (open) preloadFxAssets()
   }, [open])
 
   const applyResult = useCallback(
@@ -141,7 +151,12 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
       },
       { signal: ac.signal },
     )
-      .then(applyResult)
+      .then((data) => {
+        applyResult(data)
+        const ok = !!normalizeGenResponse(data)?.addresses?.[0]
+        const fx = resolveVanityFx(p)
+        if (ok && fx) setFxPreset(fx)
+      })
       .catch((e) => {
         if (e.name !== 'AbortError') setError(formatApiError(e, tr))
       })
@@ -192,26 +207,13 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
     }
   }
 
-  const handleDownloadResults = () => {
+  const handleDownloadResults = async () => {
     if (!genResult?.addresses?.[0]) return
-    const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text('Silent Payments', 14, 20)
-    let posY = 32
-    const draw = (label, value) => {
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.text(`${label}:`, 14, posY)
-      posY += 6
-      doc.setFont('courier', 'normal')
-      const lines = doc.splitTextToSize(String(value), 170)
-      doc.text(lines, 14, posY)
-      posY += lines.length * 5 + 10
+    try {
+      await buildAndSaveGenBackupPdf({ genResult, tr })
+    } catch {
+      window.alert(tr('pdfError'))
     }
-    draw(tr('address'), genResult.addresses[0])
-    if (genResult.key_material?.spend_priv_key) draw(tr('spendSk'), genResult.key_material.spend_priv_key)
-    if (genResult.key_material?.scan_priv_key) draw(tr('scanSk'), genResult.key_material.scan_priv_key)
-    doc.save('silent_payments_address.pdf')
   }
 
   useEffect(() => {
@@ -248,6 +250,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
   const phase = loading ? 'loading' : showResult ? 'result' : 'form'
 
   return (
+    <>
     <ModalShell open={open} onClose={onClose} title={modalTitle} subtitle={modalSubtitle} closeLabel={tr('close')}>
       <div className="flex gap-0.5 rounded-md border border-bp-200 bg-bp-50 p-0.5 dark:border-bp-500/30 dark:bg-bp-800/40">
         <button
@@ -297,7 +300,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
 
       {apiStatus === 'offline' ? (
         <div className="mt-4 flex items-start gap-3 rounded-md border border-bp-200 bg-bp-50 p-2 dark:border-bp-500/40 dark:bg-bp-700/40">
-          <img src={alertIcon} alt="" className="mt-0.5 h-5 w-5 shrink-0" />
+          <img src={alertIcon} alt="" className="sp-icon-blue mt-0.5 h-5 w-5 shrink-0" />
           <p className="text-xs font-medium text-bp-blue dark:text-bp-canvas">
             {tr(import.meta.env.PROD ? 'apiOfflineProd' : 'apiOffline')}
           </p>
@@ -306,7 +309,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
 
       {error ? (
         <div className="mt-4 flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-2 dark:border-red-900/40 dark:bg-red-950/30">
-          <img src={alertIcon} alt="" className="mt-0.5 h-5 w-5 shrink-0" />
+          <img src={alertIcon} alt="" className="sp-icon-blue mt-0.5 h-5 w-5 shrink-0" />
           <p className="text-xs font-medium text-red-800 dark:text-red-200">{error}</p>
         </div>
       ) : null}
@@ -438,7 +441,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
                   className="flex gap-2.5 rounded-md border border-bp-200 bg-bp-50/80 p-2.5 dark:border-bp-500/40 dark:bg-bp-700/35"
                   role="alert"
                 >
-                  <BpIcon src={ICON.key} className="mt-0.5 h-5 w-5 shrink-0 text-bp-blue dark:text-bp-canvas" />
+                  <BpIcon src={ICON.key} className="mt-0.5 h-5 w-5 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-[11px] font-bold text-bp-blue dark:text-bp-canvas">{tr('genPrivateKeys')}</p>
                     <p className="mt-1 text-[10px] leading-relaxed text-bp-blue/85 dark:text-bp-canvas/85">{tr('genKeysWarning')}</p>
@@ -479,5 +482,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
         </div>
       ) : null}
     </ModalShell>
+    <AmbientOverlay preset={fxPreset} active={open && !!fxPreset} onDone={() => setFxPreset(null)} />
+    </>
   )
 }

@@ -289,7 +289,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
   if (loadError || !caseData) {
     return (
       <div className="flex items-center gap-3 rounded-lg border border-dashed border-bp-400 bg-bp-100 p-4 dark:border-bp-500/40 dark:bg-bp-700/35">
-        <img src={alertIcon} alt="" className="h-8 w-8 shrink-0" />
+        <img src={alertIcon} alt="" className="sp-icon-blue h-8 w-8 shrink-0" />
         <p className="text-sm font-medium text-bp-blue dark:text-bp-canvas">{loadError || tr('apiError')}</p>
       </div>
     )

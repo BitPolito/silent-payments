@@ -89,7 +89,7 @@ export default function ProtocolDemoModal({ open, onClose }) {
       {view === 'flow' ? (
         apiStatus === 'offline' ? (
           <div className="flex items-center gap-3 rounded-lg border border-bp-200 bg-bp-50 p-4 dark:border-bp-500/40 dark:bg-bp-700/40">
-            <img src={alertIcon} alt="" className="h-8 w-8 shrink-0" />
+            <img src={alertIcon} alt="" className="sp-icon-blue h-8 w-8 shrink-0" />
             <p className="text-sm font-medium text-bp-blue dark:text-bp-canvas">
               {tr(import.meta.env.PROD ? 'apiOfflineProd' : 'apiOffline')}
             </p>
@@ -119,12 +119,12 @@ export default function ProtocolDemoModal({ open, onClose }) {
                 <button
                   type="button"
                   onClick={() => openScenario(scenario.id)}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-bp-200 bg-white px-3 py-3 text-left shadow-sm transition hover:border-bp-blue/30 dark:border-bp-500/40 dark:bg-bp-800/50"
+                  className="sp-surface group flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition hover:border-bp-blue/30 dark:hover:border-bp-canvas/45"
                 >
                   <img
                     src={SCENARIO_ICONS[scenario.id] ?? STORY.wallet}
                     alt=""
-                    className="mt-0.5 h-8 w-8 shrink-0 object-contain dark:brightness-0 dark:invert"
+                    className="sp-icon-blue mt-0.5 h-8 w-8 shrink-0"
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-bold text-bp-blue dark:text-bp-canvas">
@@ -144,7 +144,7 @@ export default function ProtocolDemoModal({ open, onClose }) {
       {view === 'detail' ? (
         apiStatus === 'offline' ? (
           <div className="flex items-center gap-3 rounded-lg border border-bp-200 bg-bp-50 p-4 dark:border-bp-500/40 dark:bg-bp-700/40">
-            <img src={alertIcon} alt="" className="h-8 w-8 shrink-0" />
+            <img src={alertIcon} alt="" className="sp-icon-blue h-8 w-8 shrink-0" />
             <p className="text-sm font-medium text-bp-blue dark:text-bp-canvas">
               {tr(import.meta.env.PROD ? 'apiOfflineProd' : 'apiOffline')}
             </p>
@@ -153,7 +153,7 @@ export default function ProtocolDemoModal({ open, onClose }) {
           <p className="text-sm text-bp-600 dark:text-bp-canvas/80">{tr('loadingScenario')}</p>
         ) : caseError ? (
           <div className="flex items-center gap-3 rounded-lg border border-dashed border-bp-400 bg-bp-100 p-4 dark:bg-bp-700/35">
-            <img src={alertIcon} alt="" className="h-8 w-8" />
+            <img src={alertIcon} alt="" className="sp-icon-blue h-8 w-8" />
             <p className="text-sm font-bold text-bp-blue dark:text-bp-canvas">{caseError}</p>
           </div>
         ) : caseData && selectedScenario ? (

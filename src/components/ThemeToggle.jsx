@@ -43,7 +43,7 @@ export default function ThemeToggle({ ariaLabel }) {
           dark ? 'ml-auto' : 'mr-auto'
         }`}
       >
-        <BpIcon src={dark ? ICON.moon : ICON.sun} className="h-3.5 w-3.5 text-bp-blue" />
+        <BpIcon src={dark ? ICON.moon : ICON.sun} className="h-3.5 w-3.5 text-bp-blue dark:text-bp-blue" />
       </span>
     </button>
   )

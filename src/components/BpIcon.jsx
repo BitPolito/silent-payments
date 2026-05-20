@@ -2,7 +2,7 @@
  * Single-color SVG via CSS mask — follows `currentColor` (light/dark without a white file).
  * @param {{ src: string, className?: string, label?: string }} props
  */
-export default function BpIcon({ src, className = 'h-4 w-4', label }) {
+export default function BpIcon({ src, className = 'h-4 w-4 text-bp-blue dark:text-bp-canvas', label }) {
   const style = {
     maskImage: `url(${src})`,
     WebkitMaskImage: `url(${src})`,

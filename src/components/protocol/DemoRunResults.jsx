@@ -2,7 +2,7 @@ import CopyableText from '../CopyableText'
 
 function CompareRow({ title, expectedLabel, receivedLabel, expected, got, match, matchOk, matchFail }) {
   return (
-    <div className="rounded-lg border border-bp-200 bg-white p-3 dark:border-bp-500/30 dark:bg-bp-800/40">
+    <div className="sp-surface rounded-lg p-3">
       <p className="text-[11px] font-bold uppercase tracking-wide text-bp-500 dark:text-bp-300">{title}</p>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
         <div>

@@ -48,7 +48,7 @@ export default function ModalShell({ open, title, subtitle, onClose, closeLabel,
   return (
 
     <div className="sp-modal-overlay fixed inset-0 z-[100] flex items-center justify-center px-3 py-6 sm:px-4" role="presentation" onClick={requestClose}>
-    <div role="dialog" aria-modal="true" aria-labelledby="sp-modal-title" className="relative flex max-h-[min(92dvh,880px)] w-full max-w-[720px] flex-col overflow-hidden rounded-2xl border border-bp-200 bg-white shadow-xl dark:border-bp-500/40 dark:bg-bp-800" onClick={(e) => e.stopPropagation()}>
+    <div role="dialog" aria-modal="true" aria-labelledby="sp-modal-title" className="sp-surface relative flex max-h-[min(92dvh,880px)] w-full max-w-[720px] flex-col overflow-hidden rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-black/40" onClick={(e) => e.stopPropagation()}>
     <div className="grid shrink-0 grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2 border-b border-bp-200 bg-bp-50 px-3 py-3 dark:border-bp-500/35 dark:bg-bp-700/60 sm:px-4 sm:py-3.5">
               <span className="col-start-1" aria-hidden />
     <div className="col-start-2 min-w-0 text-center">
@@ -64,7 +64,7 @@ export default function ModalShell({ open, title, subtitle, onClose, closeLabel,
     </div>
               <button
             type="button"
-            className="col-start-3 flex h-9 w-9 items-center justify-center justify-self-end rounded-full border border-bp-200 bg-white p-0 text-bp-blue transition hover:border-bp-300 hover:bg-bp-50 dark:border-bp-canvas/40 dark:bg-bp-800/80 dark:text-bp-canvas dark:hover:border-bp-canvas dark:hover:bg-bp-700"
+            className="col-start-3 flex h-9 w-9 items-center justify-center justify-self-end rounded-full border border-bp-200 bg-white p-0 text-bp-blue transition hover:border-bp-300 hover:bg-bp-50 dark:border-bp-canvas/35 dark:bg-bp-600 dark:text-bp-canvas dark:hover:border-bp-canvas dark:hover:bg-bp-500"
             onClick={requestClose}
             aria-label={closeLabel}
           >
