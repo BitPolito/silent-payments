@@ -90,12 +90,6 @@ cd api
 python3 -m core.utils.vanity_python your_vanity_string
 ```
 
-Or directly from rust binary:
-```bash
-python3 ./vanity/target/release/vanity "your_vanity_string"
-
-```
-
 Command line option:
 
 **--mode**: select mode from prefix, suffix and contains (default contains).
@@ -106,12 +100,12 @@ Command line option:
 
 Rust implementation benchmark and test:
 ```bash
-cd vanity
+cd api/vanity
 cargo bench
 ```
 All results are also displyed in vanity/target/criterion
 ```bash
-cd vanity
+cd api/vanity
 cargo test
 ```
 You can find the tests in vanity/tests/integration_tests.rs 
