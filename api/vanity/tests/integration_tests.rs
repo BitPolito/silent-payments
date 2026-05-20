@@ -77,16 +77,24 @@ mod matcher_tests {
     }
 
     #[test]
+    fn contains_skips_fixed_sp1qq() {
+        let m = Matcher::new("sp1qq", MatchMode::Contains);
+        assert!(!m.matches("sp1qqqcafexyz"));
+        let m2 = Matcher::new("cafe", MatchMode::Contains);
+        assert!(m2.matches("sp1qqqcafexyz"));
+    }
+
+    #[test]
     fn contains_case_insensitive() {
         let m = Matcher::new("CAFE", MatchMode::Contains);
         assert!(m.matches("sp1qqqcafexyz"), "pattern must be lowercased");
     }
 
     #[test]
-    fn prefix_skips_hrp_separator() {
-        let m = Matcher::new("qqq", MatchMode::Prefix);
-        assert!(m.matches("sp1qqqabc"));
-        assert!(!m.matches("sp1abcqqq"));
+    fn prefix_skips_fixed_sp1qq() {
+        let m = Matcher::new("abc", MatchMode::Prefix);
+        assert!(m.matches("sp1qqabcxyz"));
+        assert!(!m.matches("sp1qqqabc"));
     }
 
     #[test]

@@ -16,6 +16,35 @@ pub struct Matcher {
     mode:       MatchMode,
 }
 
+/// BIP-352 v0 silent payment addresses (version 0) begin with `sp1qq…` / `tsp1qq…`.
+/// Vanity patterns apply only after that fixed prefix.
+#[inline]
+fn vanity_search_start(address: &str) -> usize {
+    let lower = address.to_ascii_lowercase();
+    if lower.starts_with("tsp1qq") {
+        return 6;
+    }
+    if lower.starts_with("sp1qq") {
+        return 5;
+    }
+    if lower.starts_with("tsp1q") {
+        return 5;
+    }
+    if lower.starts_with("sp1q") {
+        return 4;
+    }
+    address
+        .find('1')
+        .map(|i| i + 2)
+        .unwrap_or(0)
+}
+
+#[inline]
+fn searchable_part(address: &str) -> &str {
+    let start = vanity_search_start(address);
+    address.get(start..).unwrap_or("")
+}
+
 impl Matcher {
     pub fn new(pattern: &str, mode: MatchMode) -> Self {
         Self {
@@ -26,16 +55,10 @@ impl Matcher {
 
     #[inline]
     pub fn matches(&self, address: &str) -> bool {
+        let slice = searchable_part(address);
         match self.mode {
-            MatchMode::Contains => address.contains(self.pattern.as_str()),
-            MatchMode::Prefix   => {
-                // Skip the HRP + separator ("sp1" or "tsp1")
-                let after_sep = address
-                    .find('1')
-                    .map(|i| &address[i + 1..])
-                    .unwrap_or(address);
-                after_sep.starts_with(self.pattern.as_str())
-            }
+            MatchMode::Contains => slice.contains(self.pattern.as_str()),
+            MatchMode::Prefix   => slice.starts_with(self.pattern.as_str()),
             MatchMode::Suffix   => address.ends_with(self.pattern.as_str()),
         }
     }
@@ -58,11 +81,16 @@ mod tests {
     }
 
     #[test]
-    fn test_prefix_skips_hrp() {
-        let m = Matcher::new("qqq", MatchMode::Prefix);
-        // "sp1" + "qqqabc..." -> after '1': "qqqabc..."
-        assert!(m.matches("sp1qqqabc"));
-        assert!(!m.matches("sp1abcqqq"));
+    fn test_contains_skips_hrp() {
+        let m = Matcher::new("sp1", MatchMode::Contains);
+        assert!(!m.matches("sp1qqqcafexyz"), "HRP must not be searchable");
+    }
+
+    #[test]
+    fn test_prefix_skips_fixed_sp1qq() {
+        let m = Matcher::new("abc", MatchMode::Prefix);
+        assert!(m.matches("sp1qqabcxyz"));
+        assert!(!m.matches("sp1qqqabc"));
     }
 
     #[test]

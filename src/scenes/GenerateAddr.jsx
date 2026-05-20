@@ -1,406 +1,483 @@
-import { useState, useEffect } from 'react';
-import { Box, VStack, HStack, Text, Button, Input, Spinner, Separator, Select, Checkbox } from '@chakra-ui/react';
-import iconDownload from '../assets/icon-download.png'
-import bull_head from '../assets/icon-bitpolito-bull-head.png'
-import { BiDockBottom } from 'react-icons/bi';
-import { jsPDF } from 'jspdf';
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { jsPDF } from 'jspdf'
+import { ICON } from '../assets/icons'
+import BpIcon from '../components/BpIcon'
+import Bech32Alphabet from '../components/Bech32Alphabet'
+import CopyableText from '../components/CopyableText'
+import DownloadAction from '../components/DownloadAction'
+import Collapsible from '../components/protocol/Collapsible'
+import ModalShell from '../components/ModalShell'
+import { useApiOnline } from '../hooks/useApiOnline'
+import { useVanityLimits } from '../hooks/useVanityLimits'
+import { useLocale } from '../i18n/LocaleContext'
+import { fetchSpAddress, fetchVanityAddress, formatApiError } from '../utils/api'
+import { normalizeGenResponse, qrImageUrl } from '../utils/normalizeGen'
+import {
+  DEFAULT_VANITY_PATTERN,
+  effectiveVanityPattern,
+  isBech32m,
+  parsePatternInput,
+  patternValidationError,
+  vanityContainsPreview,
+  vanityPatternRange,
+} from '../utils/bech32m'
 
-export default function GenerateAddr({ isOpen, onClose, isVanity }) {
+const alertIcon = '/bitpolito/alert.svg'
 
-	const [loading, setLoading] = useState(false);
-	const [testFinished, setTestFinished] = useState(false);
-	const [testResults, setTestResults] = useState([]);
+const BTN_PRIMARY =
+  'rounded-md border border-bp-blue bg-bp-blue px-3 py-1.5 text-xs font-semibold text-bp-canvas transition hover:opacity-90 disabled:opacity-40 dark:border-bp-canvas dark:bg-bp-canvas dark:text-bp-blue'
+const BTN_GHOST =
+  'rounded-md border border-bp-200/80 px-2.5 py-1 text-[11px] font-semibold text-bp-blue transition hover:bg-bp-50 dark:border-bp-500/40 dark:text-bp-canvas dark:hover:bg-bp-700/50'
+const INPUT =
+  'rounded-md border border-bp-200 bg-white px-2.5 py-1.5 font-mono text-xs dark:border-bp-500/40 dark:bg-bp-800 dark:text-bp-canvas'
+const COPY_COMPACT =
+  'mt-0 !p-2 !text-[11px] !bg-bp-50 dark:!bg-bp-700/70 dark:!text-bp-canvas dark:hover:!bg-bp-700/90'
+function downloadPngBase64(b64, filename) {
+  const bin = atob(b64)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  const blob = new Blob([bytes], { type: 'image/png' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  setTimeout(() => URL.revokeObjectURL(url), 100)
+}
 
-	const [pattern, setPattern] = useState("");
-	const [mode, setMode] = useState("contains");
-	const [threads, setThreads] = useState(0);
-	const [testnet, setTestnet] = useState(0);
-	const [forcePython, setForcePython] = useState(0);
-	const [error, setError] = useState("")
+/**
+ * @param {{ open: boolean, onClose: () => void, initialTab?: 'random' | 'vanity' }} props
+ */
+export default function GenerateAddrModal({ open, onClose, initialTab = 'random' }) {
+  const { tr } = useLocale()
+  const vanityLimits = useVanityLimits(open)
+  const apiStatus = useApiOnline(open)
+  const [tab, setTab] = useState(initialTab)
+  const [loading, setLoading] = useState(false)
+  const [genResult, setGenResult] = useState(null)
+  const [pattern, setPattern] = useState('')
+  const [lastVanityPattern, setLastVanityPattern] = useState('')
+  const [testnet, setTestnet] = useState(false)
+  const [error, setError] = useState('')
+  const [patternError, setPatternError] = useState('')
+  const abortRef = useRef(/** @type {AbortController | null} */ (null))
+  const patternRef = useRef(/** @type {HTMLInputElement | null} */ (null))
 
-	const [isDownloading, setIsDownloading] = useState(false)
+  const showResult = !!genResult?.addresses?.[0]
 
+  const resetResults = useCallback(() => {
+    abortRef.current?.abort()
+    setGenResult(null)
+    setLoading(false)
+    setError('')
+  }, [])
 
-	useEffect(() => {
-		if (!isVanity && isOpen) {
-			const fetchAddr = () => { 
-				setLoading(true);
-				fetch('/api/get_sp_address')
-				.then(async response => {
-					if (!response.ok) {
-						const errorText = await response.text();
-						throw new Error(`Server failed with status ${response.status}: ${errorText}`);
-					}
-					return response.json();
-				})
-				.then(data => {
-					setTestResults(data);
-				})
-				.catch(error => {
-					console.log("Error while fetching: ", error);
-					setLoading(false);
-					setTestFinished(true);
-				})
-				.finally(() => {
-					setLoading(false);
-					setTestFinished(true);
-				})
-			}
-			fetchAddr();
-		}	
-	}, [isVanity, isOpen]) 
+  useEffect(() => {
+    if (open) setTab(initialTab)
+  }, [open, initialTab])
 
-	if (!isOpen) return null;
+  useEffect(() => {
+    if (!open) {
+      abortRef.current?.abort()
+      setPattern('')
+      setLastVanityPattern('')
+      setTestnet(false)
+      setError('')
+      setPatternError('')
+      setGenResult(null)
+      setLoading(false)
+    }
+  }, [open])
 
-	const isBech32m = (s) => {
-		const pattern = /^[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/;
-		return pattern.test(s.toLowerCase());
-	}
+  const applyResult = useCallback(
+    (data) => {
+      const normalized = normalizeGenResponse(data)
+      if (!normalized) {
+        const serverMsg = data?.error != null ? String(data.error) : ''
+        setError(serverMsg || tr('apiError'))
+        setGenResult(null)
+        return
+      }
+      setGenResult(normalized)
+      setError('')
+    },
+    [tr],
+  )
 
-	const handleDownloadQr = async () => {
-		setIsDownloading(true);
-		fetch('/api/qr_code')
-		.then(async response => {
-			if (!response.ok) {
-				throw new Error('Error while fetching the qr file');
-			}
+  const runRandomGenerate = useCallback(() => {
+    abortRef.current?.abort()
+    const ac = new AbortController()
+    abortRef.current = ac
+    setLoading(true)
+    setError('')
+    setGenResult(null)
+    fetchSpAddress({ testnet }, { signal: ac.signal })
+      .then(applyResult)
+      .catch((e) => {
+        if (e.name !== 'AbortError') setError(formatApiError(e, tr))
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false)
+      })
+  }, [applyResult, tr, testnet])
 
-			const blob = await response.blob();
-			const tempUrl = URL.createObjectURL(blob);
+  const runVanitySearch = useCallback(() => {
+    const p = effectiveVanityPattern(pattern, vanityLimits.maxPattern)
+    if (!p || patternError) return
+    abortRef.current?.abort()
+    const ac = new AbortController()
+    abortRef.current = ac
+    setLoading(true)
+    setError('')
+    setGenResult(null)
+    setLastVanityPattern(p)
+    fetchVanityAddress(
+      {
+        pattern: p,
+        mode: 'contains',
+        testnet,
+      },
+      { signal: ac.signal },
+    )
+      .then(applyResult)
+      .catch((e) => {
+        if (e.name !== 'AbortError') setError(formatApiError(e, tr))
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false)
+      })
+  }, [pattern, patternError, testnet, applyResult, tr, vanityLimits.maxPattern])
 
-			const link = document.createElement('a');
-			link.href = tempUrl;
-			link.download = 'silent_payments_qr.png';
-			
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
+  const onPatternChange = (e) => {
+    const { value } = parsePatternInput(e.target.value, vanityLimits.maxPattern)
+    setPattern(value)
+    setGenResult(null)
+    const effective = effectiveVanityPattern(value, vanityLimits.maxPattern)
+    setPatternError(patternValidationError(effective, tr, vanityLimits.maxPattern))
+  }
 
-			setTimeout(() => URL.revokeObjectURL(tempUrl), 100);
-		})
-		.catch(error => {
-			console.log("Error while fetching qr code: ", error);
-		})
-		.finally(
-			setIsDownloading(false)
-		)
-	}
+  useEffect(() => {
+    if (!open) return
+    if (!pattern.trim()) return
+    const trimmed = pattern.slice(0, vanityLimits.maxPattern)
+    if (trimmed !== pattern) {
+      setPattern(trimmed)
+      setPatternError(patternValidationError(effectiveVanityPattern(trimmed, vanityLimits.maxPattern), tr, vanityLimits.maxPattern))
+    }
+  }, [open, vanityLimits.maxPattern, pattern, tr])
 
-	const handleDownloadResults = () => {
-		const doc = new jsPDF()
+  const handleDownloadQr = async () => {
+    const addr = genResult?.addresses?.[0]
+    if (!addr) return
+    if (genResult.qr_png_base64) {
+      downloadPngBase64(genResult.qr_png_base64, 'silent_payment_qr.png')
+      return
+    }
+    try {
+      const res = await fetch(qrImageUrl(addr))
+      if (!res.ok) throw new Error('QR fetch failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'silent_payment_qr.png'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    } catch {
+      window.open(qrImageUrl(addr), '_blank', 'noopener,noreferrer')
+    }
+  }
 
-		doc.setFontSize(18);
-		doc.addImage(bull_head, "PNG", 14, 10, 40, 40);
-		
-		doc.setFont("helvetica", "bold");
-		doc.text("Results", 14, 60);
+  const handleDownloadResults = () => {
+    if (!genResult?.addresses?.[0]) return
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('Silent Payments', 14, 20)
+    let posY = 32
+    const draw = (label, value) => {
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`${label}:`, 14, posY)
+      posY += 6
+      doc.setFont('courier', 'normal')
+      const lines = doc.splitTextToSize(String(value), 170)
+      doc.text(lines, 14, posY)
+      posY += lines.length * 5 + 10
+    }
+    draw(tr('address'), genResult.addresses[0])
+    if (genResult.key_material?.spend_priv_key) draw(tr('spendSk'), genResult.key_material.spend_priv_key)
+    if (genResult.key_material?.scan_priv_key) draw(tr('scanSk'), genResult.key_material.scan_priv_key)
+    doc.save('silent_payments_address.pdf')
+  }
 
-		let posY = 70;
+  useEffect(() => {
+    if (open && tab === 'vanity' && !showResult && !loading) {
+      patternRef.current?.focus()
+    }
+  }, [open, tab, showResult, loading])
 
-		const drawData = (label, value) => {
-			
-			doc.setFontSize(10); 
-			doc.setFont("helvetica", "bold");
-			doc.setTextColor(74, 85, 104); 
-			doc.text(`${label}:`, 14, posY);
+  const modalTitle = tab === 'random' ? tr('modalGenTitle') : tr('modalVanityTitle')
+  const modalSubtitle = tab === 'random' ? tr('modalGenSubtitle') : tr('modalVanitySubtitle')
+  const vanityEffective = effectiveVanityPattern(pattern, vanityLimits.maxPattern)
+  const vanityPatternLen = pattern.trim() ? pattern.length : vanityEffective.length
+  const vanityPreviewLine = vanityContainsPreview(testnet, pattern, vanityLimits.maxPattern)
 
-			posY += 5;
+  const primaryDisabled =
+    loading ||
+    apiStatus === 'offline' ||
+    (tab === 'vanity' &&
+      (!!patternError || !isBech32m(vanityEffective) || vanityEffective.length > vanityLimits.maxPattern))
 
-			doc.setFontSize(10);
-			doc.setFont("courier", "normal"); 
-			doc.setTextColor(113, 128, 150);
+  const addr = genResult?.addresses?.[0]
+  const isTestnetAddr =
+    genResult?.network === 'testnet' || (addr && addr.toLowerCase().startsWith('tsp1'))
+  const vanityHighlight =
+    tab === 'vanity' && addr && lastVanityPattern
+      ? vanityPatternRange(addr, lastVanityPattern, 'contains', isTestnetAddr)
+      : null
+  const qrSrc = genResult?.qr_png_base64
+    ? `data:image/png;base64,${genResult.qr_png_base64}`
+    : addr
+      ? qrImageUrl(addr)
+      : null
 
-			const maxBoxWidth = 180; 
-			const padding = 6;
-		
-			const splitText = doc.splitTextToSize(String(value), maxBoxWidth - (padding * 2));
+  const phase = loading ? 'loading' : showResult ? 'result' : 'form'
 
-			const lineHeight = 5;
-			const boxHeight = (splitText.length * lineHeight) + (padding * 2);
+  return (
+    <ModalShell open={open} onClose={onClose} title={modalTitle} subtitle={modalSubtitle} closeLabel={tr('close')}>
+      <div className="flex gap-0.5 rounded-md border border-bp-200 bg-bp-50 p-0.5 dark:border-bp-500/30 dark:bg-bp-800/40">
+        <button
+          type="button"
+          onClick={() => {
+            setTab('random')
+            resetResults()
+          }}
+          className={`flex-1 rounded px-2.5 py-1 text-[11px] font-semibold transition ${
+            tab === 'random'
+              ? 'bg-bp-blue text-bp-canvas dark:bg-bp-canvas dark:text-bp-blue'
+              : 'text-bp-blue/60 hover:text-bp-blue dark:text-bp-canvas/60 dark:hover:text-bp-canvas'
+          }`}
+        >
+          {tr('genTabRandom')}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setTab('vanity')
+            resetResults()
+          }}
+          className={`flex-1 rounded px-2.5 py-1 text-[11px] font-semibold transition ${
+            tab === 'vanity'
+              ? 'bg-bp-blue text-bp-canvas dark:bg-bp-canvas dark:text-bp-blue'
+              : 'text-bp-blue/60 hover:text-bp-blue dark:text-bp-canvas/60 dark:hover:text-bp-canvas'
+          }`}
+        >
+          {tr('genTabVanity')}
+        </button>
+      </div>
 
-			doc.setFillColor(247, 250, 252);
-			doc.roundedRect(14, posY, maxBoxWidth, boxHeight, 2, 2, 'F');
+      {phase !== 'loading' ? (
+        <label className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-bp-200/80 bg-bp-50/50 px-2.5 py-2 text-[11px] font-semibold text-bp-blue dark:border-bp-500/35 dark:bg-bp-800/30 dark:text-bp-canvas">
+          <span className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={testnet}
+              onChange={(e) => setTestnet(e.target.checked)}
+              className="rounded border-bp-300"
+            />
+            {tr('testnet')}
+          </span>
+          <span className="font-normal text-bp-500 dark:text-bp-canvas/70">{tr('testnetHint')}</span>
+        </label>
+      ) : null}
 
-			doc.text(splitText, 14 + padding, posY + padding + 3.5);
+      {apiStatus === 'offline' ? (
+        <div className="mt-4 flex items-start gap-3 rounded-md border border-bp-200 bg-bp-50 p-2 dark:border-bp-500/40 dark:bg-bp-700/40">
+          <img src={alertIcon} alt="" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p className="text-xs font-medium text-bp-blue dark:text-bp-canvas">
+            {tr(import.meta.env.PROD ? 'apiOfflineProd' : 'apiOffline')}
+          </p>
+        </div>
+      ) : null}
 
-			posY += boxHeight + 10; 
-		};
+      {error ? (
+        <div className="mt-4 flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-2 dark:border-red-900/40 dark:bg-red-950/30">
+          <img src={alertIcon} alt="" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p className="text-xs font-medium text-red-800 dark:text-red-200">{error}</p>
+        </div>
+      ) : null}
 
-		drawData("Address", testResults.addresses[0]);
-		drawData("Spend Private Key", testResults.key_material.spend_priv_key);
-		drawData("Scan Private Key", testResults.key_material.scan_priv_key);
+      {phase === 'loading' ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-10">
+          <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-bp-blue border-t-transparent dark:border-bp-canvas dark:border-t-transparent" />
+          <p className="text-xs font-semibold text-bp-blue dark:text-bp-canvas">
+            {tab === 'vanity' ? tr('genSearching') : tr('generating')}
+          </p>
+          {tab === 'vanity' ? (
+            <p className="max-w-md break-all text-center font-mono text-xs text-bp-500 dark:text-bp-canvas/80">{vanityPreviewLine}</p>
+          ) : null}
+        </div>
+      ) : null}
 
-		doc.save("Address_Results.pdf");
+      {phase === 'form' && tab === 'random' ? (
+        <div className="mt-3 flex flex-col gap-2.5">
+          <p className="text-xs leading-relaxed text-bp-blue/80 dark:text-bp-canvas/85">{tr('genRandomLead')}</p>
+          <button
+            type="button"
+            onClick={runRandomGenerate}
+            className={`w-full ${BTN_PRIMARY}`}
+          >
+            {tr('generate')}
+          </button>
+        </div>
+      ) : null}
 
-	}
+      {phase === 'form' && tab === 'vanity' ? (
+        <div className="mt-3 flex flex-col gap-2.5">
+          <p className="text-xs leading-relaxed text-bp-blue/90 dark:text-bp-canvas/90">{tr('genVanityLead')}</p>
 
-	const handleVanityTest = async () => {
-		setLoading(true);
-		fetch(`/api/vanity_address/${pattern}/${mode}/${threads}/${testnet}/${forcePython}`)
-			.then(async response => {
-				if (!response.ok) {
-					const errorText = await response.text();
-					throw new Error(`Server failed with status ${response.status}: ${errorText}`);
-				}
-				return response.json();
-			})
-			.then(data => {
-				setTestResults(data);
-				setPattern("");
-			})
-			.catch(error => {
-				console.log("Error while fetching: ", error);
-				setLoading(false);
-				setTestFinished(true);
-			})
-			.finally(() => {
-				setLoading(false);
-				setTestFinished(true);
-			})
+          {!vanityLimits.isLocalApi ? (
+            <p className="text-[10px] text-bp-500 dark:text-bp-canvas/65">
+              {tr('vanityLimitVercel')
+                .replace('{n}', String(vanityLimits.maxPattern))
+                .replace('{s}', String(vanityLimits.timeoutSec))}
+            </p>
+          ) : null}
 
-	}
+          <div className="flex items-baseline justify-between gap-2">
+            <label htmlFor="vanity-pattern" className="text-[10px] font-semibold uppercase tracking-wide text-bp-500 dark:text-bp-canvas/75">
+              {tr('patternLabel')}
+            </label>
+            <span className="font-mono text-[10px] font-semibold tabular-nums text-bp-500 dark:text-bp-canvas/70">
+              {vanityPatternLen}/{vanityLimits.maxPattern}
+            </span>
+          </div>
 
-	const closePage = () => {
-		setLoading(false);
-		setTestResults([]);
-		setPattern("");
-		setTestFinished(false);
-		setMode("contains");
-		setForcePython(0);
-		setTestnet(0);
-		setThreads(0);
-		setIsDownloading(false);
-		setError("");
-		onClose();
-	}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+            <input
+              ref={patternRef}
+              id="vanity-pattern"
+              type="text"
+              value={pattern}
+              onChange={onPatternChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !primaryDisabled) runVanitySearch()
+              }}
+              placeholder={DEFAULT_VANITY_PATTERN}
+              autoComplete="off"
+              spellCheck={false}
+              className={`min-w-0 flex-1 ${INPUT} ${patternError ? 'border-red-400 dark:border-red-500/60' : ''}`}
+            />
+            <button
+              type="button"
+              disabled={primaryDisabled}
+              onClick={runVanitySearch}
+              className={`shrink-0 ${BTN_PRIMARY}`}
+            >
+              {tr('generate')}
+            </button>
+          </div>
 
-	return (
-	<Box
-		position="fixed" top={0} left={0} w="100vw" h="100vh"
-		bg="rgba(0, 0, 0, 0.6)"
-		backdropFilter="blur(4px)" zIndex={9999}
-		display="flex" alignItems="center" justifyContent="center"
-		onClick={closePage}
-	>
-		<Box
-		bg="white" border="4px solid #001CE0" borderRadius="2xl" p={8} w="100%"
-		maxW="700px" maxH="85vh" overflowY="auto" position="relative"
-		onClick={(e) => e.stopPropagation()}
-		boxShadow="2xl"
-		color="black"
-		>
-		<Button position="absolute" top={4} right={4} size="sm" variant="ghost" onClick={closePage}>
-			X
-		</Button>
+          <p className="break-all font-mono text-[10px] leading-relaxed text-bp-500 dark:text-bp-canvas/75">
+            <span className="text-bp-400 dark:text-bp-canvas/55">{tr('vanityPreview')}: </span>
+            <span className="font-semibold text-bp-blue dark:text-bp-canvas">{vanityPreviewLine}</span>
+          </p>
 
-		<VStack gap={6} align="stretch">
-			<Text fontSize="2xl" fontWeight="bold" color="#001CE0" textAlign="center">
-				{isVanity ? "Generate your vanity address" : "Generate your silent payment address"}
-			</Text>
+          {patternError ? <p className="text-xs font-medium text-red-600 dark:text-red-400">{patternError}</p> : null}
 
-			{isVanity && (
-				<HStack w="full">
-					<Input
-						type="text"
-						placeholder="Enter the pattern"
-						value={pattern}
-						onChange={(e) => {
-							setTestFinished(false);
-							if (!isBech32m(e.target.value))
-								setError("Invalid pattern: unaccepted characters")
-							else if (e.target.value.length > 4)
-								setError("Invalid pattern: too long pattern")
-							else
-								setError("")
-								setPattern(e.target.value)
-						}}
-						flex="1"
-					/>
-					<Button
-						bg="#001CE0"
-						color="white"
-						_hover={{ bg: "#0014a8" }}
-						onClick={handleVanityTest}
-						disabled={loading || pattern.trim() === "" || error !== ""}
-					>
-						Generate
-					</Button>
-				</HStack>
+          <Bech32Alphabet />
+        </div>
+      ) : null}
 
-			)}
+      {phase === 'result' && addr ? (
+        <div className="mt-5 flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded bg-bp-100 px-2 py-0.5 text-[10px] font-semibold text-bp-600 dark:bg-bp-700/60 dark:text-bp-200">
+                {isTestnetAddr ? tr('networkTestnet') : tr('networkMainnet')}
+              </span>
+              {tab === 'vanity' && genResult.elapsed != null ? (
+                <span className="rounded bg-bp-100 px-2 py-0.5 text-[10px] font-semibold text-bp-600 dark:bg-bp-700/60 dark:text-bp-200">
+                  {tr('elapsed')}: {Number(genResult.elapsed).toFixed(2)} s
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={resetResults}
+              className={`${BTN_GHOST} ml-auto`}
+            >
+              {tr('genNewAddress')}
+            </button>
+          </div>
 
-			{isVanity && (
-				<Text color="gray.500" fontSize="2xm">Accepted characers: qpzry9x8gf2tvdw0s3jn54khce6mua7l</Text>
-			)}
+          <div className="rounded-md border border-bp-200 bg-bp-50/60 p-2.5 dark:border-bp-500/40 dark:bg-bp-700/30">
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+              {qrSrc ? (
+                <div className="shrink-0 rounded-md border border-bp-200 bg-white p-1 dark:border-bp-500/30">
+                  <img src={qrSrc} alt="" className="h-20 w-20" />
+                </div>
+              ) : null}
+              <div className="min-w-0 flex-1 w-full">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-bp-500 dark:text-bp-canvas/75">
+                  {tr('address')}
+                </p>
+                <CopyableText value={addr} highlight={vanityHighlight} className={COPY_COMPACT} />
+              </div>
+            </div>
+          </div>
 
-			<Separator />
+          {genResult.key_material ? (
+            <Collapsible title={tr('genFoldKeys')} nested>
+              <div className="flex flex-col gap-2.5 pt-0.5">
+                <div
+                  className="flex gap-2.5 rounded-md border border-bp-200 bg-bp-50/80 p-2.5 dark:border-bp-500/40 dark:bg-bp-700/35"
+                  role="alert"
+                >
+                  <BpIcon src={ICON.key} className="mt-0.5 h-5 w-5 shrink-0 text-bp-blue dark:text-bp-canvas" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold text-bp-blue dark:text-bp-canvas">{tr('genPrivateKeys')}</p>
+                    <p className="mt-1 text-[10px] leading-relaxed text-bp-blue/85 dark:text-bp-canvas/85">{tr('genKeysWarning')}</p>
+                    <p className="mt-1 text-[10px] leading-relaxed text-bp-500 dark:text-bp-300">{tr('genKeysShort')}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-0.5 text-[10px] font-semibold text-bp-blue dark:text-bp-canvas/85">{tr('scanSk')}</p>
+                  <CopyableText value={genResult.key_material.scan_priv_key} className={COPY_COMPACT} />
+                </div>
+                <div>
+                  <p className="mb-0.5 text-[10px] font-semibold text-bp-blue dark:text-bp-canvas/85">{tr('spendSk')}</p>
+                  <CopyableText value={genResult.key_material.spend_priv_key} className={COPY_COMPACT} />
+                </div>
+              </div>
+            </Collapsible>
+          ) : null}
 
-			{loading ? (
-
-			<VStack py={10}>
-				<Spinner size="xl" color="#001CE0" borderWidth="4px" />
-				<Text color="gray.500" mt={4}>Generating address...</Text>
-			</VStack>
-
-			) : error !== '' ? (
-					<HStack py={10} justify="center" bg="red.50" borderRadius="md" border="1px dashed" borderColor="red.300">
-						<Text color="red.500" fontWeight="bold"> {error} </Text>
-					</HStack>
-			) : (
-			testFinished && testResults && (
-				<VStack align="start" gap={4} bg="gray.50" p={4} borderRadius="md" w="full" position="relative">
-				<HStack justify="space-between" w="full" pr={8}>
-				
-					<Text fontSize="sm" color="gray.500" fontWeight="medium">
-						Elapsed time: {testResults.elapsed ? `${testResults.elapsed.toFixed(3)} s` : "N/A"}
-					</Text>
-					{isVanity && (
-						<Button
-						position="absolute"
-						top={1}
-						right={1}
-						size="sm"
-						variant="ghost"
-						onClick={() => {
-							setTestResults(null);
-							setTestFinished(false);
-						}}
-						>
-						X
-						</Button>
-					)}
-				</HStack>
-
-
-					<Box w="full">
-						{testResults && (
-						<VStack
-							align="start"
-							gap={3}
-							mt={2}
-							bg="white"
-							p={4}
-							borderRadius="md"
-							borderWidth="1px"
-							borderColor="gray.200"
-							w="full"
-						>
-							{testResults.message && (
-							<Text fontSize="md" fontWeight="bold" color="green.600">
-								{testResults.message}
-							</Text>
-							)}
-
-							{testResults.addresses && testResults.addresses.length > 0 && (
-							<Box w="full">
-								<Text fontSize="sm" fontWeight="bold" color="gray.700">
-									Generated Address:
-								</Text>
-								<Text
-								fontSize="sm"
-								color="gray.600"
-								wordBreak="break-all"
-								bg="gray.50"
-								p={2}
-								borderRadius="md"
-								fontFamily="monospace"
-								>
-									{testResults.addresses[0]}
-								</Text>
-							</Box>
-							)}
-
-							{testResults.key_material && (
-							<>
-
-								<Box w="full">
-									<Text fontSize="sm" fontWeight="bold" color="gray.700">
-										Spend Private Key:
-									</Text>
-									<Text
-										fontSize="sm"
-										color="gray.600"
-										wordBreak="break-all"
-										bg="gray.50"
-										p={2}
-										borderRadius="md"
-										fontFamily="monospace"
-									>
-										{testResults.key_material.spend_priv_key}
-									</Text>
-								</Box>
-
-								<Box w="full">
-									<Text fontSize="sm" fontWeight="bold" color="gray.700">
-										Scan Private Key:
-									</Text>
-									<Text
-										fontSize="sm"
-										color="gray.600"
-										wordBreak="break-all"
-										bg="gray.50"
-										p={2}
-										borderRadius="md"
-										fontFamily="monospace"
-									>
-										{testResults.key_material.scan_priv_key}
-									</Text>
-								</Box>
-							</>
-							)}
-
-								<Box 
-									position="relative"
-									left={55}
-									zIndex={10}
-								>
-									<HStack gap={5}>
-										<Button
-											onClick={handleDownloadQr}
-											loading={isDownloading}
-											loadingText="Downloading..."
-											backgroundColor={"#001CE0"}
-											color="white"
-											size="lg"
-											variant="solid"
-										>
-											<img 
-												src={iconDownload} 
-												alt="download icon" 
-												style={{ width: '20px', height: '20px', marginRight: '2px' }} 
-											/>
-											Download Qr Code
-										</Button>
-
-										<Button
-											onClick={handleDownloadResults}
-											loading={isDownloading}
-											loadingText="Downloading..."
-											backgroundColor={"#001CE0"}
-											color="white"
-											size="lg"
-											variant="solid"
-										>
-											<img 
-												src={iconDownload} 
-												alt="download icon" 
-												style={{ width: '20px', height: '20px', marginRight: '2px' }} 
-											/>
-											Download Results
-										</Button>
-
-									</HStack>
-								</Box>
-
-						</VStack>
-						)}
-					</Box>
-
-				</VStack>
-			)
-			)}
-		</VStack>
-		</Box>
-	</Box>
-	);
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-bp-500 dark:text-bp-canvas/75">
+              {tr('downloadSection')}
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <DownloadAction
+                icon={ICON.save}
+                title={tr('downloadQr')}
+                hint={tr('downloadQrHint')}
+                onClick={handleDownloadQr}
+              />
+              <DownloadAction
+                icon={ICON.save}
+                title={tr('downloadPdf')}
+                hint={tr('downloadPdfHint')}
+                onClick={handleDownloadResults}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </ModalShell>
+  )
 }
