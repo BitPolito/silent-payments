@@ -1,32 +1,468 @@
-@font-face {
-  font-family: 'SF Pro Display';
-  src: url('./assets/fonts/SF-Pro-Display-Regular.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    @apply outline-2 outline-offset-2 outline-bp-blue;
+  }
+
+  .dark button:focus-visible,
+  .dark a:focus-visible {
+    @apply outline-bp-canvas;
+  }
 }
 
-@font-face {
-  font-family: 'SF Pro Display';
-  src: url('./assets/fonts/SF-Pro-Display-Bold.woff') format('woff');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
+@layer components {
+  .sp-modal-overlay {
+    background: rgba(0, 28, 224, 0.22);
+    backdrop-filter: blur(8px);
+  }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'SF Pro Display', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  .sp-btn-outline,
+  .sp-btn-solid {
+    @apply inline-flex items-center justify-center gap-2 border-2 font-semibold transition-all duration-200;
+    @apply rounded-xl px-5 py-3 text-sm sm:px-7 sm:py-3.5 sm:text-base;
+    @apply hover:-translate-y-px hover:shadow-sm active:translate-y-0;
+  }
 
-#root {
-  width: 100vw;
-  min-height: 100vh;
-}
+  .sp-btn-outline {
+    @apply border-bp-300 bg-white text-bp-blue;
+    @apply hover:border-bp-500 hover:bg-bp-50 dark:border-bp-400/60 dark:bg-bp-800/40 dark:text-bp-canvas dark:hover:border-bp-canvas/50 dark:hover:bg-bp-700/50;
+  }
 
-button:focus {
-  outline: none;
+  .sp-btn-solid {
+    @apply border-bp-blue bg-bp-blue text-bp-canvas shadow-sm;
+    @apply hover:border-bp-800 hover:bg-bp-800 dark:border-bp-canvas/30 dark:bg-bp-canvas dark:text-bp-blue dark:hover:bg-bp-100;
+  }
+
+  .site-footer {
+    @apply mt-auto bg-bp-50 py-6 text-bp-blue;
+    @apply dark:bg-bp-700/90 dark:text-bp-canvas;
+  }
+
+  .sp-hero-panel {
+    @apply rounded-2xl border border-bp-200 bg-white px-5 py-6 shadow-sm;
+    @apply dark:border-bp-500/35 dark:bg-bp-800/45;
+  }
+
+  .sp-hero-kicker {
+    @apply text-[11px] font-bold uppercase leading-none tracking-[0.14em] text-bp-blue/55;
+    @apply dark:text-bp-canvas/55;
+  }
+
+  .sp-section-label {
+    @apply mb-3 text-xs font-bold uppercase tracking-[0.2em] text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-steps {
+    @apply rounded-xl border border-bp-200 bg-bp-50 p-1 dark:border-bp-500/35 dark:bg-bp-700/40;
+  }
+
+  .sp-steps-btn {
+    @apply flex w-full flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-center transition;
+    @apply text-bp-600 hover:bg-white dark:text-bp-200 dark:hover:bg-bp-800/60;
+  }
+
+  .sp-steps-btn.is-current {
+    @apply bg-bp-blue text-bp-canvas shadow-sm dark:bg-bp-canvas dark:text-bp-blue;
+  }
+
+  .sp-steps-btn.is-done:not(.is-current) {
+    @apply text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-steps-num {
+    @apply flex h-5 w-5 items-center justify-center rounded-full border border-current text-[10px] font-bold;
+  }
+
+  .sp-steps-label {
+    @apply max-w-full truncate px-0.5 text-[10px] font-semibold leading-tight;
+  }
+
+  .sp-flow-nav {
+    @apply sticky bottom-0 -mx-1 flex items-center justify-between gap-3 border-t border-bp-200 bg-bp-canvas/95 px-1 pt-3 backdrop-blur-sm;
+    @apply dark:border-bp-500/35 dark:bg-bp-800/95;
+  }
+
+  .sp-scenario-panel {
+    @apply rounded-xl border border-bp-200/90 bg-white px-3 py-2.5;
+    @apply dark:border-bp-500/30 dark:bg-bp-800/30;
+  }
+
+  .sp-scenario-vector {
+    @apply mb-1 text-[11px] font-semibold uppercase tracking-wide text-bp-500 dark:text-bp-200;
+  }
+
+  .sp-scenario-lead {
+    @apply mt-2.5 text-sm font-medium leading-snug text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-scenario-body {
+    @apply mt-2.5 space-y-0 rounded-lg border border-bp-200/60 bg-bp-50/40 p-2;
+    @apply dark:border-bp-500/25 dark:bg-bp-800/25;
+  }
+
+  .sp-story-stage {
+    @apply mb-1 grid grid-cols-[1fr_auto_1fr] items-center justify-items-center gap-2 px-1;
+  }
+
+  .sp-story-pizza {
+    @apply h-8 w-8 shrink-0 self-center object-contain;
+    @apply dark:brightness-0 dark:invert;
+  }
+
+  .sp-story-actor {
+    @apply flex w-full max-w-[5.5rem] flex-col items-center gap-0.5 transition;
+  }
+
+  .sp-story-actor.is-active .sp-story-actor-img {
+    @apply ring-1 ring-bp-blue/25 dark:ring-bp-canvas/30;
+  }
+
+  .sp-story-actor.is-dim {
+    @apply opacity-45 grayscale;
+  }
+
+  .sp-story-actor-img {
+    @apply h-9 w-9 rounded-md border border-bp-200/80 bg-white object-contain p-0.5 transition;
+    @apply dark:border-bp-500/35 dark:bg-bp-800/50 dark:brightness-0 dark:invert;
+  }
+
+  .sp-story-actor-name {
+    @apply text-[11px] font-bold text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-vector-aside {
+    @apply mt-2 rounded-lg border border-amber-300/80 bg-amber-50/90 px-2.5 py-2 text-xs leading-relaxed text-amber-950;
+    @apply dark:border-amber-500/35 dark:bg-amber-950/30 dark:text-amber-100;
+  }
+
+  .sp-fixture-meta {
+    @apply mt-2 flex flex-wrap gap-1.5;
+  }
+
+  .sp-fixture-meta-item {
+    @apply rounded-full border border-bp-200 bg-bp-50 px-2 py-0.5 text-[10px] font-semibold text-bp-700;
+    @apply dark:border-bp-500/35 dark:bg-bp-800/55 dark:text-bp-canvas;
+  }
+
+  .sp-step-block {
+    @apply space-y-2;
+  }
+
+  .sp-step-head {
+    @apply flex gap-2.5;
+  }
+
+  .sp-step-icon {
+    @apply mt-0.5 h-7 w-7 shrink-0 object-contain dark:brightness-0 dark:invert;
+  }
+
+  .sp-step-head-text {
+    @apply min-w-0 flex-1;
+  }
+
+  .sp-step-title {
+    @apply text-sm font-bold text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-step-lead {
+    @apply mt-0.5 text-xs leading-snug text-bp-600 dark:text-bp-200;
+  }
+
+  .sp-step-body {
+    @apply space-y-2 border-t border-bp-200/60 pt-2;
+    @apply dark:border-bp-500/25;
+  }
+
+  .sp-step-prose {
+    @apply text-sm leading-relaxed text-bp-700 dark:text-bp-canvas/90;
+  }
+
+  .sp-fold {
+    @apply rounded-lg border border-bp-200/80 bg-white/70;
+    @apply dark:border-bp-500/25 dark:bg-bp-800/40;
+  }
+
+  .sp-fold-nested {
+    @apply border-bp-200/60 bg-bp-50/50 dark:bg-bp-800/25;
+  }
+
+  .sp-fold-trigger {
+    @apply flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-xs font-semibold text-bp-blue;
+    @apply dark:text-bp-canvas;
+  }
+
+  .sp-fold-chevron {
+    @apply shrink-0 text-bp-500 dark:text-bp-200;
+  }
+
+  .sp-fold-panel {
+    @apply space-y-2 border-t border-bp-200/70 px-2.5 py-2;
+    @apply dark:border-bp-500/25;
+  }
+
+  .sp-scan-explainer-inner {
+    @apply space-y-1.5;
+  }
+
+  .sp-flow-shell {
+    @apply flex flex-col gap-2.5;
+  }
+
+  .sp-flow-edge-note {
+    @apply rounded-md bg-amber-50/90 px-2 py-1.5 text-[11px] leading-snug text-amber-950;
+    @apply dark:bg-amber-950/25 dark:text-amber-100;
+  }
+
+  .sp-flow-footer {
+    @apply text-center text-[11px] text-bp-500 dark:text-bp-canvas/50;
+  }
+
+  .sp-flow-rail {
+    @apply px-0.5;
+  }
+
+  .sp-flow-rail-dot {
+    @apply relative z-[1] h-3 w-3 shrink-0 rounded-full border-2 border-bp-300 bg-white transition;
+    @apply dark:border-bp-500/50 dark:bg-bp-800;
+  }
+
+  .sp-flow-rail-dot.is-done {
+    @apply border-bp-blue bg-bp-blue dark:border-bp-canvas dark:bg-bp-canvas;
+  }
+
+  .sp-flow-rail-dot.is-current {
+    @apply scale-125 border-bp-blue ring-2 ring-bp-blue/25 dark:border-bp-canvas dark:ring-bp-canvas/30;
+  }
+
+  .sp-flow-rail-dot.is-locked {
+    @apply opacity-40;
+  }
+
+  .sp-flow-rail-line {
+    @apply mx-0.5 h-0.5 min-w-[8px] flex-1 rounded bg-bp-200;
+    @apply dark:bg-bp-600/60;
+  }
+
+  .sp-flow-rail-line.is-done {
+    @apply bg-bp-blue dark:bg-bp-canvas/50;
+  }
+
+  .sp-flow-card {
+    @apply rounded-xl border border-bp-200/80 bg-white px-3 py-2.5;
+    @apply dark:border-bp-500/30 dark:bg-bp-800/35;
+  }
+
+  .sp-flow-panel {
+    @apply mt-2.5 space-y-2.5 animate-[sp-flow-in_0.22s_ease-out];
+  }
+
+  @keyframes sp-flow-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .sp-flow-step-head {
+    @apply flex gap-2.5;
+  }
+
+  .sp-flow-step-icon {
+    @apply h-9 w-9 shrink-0;
+  }
+
+  .sp-flow-step-head .sp-flow-text {
+    @apply mt-1;
+  }
+
+  .sp-flow-data {
+    @apply rounded-lg border border-bp-200/70 bg-white p-2.5 dark:border-bp-500/20 dark:bg-bp-800/30;
+  }
+
+  .sp-flow-data-label {
+    @apply flex gap-2;
+  }
+
+  .sp-flow-data-icon {
+    @apply h-5 w-5 shrink-0 opacity-90;
+  }
+
+  .sp-flow-data-body {
+    @apply mt-2;
+  }
+
+  .sp-flow-legend {
+    @apply rounded-lg bg-bp-50/70 px-2.5 py-2;
+    @apply dark:bg-bp-700/25;
+  }
+
+  .sp-flow-legend-title {
+    @apply text-[10px] font-semibold text-bp-500 dark:text-bp-canvas/55;
+  }
+
+  .sp-flow-legend-list {
+    @apply mt-1 list-none space-y-1 pl-0 text-[11px] leading-snug text-bp-600;
+    @apply dark:text-bp-canvas/75;
+  }
+
+  .sp-flow-legend-list li::before {
+    content: '· ';
+    @apply font-bold text-bp-blue/50 dark:text-bp-canvas/40;
+  }
+
+  .sp-flow-badge {
+    @apply rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide;
+  }
+
+  .sp-flow-badge.is-silent {
+    @apply bg-bp-blue/10 text-bp-blue dark:bg-bp-canvas/15 dark:text-bp-canvas;
+  }
+
+  .sp-flow-badge.is-bc1 {
+    @apply bg-bp-100 text-bp-500 dark:bg-bp-700/50 dark:text-bp-canvas/55;
+  }
+
+  .sp-flow-heading {
+    @apply text-sm font-bold text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-flow-step-lead {
+    @apply mt-1 text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/75;
+  }
+
+  .sp-flow-text {
+    @apply mt-2 text-xs leading-relaxed text-bp-700 dark:text-bp-canvas/85;
+  }
+
+  .sp-flow-callout-inline {
+    @apply mt-2 rounded-md border-l-[3px] border-bp-blue bg-bp-50/80 px-2 py-1.5 text-[11px] font-medium leading-snug text-bp-blue;
+    @apply dark:border-bp-canvas dark:bg-bp-700/40 dark:text-bp-canvas/90;
+  }
+
+  .sp-flow-done {
+    @apply text-center text-[11px] font-medium text-bp-600 dark:text-bp-canvas/70;
+  }
+
+  .sp-flow-verdict {
+    @apply rounded-lg px-2.5 py-1.5 text-xs font-semibold;
+  }
+
+  .sp-flow-verdict.is-ok {
+    @apply bg-bp-blue/10 text-bp-blue dark:bg-bp-canvas/15 dark:text-bp-canvas;
+  }
+
+  .sp-flow-verdict.is-fail {
+    @apply bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-200;
+  }
+
+  .sp-scan-steps {
+    @apply mt-1.5 space-y-1.5;
+  }
+
+  .sp-scan-steps li {
+    @apply flex items-start gap-2 text-xs leading-snug text-bp-700 dark:text-bp-canvas/90;
+  }
+
+  .sp-scan-step-icon {
+    @apply h-5 w-5 shrink-0;
+  }
+
+  .sp-scan-step-num {
+    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-bp-blue/10 text-[10px] font-bold text-bp-blue;
+    @apply dark:bg-bp-canvas/15 dark:text-bp-canvas;
+  }
+
+  .sp-flow-note {
+    @apply mt-2 rounded-lg bg-bp-50 px-2.5 py-2 text-xs leading-relaxed text-bp-600;
+    @apply dark:bg-bp-700/40 dark:text-bp-200;
+  }
+
+  .sp-flow-muted {
+    @apply text-xs text-bp-600 dark:text-bp-200;
+  }
+
+  .sp-flow-field-label {
+    @apply mt-2 text-[11px] font-bold text-bp-600 dark:text-bp-200;
+  }
+
+  .sp-flow-outputs {
+    @apply mt-1.5 space-y-1.5;
+  }
+
+  .sp-utxo-list {
+    @apply mt-2 flex flex-col gap-1.5;
+  }
+
+  .sp-utxo-chip {
+    @apply flex flex-wrap items-center gap-2 rounded-lg border border-bp-200 bg-white px-2 py-1.5;
+    @apply dark:border-bp-500/35 dark:bg-bp-800/50;
+  }
+
+  .sp-utxo-card {
+    @apply rounded-lg border border-bp-200 bg-white px-2.5 py-2;
+    @apply dark:border-bp-500/35 dark:bg-bp-800/50;
+  }
+
+  .sp-utxo-card-head {
+    @apply mb-1 flex flex-wrap items-center justify-between gap-1;
+  }
+
+  .sp-utxo-index {
+    @apply text-[10px] font-bold uppercase tracking-wide text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-utxo-ref {
+    @apply font-mono text-[10px] leading-snug text-bp-700 dark:text-bp-canvas/90;
+  }
+
+  .sp-utxo-pill {
+    @apply rounded-full bg-bp-blue/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bp-blue;
+    @apply dark:bg-bp-canvas/15 dark:text-bp-canvas;
+  }
+
+  .sp-key-pair {
+    @apply mt-2 grid gap-2 sm:grid-cols-2;
+  }
+
+  .sp-demo-running {
+    @apply mt-2 text-sm font-medium text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-demo-error {
+    @apply mt-2 text-sm font-medium text-red-700 dark:text-red-300;
+  }
+
+  .sp-demo-verify {
+    @apply mt-2 text-xs font-bold;
+  }
+
+  .sp-demo-verify.is-ok {
+    @apply text-bp-blue dark:text-bp-canvas;
+  }
+
+  .sp-demo-verify.is-fail {
+    @apply text-red-700 dark:text-red-300;
+  }
+
+  .sp-demo-results-title {
+    @apply text-sm font-bold text-bp-blue dark:text-bp-canvas;
+  }
 }

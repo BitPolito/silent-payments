@@ -229,11 +229,7 @@ def generate_sp_address(
                 create_labeled_silent_payment_address(b_scan, B_spend, m, hrp, version)
             )
     if qr_code:
-        generate_qrcode(
-            sp_addresses[0],
-            scan_priv=b_scan.hex(),
-            spend_priv=b_spend.hex(),
-        )
+        generate_qrcode(sp_addresses[0])
 
     return sp_addresses, key_material
 

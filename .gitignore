@@ -204,11 +204,12 @@ dist-ssr
 *.sln
 *.sw?
 
-api/vanity/target
-vanity/Cargo.lock
+api/vanity/target/
 api/vanity/Cargo.lock
-api/vanity/target
+vanity/Cargo.lock
 
 *.csv
-
 silent_payment_qr.png
+
+# Local build output (Vite)
+dist/
