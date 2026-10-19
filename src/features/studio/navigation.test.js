@@ -5,6 +5,7 @@ afterEach(() => vi.unstubAllGlobals())
 it('validates shared selections and falls back visibly', () => {
   expect(studioSelection('?tool=payment&preset=mutation')).toEqual({ tool: 'payment', preset: 'mutation', invalid: false })
   expect(studioSelection('?tool=scan&preset=mutation')).toEqual({ tool: 'payment', preset: 'default', invalid: true })
+  expect(studioSelection('?tool=scan&tool=payment').invalid).toBe(true)
   expect(studioSelection('?tool=unknown')).toEqual({ tool: 'payment', preset: 'default', invalid: true })
 })
 it('shares only tool and preset, keeping addresses and results out of links', () => {

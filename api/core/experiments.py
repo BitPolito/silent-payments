@@ -16,8 +16,8 @@ ROOT = Path(__file__).parent / 'test'
 class ExperimentInputError(ValueError):
     pass
 
-TOOLS = ('payment', 'address')
-PRESETS = {'payment': ['default', 'mutation'], 'address': ['default']}
+TOOLS = ('payment', 'address', 'labels', 'scan')
+PRESETS = {'payment': ['default', 'mutation'], 'address': ['default'], 'labels': ['default'], 'scan': ['default']}
 
 @lru_cache(maxsize=1)
 def fixtures():
@@ -47,7 +47,7 @@ def addresses(network='testnet', labels=None):
 
 def metadata():
     return {'tools': list(TOOLS), 'presets': PRESETS, 'inputs': [{'id': i, 'type': 'P2PKH', 'outpoint': f"{item['txid']}:{item['vout']}"} for i, item in enumerate(input_cards())],
-            'samples': {network: addresses(network)[0] for network in ('testnet', 'mainnet')}, 'provenance': provenance()}
+            'labels': [{'id': index, 'name': name} for index, name in LABEL_NAMES.items()], 'samples': {network: addresses(network)[0] for network in ('testnet', 'mainnet')}, 'provenance': provenance()}
 
 def integer(value, minimum, maximum, name):
     if type(value) is not int or not minimum <= value <= maximum:
@@ -139,6 +139,81 @@ def execute(tool, body):
     elif tool == 'address':
         validate(body, {'preset', 'network', 'address'}, 'address')
         result = inspect_address(body.get('address', addresses(body.get('network', 'testnet'))[0]))
+    elif tool == 'labels':
+        result = labels_experiment(body)
+    elif tool == 'scan':
+        result = scan_batch(body)
     else:
         raise ExperimentInputError('Unknown experiment')
     return {'computed': True, 'tool': tool, 'result': result, 'provenance': provenance()}
+
+LABEL_NAMES = {1: 'donations', 2: 'shop', 3: 'project'}
+
+def known_labels(body):
+    labels = body.get('known_labels', [1, 2, 3])
+    if not isinstance(labels, list) or len(labels) > 3 or any(type(i) is not int or i not in LABEL_NAMES for i in labels) or len(labels) != len(set(labels)):
+        raise ExperimentInputError('Select up to three unique known labels')
+    return labels
+
+def label_rows(network):
+    result = []
+    for index, address in enumerate(addresses(network, [1, 2, 3])):
+        scan_key, spend_key = decode_silent_payment_address(address)
+        result.append({'index': index, 'name': LABEL_NAMES.get(index, 'base'), 'address': address, 'scan_pub_key': scan_key.hex(), 'spend_pub_key': spend_key.hex()})
+    return result
+
+def labels_experiment(body):
+    validate(body, {'preset', 'network', 'label', 'known_labels'}, 'labels')
+    label = integer(body.get('label', 1), 1, 3, 'label')
+    known = known_labels(body)
+    network = body.get('network', 'testnet')
+    rows = label_rows(network)
+    vin = deepcopy(input_cards()[:2])
+    outputs = sending_run(vin, [rows[label]['address']])
+    wallet = scan(public_vin(vin), list(outputs), keys(), known)
+    return {'network': network, 'addresses': rows, 'selected_label': label, 'known_labels': known, 'outputs': outputs, 'wallet': wallet, 'inputs': public_vin(vin)}
+
+def synthetic_batch(network):
+    from core.utils.schnorr_lib import G, point_mul, bytes_from_point
+    vin = deepcopy(input_cards()[:2])
+    base, labeled = addresses(network, [1])
+    outputs = sending_run(vin, [base])
+    label_outputs = sending_run(vin, [labeled])
+    no_inputs = deepcopy(vin)
+    for item in no_inputs:
+        item['prevout']['scriptPubKey']['hex'] = '6a'
+    future = deepcopy(vin) + [{'txid': '04'*32, 'vout': 0, 'prevout': {'scriptPubKey': {'hex': '5220'+'00'*32}}}]
+    malformed = [{'txid':'05'*32, 'vout':0, 'prevout':{'scriptPubKey':{'hex':'0014'+'00'*20}}, 'scriptSig':'', 'txinwitness':'0102ff'}]
+    return [
+        {'id':'base', 'vin':public_vin(vin), 'outputs':outputs},
+        {'id':'labeled', 'vin':public_vin(vin), 'outputs':label_outputs},
+        {'id':'unrelated', 'vin':public_vin(vin), 'outputs':[bytes_from_point(point_mul(G,42)).hex()]},
+        {'id':'no_inputs', 'vin':public_vin(no_inputs), 'outputs':outputs},
+        {'id':'future_witness', 'vin':public_vin(future), 'outputs':outputs},
+        {'id':'malformed_witness', 'vin':malformed, 'outputs':outputs},
+    ]
+
+def scan_batch(body):
+    from core.utils.utils import has_unsupported_witness, select_inputs
+    validate(body, {'preset', 'network', 'known_labels'}, 'scan')
+    known = known_labels(body)
+    network = body.get('network', 'testnet')
+    transactions = []
+    for tx in synthetic_batch(network):
+        reason = None
+        eligible = True
+        if has_unsupported_witness(tx['vin']):
+            eligible, reason = False, 'future_witness'
+        elif not select_inputs(tx['vin']):
+            eligible, reason = False, 'no_inputs'
+        try:
+            # Ownership is not part of the scanner's input; only public tx data and receiver material.
+            wallet = scan(tx['vin'], list(tx['outputs']), keys(), known)
+            status = 'skipped' if not eligible else 'found' if wallet else 'no_match'
+        except ValueError as error:
+            # Only this exact, intentionally malformed fixture is an educational rejection.
+            if tx['id'] != 'malformed_witness' or str(error) != 'Truncated witness item':
+                raise
+            status, wallet, reason = 'rejected', [], 'malformed_witness'
+        transactions.append({**tx, 'eligible': eligible, 'status': status, 'reason': reason, 'wallet': wallet})
+    return {'network': network, 'known_labels': known, 'transactions': transactions, 'found': sum(len(tx['wallet']) for tx in transactions)}

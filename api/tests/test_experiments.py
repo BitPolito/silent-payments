@@ -95,3 +95,50 @@ def test_invalid_signature_never_reports_success(client,monkeypatch):
     response=client.post('/api/experiments/payment',json={'action':'verify'})
     assert response.status_code==500
     assert response.json['code']=='INTERNAL_ERROR'
+
+@pytest.mark.parametrize('network',['testnet','mainnet'])
+@pytest.mark.parametrize('label',[1,2,3])
+def test_label_derivation_and_known_labels(client, network, label):
+    payload={'network':network,'label':label,'known_labels':[label]}
+    result=client.post('/api/experiments/labels',json=payload).json['result']
+    assert len(result['addresses'])==4
+    assert len({row['scan_pub_key'] for row in result['addresses']})==1
+    assert len({row['spend_pub_key'] for row in result['addresses']})==4
+    assert len(result['wallet'])==1
+    payload['known_labels']=[]
+    unknown=client.post('/api/experiments/labels',json=payload).json['result']
+    assert unknown['wallet']==[]
+    assert unknown['outputs']==result['outputs']
+
+@pytest.mark.parametrize('network',['testnet','mainnet'])
+def test_scanning_all_outcomes_and_no_ownership_input(client,network,monkeypatch):
+    original=exp.scan
+    def scanner(vin,outputs,material,labels):
+        assert all('owner' not in item and 'private_key' not in item for item in vin)
+        return original(vin,outputs,material,labels)
+    monkeypatch.setattr(exp,'scan',scanner)
+    result=client.post('/api/experiments/scan',json={'network':network}).json['result']
+    assert len(result['transactions'])==6
+    assert result['found']==2
+    assert [tx['status'] for tx in result['transactions']]==['found','found','no_match','skipped','skipped','rejected']
+    unknown=client.post('/api/experiments/scan',json={'network':network,'known_labels':[]}).json['result']
+    assert unknown['found']==1
+    assert unknown['transactions'][1]['status']=='no_match'
+
+@pytest.mark.parametrize('tool,payload', [('labels',{'label':0}),('labels',{'label':4}),('labels',{'label':True}),('labels',{'known_labels':[1,1]}),('scan',{'known_labels':[1,2,3,4]}),('scan',{'known_labels':[True]}),('scan',{'transactions':[]}),('scan',{'known_labels':'1'}),('labels',{'key_material':{}})])
+def test_bounded_label_scan_controls(client,tool,payload):
+    response=client.post('/api/experiments/'+tool,json=payload)
+    assert response.status_code==400
+    assert response.json['code']=='INVALID_INPUT'
+
+def test_unrelated_scanner_failure_never_becomes_educational_rejection(client,monkeypatch):
+    original=exp.scan
+    def unrelated(vin,outputs,material,labels):
+        if vin[0].get('txinwitness')=='0102ff':
+            raise ValueError('unrelated secret')
+        return original(vin,outputs,material,labels)
+    monkeypatch.setattr(exp,'scan',unrelated)
+    response=client.post('/api/experiments/scan',json={})
+    assert response.status_code==500
+    assert response.json['code']=='INTERNAL_ERROR'
+    assert 'secret' not in response.get_data(as_text=True)

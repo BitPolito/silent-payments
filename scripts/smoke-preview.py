@@ -31,7 +31,20 @@ def smoke(base, revision=None):
     assert len(call('/api/reference_cases'))==28
     assert call('/api/single_test/send/25')['expected_failure']
     assert call('/api/single_test/receive/18?case_index=1')['test_passed']
-    print('Preview smoke checks passed: frontend, revision, runnable generator, both networks, QR and reference subcases')
+    metadata=call('/api/experiments')
+    assert set(metadata['tools'])=={'payment','address','labels','scan'}
+    for network in ('testnet','mainnet'):
+        inspected=call('/api/experiments/address',{'address':metadata['samples'][network]})['result']
+        assert inspected['status']=='supported' and inspected['network']==network
+        payment=call('/api/experiments/payment',{'network':network,'action':'verify','comparison':'mutation'})['result']
+        assert len(payment['wallet'])==1 and payment['comparison_wallet']==[]
+        assert all(item['verified'] for item in payment['evidence'])
+        labels=call('/api/experiments/labels',{'network':network,'label':1,'known_labels':[]})['result']
+        assert labels['wallet']==[]
+        batch=call('/api/experiments/scan',{'network':network})['result']
+        assert batch['found']==2 and len(batch['transactions'])==6
+        assert {tx['status'] for tx in batch['transactions']}=={'found','no_match','skipped','rejected'}
+    print('Preview smoke checks passed: frontend, revision, runnable generator, both networks, QR, references and all studio tools')
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
