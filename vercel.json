@@ -1,13 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci && python3 scripts/build-vanity.py",
   "functions": {
     "api/index.py": {
       "includeFiles": "api/{bin/**,core/test/**,build-info.json}",
-      "maxDuration": 60
+      "maxDuration": 60,
+      "excludeFiles": "{native/**,api/{tests/**,venv/**},.cache/**}"
     }
   },
   "headers": [

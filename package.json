@@ -4,20 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=22.14.0"
+    "node": ">=22.14.0 <23"
   },
   "scripts": {
     "dev:frontend": "vite",
     "dev:backend": "cd api && ./venv/bin/flask --app index run -p 5328",
-    "dev:rust": "cargo build --locked --release --manifest-path api/vanity/Cargo.toml",
+    "dev:rust": "cargo build --locked --release --manifest-path native/vanity/Cargo.toml",
     "dev": "npm run build:vanity && concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "vite build",
     "lint": "eslint src",
     "prune:i18n": "node scripts/prune-i18n.mjs",
     "prune:i18n:unused": "node scripts/prune-unused-i18n.mjs",
     "verify:errors": "vitest run src/utils/api.test.js",
-    "build:vanity": "cargo build --locked --release --manifest-path api/vanity/Cargo.toml",
-    "vercel-build": "npm run build",
+    "build:vanity": "cargo build --locked --release --manifest-path native/vanity/Cargo.toml",
+    "vercel-build": "python3 scripts/build-vanity.py && npm run build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",

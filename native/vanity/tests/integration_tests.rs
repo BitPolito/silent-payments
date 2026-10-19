@@ -326,7 +326,7 @@ fn cli_deadline_exit_code() {
 #[test]
 fn encoding_matches_shared_python_and_bip_fixtures() {
     use secp256k1::{Secp256k1, SecretKey, PublicKey};
-    let cases: serde_json::Value = serde_json::from_str(include_str!("../../core/test/key_vectors.json")).unwrap();
+    let cases: serde_json::Value = serde_json::from_str(include_str!("../../../api/core/test/key_vectors.json")).unwrap();
     let secp = Secp256k1::new();
     for case in cases.as_array().unwrap() {
         let scan = SecretKey::from_slice(&hex::decode(case["scan_priv_key"].as_str().unwrap()).unwrap()).unwrap();

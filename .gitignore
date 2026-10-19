@@ -204,7 +204,7 @@ dist-ssr
 *.sln
 *.sw?
 
-api/vanity/target/
+native/vanity/target/
 
 *.csv
 silent_payment_qr.png

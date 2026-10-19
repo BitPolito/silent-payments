@@ -45,8 +45,8 @@ def _find_bin() -> Optional[Path]:
     """Cerca il binario vanity."""
     bundled = _REPO_ROOT / 'bin' / 'vanity'
     candidates = [bundled] if is_vercel_runtime() else [
-        _REPO_ROOT / 'vanity' / 'target' / 'release' / 'vanity',
-        _REPO_ROOT / 'vanity' / 'target' / 'debug' / 'vanity', bundled,
+        _REPO_ROOT.parent / 'native' / 'vanity' / 'target' / 'release' / 'vanity',
+        _REPO_ROOT.parent / 'native' / 'vanity' / 'target' / 'debug' / 'vanity', bundled,
     ]
     executable = [p for p in candidates if p.is_file() and os.access(p, os.X_OK)]
     for path in sorted(executable, key=lambda p: p.stat().st_mtime, reverse=True):
@@ -190,8 +190,8 @@ def _rust_vanity(
             raise RuntimeError('Vanity search is unavailable (binary not bundled).')
         raise RuntimeError(
             "Binario vanity non trovato.\n"
-            f"Cerca in: {[str(p) for p in [Path(__file__).resolve().parent.parent.parent / 'bin' / 'vanity', _REPO_ROOT / 'vanity' / 'target' / 'release' / 'vanity']]}\n"
-            "Per buildare: cd api/vanity && cargo build --release"
+            f"Cerca in: {[str(p) for p in [Path(__file__).resolve().parent.parent.parent / 'bin' / 'vanity', _REPO_ROOT.parent / 'native' / 'vanity' / 'target' / 'release' / 'vanity']]}\n"
+            "Per buildare: cd native/vanity && cargo build --release"
         )
 
     timeout = timeout_sec if timeout_sec is not None else vanity_search_timeout_sec()

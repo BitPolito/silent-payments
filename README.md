@@ -16,7 +16,7 @@ npm run build:vanity
 npm run dev
 ```
 
-Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run dev` starts both servers and builds Rust; the backend finds the fresh executable under `api/vanity/target`. It never copies over `api/bin/vanity`. Production uses pinned dependencies from `api/requirements.txt`; `api/requirements-dev.txt` additionally supports the legacy notebooks.
+Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run dev` starts both servers and builds Rust; the backend finds the fresh executable under `native/vanity/target`. It never copies over `api/bin/vanity`. Production uses pinned dependencies from `api/requirements.txt`; `api/requirements-dev.txt` additionally supports the legacy notebooks.
 
 ## What to try
 
@@ -30,7 +30,7 @@ Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run 
 The simple UI searches for a substring. The API and CLI additionally support `prefix` and `suffix`. Prefix/contains searches begin after `sp1qq` or `tsp1qq`; suffix matching includes the checksum. Compressed scan-key encoding restricts the first prefix symbol to **gf2tvdw0**. Other initial prefix symbols are rejected as impossible.
 
 ```sh
-api/vanity/target/release/vanity g --mode prefix --threads 2 --timeout 10 --testnet
+native/vanity/target/release/vanity g --mode prefix --threads 2 --timeout 10 --testnet
 api/venv/bin/python -m flask --app api.index run --port 5328
 ```
 
@@ -58,7 +58,7 @@ Earlier random generation returned 64-byte HMAC outputs and silently truncated t
 ## Verification
 
 ```sh
-cargo test --locked --manifest-path api/vanity/Cargo.toml
+cargo test --locked --manifest-path native/vanity/Cargo.toml
 api/venv/bin/python -m pytest -m 'not slow' -q
 api/venv/bin/python -m pytest -m slow -q
 npm run lint
@@ -74,7 +74,15 @@ Cross-language fixtures verify actual Python/Rust address encoding and checksums
 
 Playwright serves the production build and covers the guided flow, advanced subcases and expected rejections, both networks, clipboard, QR decoding, PDF text/keys, language/theme persistence, timeout errors, stale requests, and a short real vanity search. Set `SP_PYTHON` to an alternative test-environment interpreter if needed. PR CI runs these checks without deployment secrets; the recipient-limit job has its own 60-minute timeout.
 
-## Preview delivery
+## Vercel Git deployment
+
+The existing Git integration can deploy this project directly. Its install command installs Node dependencies and runs `scripts/build-vanity.py` before function packaging. The build command repeats the generator check and builds the frontend. Rust source is included in the upload; compiler outputs and virtual environments are excluded. The pinned Rust toolchain is bootstrapped when unavailable. The generator is compiled on Vercel’s Linux build image for its Linux runtime, self-tested, and bundled with a revision/checksum receipt. A failed generator build fails deployment.
+
+After the local checks pass, merging into the configured production branch (`main` in this repository) triggers the normal Vercel deployment. No Vercel token or separate GitHub deployment workflow is required. Inspect `/api/health` after deployment for the source revision and `vanity_binary: true`.
+
+To reproduce the source build locally on Linux x86_64, run `npm run vercel-build`. It generates ignored `api/bin/vanity` and `api/build-info.json` build artifacts. Other local platforms can use the usual native development build and `npm run build`.
+
+## Optional preview delivery
 
 Compiled binaries are ignored rather than committed. The **Verified preview** workflow is manually triggered from a reviewed repository branch. It first runs correctness CI, builds a static `x86_64-unknown-linux-musl` executable, and copies only required source and the fresh binary into an isolated `.preview-stage` directory. A manifest records the source revision and binary SHA-256. It never packages an existing developer binary.
 
@@ -84,9 +92,9 @@ For a local packaging check after a musl build:
 
 ```sh
 python3 scripts/prepare-preview.py \
-  --binary api/vanity/target/x86_64-unknown-linux-musl/release/vanity \
+  --binary native/vanity/target/x86_64-unknown-linux-musl/release/vanity \
   --output .preview-stage
 python3 scripts/smoke-preview.py https://YOUR-PREVIEW --revision YOUR-COMMIT
 ```
 
-Packaging normally requires a clean committed tree. `--allow-dirty` is only for local verification and marks the revision with `-dirty`. Do not use the old direct Vercel Git deployment path for a release: it cannot include a newly built ignored binary. Adopt the reviewed packaging pipeline before a future production rollout.
+Packaging normally requires a clean committed tree. `--allow-dirty` is only for local verification and marks the revision with `-dirty`. The optional preview workflow can reuse its verified prebuilt binary without installing Rust again; direct Git deployments build from source instead.

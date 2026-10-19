@@ -19,10 +19,11 @@ jobs:
           cache-dependency-path: api/requirements*.txt
       - run: python -m venv api/venv
       - run: api/venv/bin/pip install -r api/requirements-test.txt
-      - run: cargo test --locked --manifest-path api/vanity/Cargo.toml
+      - run: cargo test --locked --manifest-path native/vanity/Cargo.toml
       - run: api/venv/bin/python -m pytest -m 'not slow' -q
       - run: npm ci
-      - run: npm run lint && npm test && npm run build
+      - run: npm run lint && npm test && npm run vercel-build
+      - run: api/venv/bin/python -m pytest api/tests/test_packaging.py -q
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4

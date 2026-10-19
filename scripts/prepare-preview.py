@@ -22,6 +22,8 @@ def prepare(binary, output, allow_dirty=False):
     files = ['package.json','package-lock.json','index.html','vite.config.js','tailwind.config.js','postcss.config.js','vercel.json','.python-version']
     for file in files:
         shutil.copy2(ROOT/file,output/file)
+    (output/'scripts').mkdir()
+    shutil.copy2(ROOT/'scripts/build-vanity.py',output/'scripts/build-vanity.py')
     for directory in ['src','public','api/core']:
         shutil.copytree(ROOT/directory,output/directory,ignore=shutil.ignore_patterns('__pycache__','*.ipynb','*.pyc'))
     for file in ['index.py','requirements.txt']:

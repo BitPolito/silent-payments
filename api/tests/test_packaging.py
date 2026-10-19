@@ -8,7 +8,7 @@ import pytest
 
 ROOT=Path(__file__).resolve().parents[2]
 
-@pytest.mark.parametrize('relative_binary', ['api/vanity/target/debug/vanity', 'api/vanity/target/x86_64-unknown-linux-musl/release/vanity'])
+@pytest.mark.parametrize('relative_binary', ['native/vanity/target/debug/vanity', 'native/vanity/target/x86_64-unknown-linux-musl/release/vanity'])
 def test_isolated_runtime(tmp_path, relative_binary):
     binary=ROOT/relative_binary
     if not binary.is_file(): pytest.skip('Build Rust before packaging tests')
@@ -17,9 +17,10 @@ def test_isolated_runtime(tmp_path, relative_binary):
     spec.loader.exec_module(module)
     stage=tmp_path/'preview'
     info=module.prepare(binary,stage,allow_dirty=True)
-    assert not (stage/'api/vanity').exists()
+    assert not (stage/'native/vanity').exists()
     assert not (stage/'api/tests').exists()
     assert (stage/'api/bin/vanity').stat().st_mode & 0o111
+    subprocess.run([sys.executable,str(stage/'scripts/build-vanity.py')],check=True,timeout=10,cwd=stage)
     code='''import sys,os,json
 sys.path.insert(0,sys.argv[1])
 os.environ['VERCEL']='1'
