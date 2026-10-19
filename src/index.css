@@ -816,3 +816,10 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-studio-results > *, .sp-studio-details { min-width: 0; max-width: 100%; }
 .sp-studio-details pre { width: 100%; max-width: 100%; }
 @media (max-width: 1023px) { .sp-studio-layout { grid-template-columns: minmax(0, 1fr); } }
+.sp-studio-inputs label { border: 1px solid var(--sp-line); border-radius: 10px; padding: 8px 12px; margin-top: 8px; }
+.sp-studio-inputs label:has(:checked) { background: var(--sp-soft); border-color: var(--sp-accent); }
+.sp-studio-ledger { display: grid; gap: 12px; min-width: 0; }
+.sp-studio-results > .sp-studio-result, .sp-studio-results > .sp-studio-columns { animation: sp-flow-in .18s ease-out; }
+.sp-studio-controls > .sp-btn-solid { position: sticky; top: calc(var(--sp-header-height) + 12px); z-index: 5; }
+.sp-studio-computed { scroll-margin-top: calc(var(--sp-header-height) + 24px); }
+.sp-studio-computed:focus { outline: 2px solid var(--sp-accent); outline-offset: 3px; }
