@@ -9,3 +9,6 @@ MarkupSafe==3.0.3
 pillow==11.2.1
 qrcode[pil]==8.2
 Werkzeug==3.1.8
+
+# Native libsecp256k1 arithmetic for the full reference suite
+coincurve==21.0.0

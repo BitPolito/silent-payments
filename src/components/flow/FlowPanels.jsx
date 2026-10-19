@@ -1,4 +1,3 @@
-import { STORY } from '../../assets/icons'
 import CopyableText from '../CopyableText'
 import { formatTxidShort, scriptTypeLabel, silentAddressKind } from '../../utils/flowDisplay'
 

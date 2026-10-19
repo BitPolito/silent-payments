@@ -54,7 +54,6 @@ fn bech32m_checksum(hrp: &str, data: &[u8]) -> u32 {
     for &b in hrp.as_bytes() { chk = polymod_step(chk) ^ (u32::from(b) >> 5); }
     chk = polymod_step(chk);
     for &b in hrp.as_bytes() { chk = polymod_step(chk) ^ (u32::from(b) & 0x1f); }
-    chk = polymod_step(chk);
     for &v in data { chk = polymod_step(chk) ^ u32::from(v); }
     for _ in 0..6 { chk = polymod_step(chk); }
     chk ^ 0x2bc830a3

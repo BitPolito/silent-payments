@@ -1,1 +1,5 @@
-api/vanity
+native/vanity/target/
+api/venv/
+api/tests/
+test-results/
+playwright-report/

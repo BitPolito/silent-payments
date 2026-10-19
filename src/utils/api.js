@@ -26,7 +26,7 @@ export async function parseApiResponse(response) {
     const raw = data?.error ?? data?.message ?? text ?? response.statusText
     const message = typeof raw === 'string' ? raw : JSON.stringify(raw)
     const err = new Error(message || 'API_ERROR')
-    err.code = 'API_ERROR'
+    err.code = data?.code || 'API_ERROR'
     throw err
   }
 

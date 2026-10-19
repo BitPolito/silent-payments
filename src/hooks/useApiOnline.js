@@ -5,18 +5,14 @@ import { checkApiHealth } from '../utils/api'
  * @param {boolean} enabled
  */
 export function useApiOnline(enabled) {
-  const [status, setStatus] = useState(/** @type {'idle' | 'checking' | 'online' | 'offline'} */ ('idle'))
+  const [status, setStatus] = useState(/** @type {'idle' | 'checking' | 'online' | 'offline'} */ ('checking'))
 
   useEffect(() => {
-    if (!enabled) {
-      setStatus('idle')
-      return
-    }
+    if (!enabled) return
     let cancelled = false
     const ac = new AbortController()
 
     const probe = () => {
-      setStatus('checking')
       checkApiHealth(ac.signal)
         .then(() => {
           if (!cancelled) setStatus('online')
@@ -38,5 +34,5 @@ export function useApiOnline(enabled) {
     }
   }, [enabled])
 
-  return status
+  return enabled ? status : 'idle'
 }

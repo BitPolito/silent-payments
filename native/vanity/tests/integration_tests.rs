@@ -101,7 +101,7 @@ mod matcher_tests {
     fn prefix_works_for_testnet() {
         let m = Matcher::new("qqq", MatchMode::Prefix);
         // "tsp1" + "qqqabc"
-        assert!(m.matches("tsp1qqqabc"));
+        assert!(m.matches("tsp1qqqqqabc"));
     }
 
     #[test]
@@ -261,11 +261,11 @@ mod parallel_tests {
     #[test]
     fn result_address_matches_prefix_mode() {
         // After "sp1" the address must start with "qq"
-        let matcher = Matcher::new("qq", MatchMode::Prefix);
+        let matcher = Matcher::new("g", MatchMode::Prefix);
         let result  = find_vanity_address_full(matcher, 2, "sp", 0);
-        let after   = &result.address["sp1".len()..];
+        let after   = &result.address["sp1qq".len()..];
         assert!(
-            after.starts_with("qq"),
+            after.starts_with("g"),
             "address after HRP separator must start with 'qq': {}",
             result.address
         );
@@ -288,5 +288,51 @@ mod parallel_tests {
         let result  = find_vanity_address_full(matcher, 1, "sp", 0);
         assert!(result.address.starts_with("sp1q"));
         assert_eq!(result.address.len(), 116);
+    }
+}
+#[test]
+fn expired_deadline_stops_workers() {
+    use std::time::Instant;
+    use vanity::{matcher::{Matcher, MatchMode}, parallel::parallel_search_until};
+    assert!(parallel_search_until(Matcher::new("qqqqqq", MatchMode::Contains), 2, "sp", 0, Some(Instant::now())).is_none());
+}
+
+#[test]
+fn prefix_search_makes_progress_on_both_networks() {
+    use std::time::{Instant, Duration};
+    use vanity::{matcher::{Matcher, MatchMode}, parallel::parallel_search_until};
+    for hrp in ["sp", "tsp"] {
+        let result = parallel_search_until(Matcher::new("g", MatchMode::Prefix), 1, hrp, 0,
+            Some(Instant::now() + Duration::from_secs(5))).expect("one-symbol prefix must be reachable");
+        assert!(result.address.starts_with(&format!("{hrp}1qqg")));
+    }
+}
+
+#[test]
+fn cli_rejects_missing_arguments_and_impossible_prefixes() {
+    for args in [vec!["q", "--threads"], vec!["q", "--mode", "prefix"], vec!["!"], vec!["q", "--threads", "65"]] {
+        let result = std::process::Command::new(env!("CARGO_BIN_EXE_vanity")).args(args).output().unwrap();
+        assert_eq!(result.status.code(), Some(1));
+    }
+}
+
+#[test]
+fn cli_deadline_exit_code() {
+    let result = std::process::Command::new(env!("CARGO_BIN_EXE_vanity"))
+        .args(["qqqqqqqqqq", "--timeout", "0"]).output().unwrap();
+    assert_eq!(result.status.code(), Some(2));
+}
+
+#[test]
+fn encoding_matches_shared_python_and_bip_fixtures() {
+    use secp256k1::{Secp256k1, SecretKey, PublicKey};
+    let cases: serde_json::Value = serde_json::from_str(include_str!("../../../api/core/test/key_vectors.json")).unwrap();
+    let secp = Secp256k1::new();
+    for case in cases.as_array().unwrap() {
+        let scan = SecretKey::from_slice(&hex::decode(case["scan_priv_key"].as_str().unwrap()).unwrap()).unwrap();
+        let spend = SecretKey::from_slice(&hex::decode(case["spend_priv_key"].as_str().unwrap()).unwrap()).unwrap();
+        let hrp = if case["network"] == "testnet" { "tsp" } else { "sp" };
+        let address = vanity::address::encode_sp_address(&PublicKey::from_secret_key(&secp, &scan), &PublicKey::from_secret_key(&secp, &spend), hrp, 0);
+        assert_eq!(address, case["address"].as_str().unwrap());
     }
 }

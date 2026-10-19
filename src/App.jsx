@@ -6,7 +6,7 @@ import AppFooter from './components/AppFooter'
 import BpIcon from './components/BpIcon'
 import LangToggle from './components/LangToggle'
 import ThemeToggle from './components/ThemeToggle'
-import { useLocale } from './i18n/LocaleContext'
+import { useLocale } from './i18n/useLocale'
 import GenerateAddrModal from './scenes/GenerateAddr'
 import ProtocolDemoModal from './scenes/ProtocolDemo'
 
@@ -129,14 +129,14 @@ export default function App() {
 
       <AppFooter />
 
-      <ProtocolDemoModal
+      {showTests && <ProtocolDemoModal
         open={showTests}
         onClose={() => {
           setShowTests(false)
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }}
-      />
-      <GenerateAddrModal open={showAddr} onClose={() => setShowAddr(false)} initialTab={addrTab} />
+      />}
+      {showAddr && <GenerateAddrModal open={showAddr} onClose={() => setShowAddr(false)} initialTab={addrTab} />}
     </div>
   )
 }

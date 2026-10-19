@@ -33,14 +33,18 @@ function spawnParticle(id, preset) {
 /**
  * @param {{ preset: FxPresetId | null, active: boolean, onDone?: () => void }} props
  */
-export default function AmbientOverlay({ preset, active, onDone }) {
+export default function AmbientOverlay(props) {
+  return props.active && props.preset ? <Animation key={props.preset} {...props} /> : null
+}
+
+function Animation({ preset, active, onDone }) {
   const [particles, setParticles] = useState(/** @type {ReturnType<typeof spawnParticle>[]} */ ([]))
-  const [isDarkTheme, setIsDarkTheme] = useState(false)
+  const [isDarkTheme, setIsDarkTheme] = useState(() => document.documentElement.classList.contains('dark'))
   const idRef = useRef(0)
   const onDoneRef = useRef(onDone)
   const timersRef = useRef({ spawn: /** @type {ReturnType<typeof setInterval> | null} */ (null), stop: null, end: null })
 
-  onDoneRef.current = onDone
+  useEffect(() => { onDoneRef.current = onDone }, [onDone])
 
   const cfg = preset ? FX_PRESETS[preset] : null
 
@@ -50,7 +54,6 @@ export default function AmbientOverlay({ preset, active, onDone }) {
 
   useEffect(() => {
     const syncTheme = () => setIsDarkTheme(document.documentElement.classList.contains('dark'))
-    syncTheme()
     const obs = new MutationObserver(syncTheme)
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
     return () => obs.disconnect()
@@ -71,7 +74,6 @@ export default function AmbientOverlay({ preset, active, onDone }) {
     }
 
     if (!active || !cfg) {
-      setParticles([])
       clearTimers()
       return undefined
     }
@@ -80,8 +82,6 @@ export default function AmbientOverlay({ preset, active, onDone }) {
       typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     idRef.current = 0
-    setParticles([])
-
     if (reduceMotion) {
       const t = window.setTimeout(() => onDoneRef.current?.(), 300)
       return () => window.clearTimeout(t)
@@ -115,7 +115,7 @@ export default function AmbientOverlay({ preset, active, onDone }) {
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
-      abort()
+      clearTimers()
     }
   }, [active, preset, cfg])
 

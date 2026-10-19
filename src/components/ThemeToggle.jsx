@@ -1,17 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ICON } from '../assets/icons'
 import BpIcon from './BpIcon'
 
 export default function ThemeToggle({ ariaLabel }) {
-  const [mounted, setMounted] = useState(false)
-  const [dark, setDark] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    const saved = localStorage.getItem('theme')
-    const isDark = saved === 'dark' || document.documentElement.classList.contains('dark')
-    setDark(isDark)
-  }, [])
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
 
   const toggle = () => {
     const next = !dark
@@ -23,10 +15,6 @@ export default function ThemeToggle({ ariaLabel }) {
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'light')
     }
-  }
-
-  if (!mounted) {
-    return <div className="h-8 w-14 shrink-0 rounded-full border border-bp-200 bg-bp-canvas dark:border-bp-500/45 dark:bg-bp-800/80" aria-hidden />
   }
 
   return (

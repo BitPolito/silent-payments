@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import Collapsible from '../components/protocol/Collapsible'
 import DemoRunResults from '../components/protocol/DemoRunResults'
 import { FLOW_ICONS } from '../assets/flowIcons'
 import FlowProgress from '../components/flow/FlowProgress'
 import { DataBlock, PubkeyOutput, StepHeader, UtxoList } from '../components/flow/FlowPanels'
-import { useLocale } from '../i18n/LocaleContext'
+import { useLocale } from '../i18n/useLocale'
 import { fetchApi, formatApiError } from '../utils/api'
 import { explainSendOutcome } from '../utils/edgeScenarioCopy'
 import { getScenarioContext } from '../utils/scenarioContext'
@@ -49,23 +49,6 @@ export default function EdgeScenarioFlow({ caseData, scenarioId, testId, onBack,
   )
 
   const stepIndex = activeSteps.indexOf(phase)
-
-  useEffect(() => {
-    if (stepIndex === -1 && activeSteps[0]) setPhase(activeSteps[0])
-  }, [stepIndex, activeSteps])
-
-  useEffect(() => {
-    setPhase('why')
-    setSendResult(null)
-    setRecvResult(null)
-    setSendError('')
-    setRecvError('')
-    setFurthest(0)
-  }, [testId])
-
-  useEffect(() => {
-    setFurthest((f) => Math.max(f, stepIndex))
-  }, [stepIndex])
 
   const runSend = useCallback(() => {
     if (!hasSend) return
@@ -123,6 +106,7 @@ export default function EdgeScenarioFlow({ caseData, scenarioId, testId, onBack,
 
   const goNext = useCallback(() => {
     if (stepIndex < 0 || stepIndex >= activeSteps.length - 1) return
+    setFurthest((f) => Math.max(f, stepIndex + 1))
     setPhase(activeSteps[stepIndex + 1])
   }, [stepIndex, activeSteps])
 
@@ -132,6 +116,7 @@ export default function EdgeScenarioFlow({ caseData, scenarioId, testId, onBack,
     recvAbort.current?.abort()
     setSendLoading(false)
     setRecvLoading(false)
+    setFurthest((f) => Math.max(f, stepIndex))
     setPhase(activeSteps[stepIndex - 1])
   }, [stepIndex, activeSteps])
 

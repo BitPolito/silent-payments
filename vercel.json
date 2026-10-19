@@ -1,22 +1,32 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
-  "installCommand": "npm install",
+  "installCommand": "npm ci && python3 scripts/build-vanity.py",
   "functions": {
-    "api/**/*.py": {
-      "includeFiles": "api/bin/**,api/core/test/**",
-      "maxDuration": 60
+    "api/index.py": {
+      "includeFiles": "api/{bin/**,core/test/**,build-info.json}",
+      "maxDuration": 60,
+      "excludeFiles": "{native/**,api/{tests/**,venv/**},.cache/**}"
     }
   },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     }
   ],

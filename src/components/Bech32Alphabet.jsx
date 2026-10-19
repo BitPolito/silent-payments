@@ -1,4 +1,4 @@
-import { useLocale } from '../i18n/LocaleContext'
+import { useLocale } from '../i18n/useLocale'
 import { BECH32M_DIGITS, BECH32M_LETTERS } from '../utils/bech32m'
 
 function CharRow({ label, chars }) {

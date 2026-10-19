@@ -11,8 +11,12 @@ pub struct KeyMaterial {
 
 /// Generate a completely fresh keypair (scan + spend).
 pub fn generate_keypair(secp: &Secp256k1<All>) -> KeyMaterial {
-    let scan_priv  = random_secret_key(&mut rand::thread_rng());
-    let spend_priv = random_secret_key(&mut rand::thread_rng());
+    generate_keypair_with_rng(secp, &mut rand::thread_rng())
+}
+
+pub fn generate_keypair_with_rng(secp: &Secp256k1<All>, rng: &mut impl RngCore) -> KeyMaterial {
+    let scan_priv = random_secret_key(rng);
+    let spend_priv = random_secret_key(rng);
     let scan_pub   = PublicKey::from_secret_key(secp, &scan_priv);
     let spend_pub  = PublicKey::from_secret_key(secp, &spend_priv);
     KeyMaterial {
@@ -28,7 +32,13 @@ pub fn generate_spend_only(
     scan_priv: &SecretKey,
     scan_pub:  &PublicKey,
 ) -> KeyMaterial {
-    let spend_priv = random_secret_key(&mut rand::thread_rng());
+    generate_spend_only_with_rng(secp, scan_priv, scan_pub, &mut rand::thread_rng())
+}
+
+pub fn generate_spend_only_with_rng(
+    secp: &Secp256k1<All>, scan_priv: &SecretKey, scan_pub: &PublicKey, rng: &mut impl RngCore,
+) -> KeyMaterial {
+    let spend_priv = random_secret_key(rng);
     let spend_pub  = PublicKey::from_secret_key(secp, &spend_priv);
     KeyMaterial {
         scan_priv:  scan_priv.secret_bytes(),
