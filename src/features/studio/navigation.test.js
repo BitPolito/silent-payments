@@ -1,3 +1,4 @@
+import { visualContent } from './visualContent'
 import { afterEach, expect, it, vi } from 'vitest'
 import { studioSelection, studioURL } from './navigation'
 import { studioContent } from './content'
@@ -16,4 +17,9 @@ it('shares only tool and preset, keeping addresses and results out of links', ()
 it('has bilingual short objectives and matching controls', () => {
   expect(Object.keys(studioContent.en).sort()).toEqual(Object.keys(studioContent.it).sort())
   for (const content of Object.values(studioContent)) for (const text of Object.values(content.objectives)) expect(text.split(/\s+/).length).toBeLessThan(40)
+})
+
+it('keeps visual teaching labels complete in both languages', () => {
+  const shape = (value) => Object.fromEntries(Object.entries(value).map(([key,item]) => [key, typeof item === 'object' ? shape(item) : typeof item]))
+  expect(shape(visualContent.en)).toEqual(shape(visualContent.it))
 })

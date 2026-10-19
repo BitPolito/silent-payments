@@ -823,3 +823,121 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-studio-controls > .sp-btn-solid { position: sticky; top: calc(var(--sp-header-height) + 12px); z-index: 5; }
 .sp-studio-computed { scroll-margin-top: calc(var(--sp-header-height) + 24px); }
 .sp-studio-computed:focus { outline: 2px solid var(--sp-accent); outline-offset: 3px; }
+
+/* Friendly studio: tactile cards and visual stories, with protocol data on demand. */
+.sp-art { display: block; width: 100%; max-width: 360px; margin: auto; color: var(--sp-accent); }
+.sp-art.is-compact { max-width: 220px; }
+.sp-art-fill { fill: var(--sp-panel); }
+.sp-experiment-illustration { position: relative; margin: -8px -12px 0; }
+.sp-experiment-illustration > span { position: absolute; right: 8px; top: 8px; font: 12px monospace; opacity: .6; }
+.sp-experiment-card { overflow: hidden; padding-top: 12px; }
+.sp-experiment-card:hover .sp-art-coin { transform: translateX(14px); }
+.sp-art-coin { transition: transform .25s ease; }
+.sp-friendly-workbench { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.35fr); gap: 28px; align-items: start; }
+.sp-friendly-controls { display: grid; gap: 24px; padding: 24px; border: 1px solid var(--sp-line); border-radius: 24px; background: var(--sp-panel); min-width: 0; }
+.sp-friendly-controls h2, .sp-friendly-controls legend { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+.sp-friendly-stage { padding: 24px; border-radius: 24px; border: 1px solid var(--sp-line); background: var(--sp-wash); }
+.sp-friendly-controls textarea { width: 100%; min-height: 110px; font-size: 12px; }
+.sp-coin-choices, .sp-scenario-choices { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.sp-coin-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; padding: 18px 12px 12px; border: 1px solid var(--sp-line); border-radius: 18px; transition: transform .18s, background .18s; }
+.sp-coin-card input { position: absolute; top: 12px; left: 12px; width: 18px; height: 18px; accent-color: var(--sp-accent); }
+.sp-big-coin { display: grid; place-items: center; width: 48px; height: 48px; border: 2px solid var(--sp-accent); border-radius: 50%; font-size: 28px; font-weight: 800; box-shadow: 3px 3px 0 var(--sp-line); margin: 8px 0; }
+.sp-coin-card strong { font-size: 12px; }
+.sp-coin-card:has(:checked) { background: var(--sp-soft); border-color: var(--sp-accent); }
+.sp-coin-card:hover { transform: translateY(-3px); }
+.sp-coin-card:has(:focus-visible) { outline: 2px solid var(--sp-accent); outline-offset: 3px; }
+.sp-coin-check { position: absolute; top: 10px; right: 12px; font-size: 13px; }
+.sp-choice-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 8px; padding: 14px; border: 1px solid var(--sp-line); background: var(--sp-panel); border-radius: 16px; transition: background .18s, transform .18s; min-height: 104px; }
+.sp-choice-card:hover { transform: translateY(-2px); border-color: var(--sp-accent); }
+.sp-choice-card[aria-pressed=true] { background: var(--sp-accent); color: var(--sp-panel); }
+.sp-choice-card strong { font-size: 12px; line-height: 1.5; }
+.sp-choice-icon { font-size: 28px; line-height: 1; }
+.sp-choice-check { position: absolute; top: 10px; right: 12px; font-size: 12px; }
+.sp-count-choices { display: flex; gap: 10px; }
+.sp-count-choices button { flex: 1; min-height: 48px; border: 1px solid var(--sp-line); border-radius: 12px; font-size: 13px; padding: 8px; }
+.sp-count-choices button[aria-pressed=true] { border-color: var(--sp-accent); background: var(--sp-soft); box-shadow: inset 0 0 0 1px var(--sp-accent); }
+.sp-advanced label { display: grid; gap: 8px; font-size: 13px; margin: 12px 0; }
+.sp-advanced .sp-input { width: 100%; }
+.sp-payment-story { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr); align-items: center; min-width: 0; padding: 24px 0 12px; gap: 4px; }
+.sp-story-person { display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 12px; font-weight: 800; text-align: center; }
+.sp-story-person > img { width: 64px; height: 64px; }
+.sp-story-journey { position: relative; }
+.sp-story-trail { display: block; text-align: center; font-size: 28px; }
+.sp-payment-story figcaption { grid-column: 1/-1; text-align: center; font-size: 11px; color: var(--sp-muted); margin-top: 24px; }
+.sp-mini-coins, .sp-mini-envelopes { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+.sp-mini-coins i, .sp-mini-envelopes i { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--sp-accent); border-radius: 50%; font-style: normal; font-size: 12px; }
+.sp-mini-envelopes i { border-radius: 6px; }
+.sp-friendly-primary { width: 100%; min-height: 56px; font-size: 16px; }
+.sp-friendly-outcome { font-size: 22px; font-weight: 800; line-height: 1.35; }
+.sp-visual-results { display: grid; gap: 12px; align-content: start; }
+.sp-visual-results > h3 { font-size: 13px; font-weight: 800; }
+.sp-friendly-payment { border: 1px solid var(--sp-line); border-radius: 18px; background: var(--sp-panel); overflow: hidden; }
+.sp-friendly-payment > button { width: 100%; display: flex; flex-wrap: wrap; align-items: center; text-align: left; gap: 12px; padding: 18px; }
+.sp-friendly-payment > button > span:first-of-type { flex: 1; }
+.sp-friendly-payment strong, .sp-friendly-payment small { display: block; }
+.sp-friendly-payment strong { font-size: 14px; }
+.sp-friendly-payment small { font-size: 11px; color: var(--sp-muted); margin-top: 6px; }
+.sp-friendly-payment > p, .sp-concept-card > p, .sp-transaction-card > p { padding: 0 18px 18px; font-size: 13px; line-height: 1.7; }
+.sp-fingerprint { width: 48px; height: 48px; flex-shrink: 0; }
+.sp-wallet-discovery { display: flex; align-items: center; gap: 18px; padding: 20px; border: 1px solid var(--sp-line); border-radius: 18px; background: var(--sp-panel); }
+.sp-wallet-discovery > span { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid currentColor; border-radius: 50%; font-size: 24px; }
+.sp-wallet-discovery h2 { font-weight: 800; font-size: 17px; }
+.sp-wallet-discovery p { color: var(--sp-muted); font-size: 12px; margin-top: 6px; }
+.sp-pocket-choices { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.sp-pocket-choices .sp-choice-card { padding: 12px 8px; }
+.sp-pocket-choices .sp-choice-card strong { font-size: 11px; }
+.sp-known-pockets { display: grid; gap: 10px; }
+.sp-known-pockets label { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid var(--sp-line); border-radius: 14px; cursor: pointer; }
+.sp-known-pockets input { width: 18px; height: 18px; accent-color: var(--sp-accent); }
+.sp-known-pockets label:has(:checked) { background: var(--sp-soft); border-color: var(--sp-accent); }
+.sp-known-pockets label > span { font-size: 26px; }
+.sp-known-pockets label > strong { font-size: 13px; }
+.sp-pocket-scene h2 { text-align: center; font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+.sp-pocket-results { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.sp-concept-card { border: 1px solid var(--sp-line); border-radius: 18px; background: var(--sp-panel); overflow: hidden; min-width: 0; }
+.sp-concept-card > button { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; padding: 12px 14px; }
+.sp-concept-card strong { font-size: 13px; }
+.sp-concept-card button > span:last-child { font-size: 20px; }
+.sp-scan-title { display: flex; align-items: center; gap: 12px; }
+.sp-scan-title .sp-art { max-width: 150px; margin: 0; }
+.sp-scan-title h2 { font-size: 22px; font-weight: 800; }
+.sp-transaction-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.sp-transaction-card { border: 1px solid var(--sp-line); border-radius: 18px; background: var(--sp-panel); min-width: 0; overflow: hidden; }
+.sp-transaction-card > button { position: relative; display: flex; flex-direction: column; gap: 8px; text-align: center; align-items: center; width: 100%; padding: 14px; min-height: 170px; }
+.sp-transaction-number { align-self: flex-start; font: 12px monospace; }
+.sp-transaction-card strong { font-size: 12px; line-height: 1.5; }
+.sp-transaction-stamp { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid currentColor; border-radius: 50%; font-size: 16px; }
+.sp-transaction-card.is-found { border: 2px solid var(--sp-accent); }
+.sp-transaction-card.is-found .sp-transaction-stamp { background: var(--sp-accent); color: var(--sp-panel); }
+.sp-address-pass { position: relative; text-align: center; padding: 24px; border: 1px solid var(--sp-line); border-radius: 24px; background: var(--sp-panel); }
+.sp-address-pass > h2 { font-size: 22px; font-weight: 800; line-height: 1.4; }
+.sp-address-pass > p { font-size: 12px; margin-top: 12px; }
+.sp-address-seal { position: absolute; top: 20px; right: 20px; display: grid; place-items: center; width: 36px; height: 36px; background: var(--sp-accent); color: var(--sp-panel); border-radius: 50%; font-size: 22px; }
+@media (max-width: 1023px) { .sp-friendly-workbench { grid-template-columns: minmax(0,1fr); } .sp-friendly-controls { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; } .sp-friendly-controls > .sp-art { max-width: 220px; } }
+@media (max-width: 639px) {
+  .sp-friendly-controls { grid-template-columns: minmax(0,1fr); padding: 18px; border-radius: 20px; }
+  .sp-friendly-stage { padding: 16px; border-radius: 20px; }
+  .sp-transaction-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+  .sp-transaction-card > button { padding: 10px; min-height: 160px; }
+  .sp-pocket-results { grid-template-columns: minmax(0,1fr); }
+  .sp-story-person > img { width: 48px; height: 48px; }
+  .sp-payment-story { padding-top: 12px; }
+  .sp-story-person { font-size: 11px; }
+  .sp-friendly-outcome { font-size: 19px; }
+}
+.sp-friendly-stage { scroll-margin-top: calc(var(--sp-header-height) + 20px); }
+@media (max-width: 639px) {
+  .sp-friendly-workbench { padding-bottom: 80px; }
+  .sp-friendly-primary { position: fixed; z-index: 30; bottom: 12px; left: 16px; width: calc(100% - 32px); box-shadow: 0 8px 32px color-mix(in srgb,var(--sp-accent) 30%,transparent); }
+  .sp-coin-choices { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+  .sp-coin-card { padding: 22px 4px 10px; }
+  .sp-big-coin { width: 34px; height: 34px; font-size: 22px; margin: 6px 0; }
+  .sp-coin-card strong { font-size: 10px; }
+  .sp-coin-card input { left: 8px; top: 8px; width: 16px; height: 16px; }
+  .sp-coin-check { display: none; }
+}
+.sp-payment-amount { font-size: 24px; font-weight: 800; line-height: 1.2; }
+.sp-payment-amount small { font-size: 12px; font-weight: 500; color: var(--sp-muted); }
+@media (prefers-reduced-motion: reduce) {
+  .sp-experiment-card:hover .sp-art-coin, .sp-coin-card:hover, .sp-choice-card:hover { transform: none; }
+}
