@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { STORY } from '../assets/icons'
-import Collapsible from '../components/protocol/Collapsible'
 import DemoRunResults from '../components/protocol/DemoRunResults'
+import WalkthroughLesson from '../components/protocol/WalkthroughLesson'
+import referenceLessons from '../utils/referenceTeaching.json'
 import { FLOW_ICONS } from '../assets/flowIcons'
 import FlowProgress from '../components/flow/FlowProgress'
-import { DataBlock, PubkeyOutput, SilentAddressField, StepHeader, UtxoList } from '../components/flow/FlowPanels'
+import { DataBlock, SilentAddressField, StepHeader, UtxoList } from '../components/flow/FlowPanels'
 import { useLocale } from '../i18n/useLocale'
 import { fetchApi, formatApiError } from '../utils/api'
-import { pickRandomFlowScenario } from '../utils/demoScenarios'
+import { FLOW_SCENARIOS } from '../utils/demoScenarios'
 import { canRunReceiveCheck, isSendStepComplete } from '../utils/flowDisplay'
-import { getScenarioContext, resolveAliceOutputs } from '../utils/scenarioContext'
+import { getScenarioContext } from '../utils/scenarioContext'
 
 const STEPS = ['bob', 'alice', 'derive', 'scan']
 
@@ -51,20 +52,13 @@ function StoryStrip({ phase, tr, midIcon }) {
   )
 }
 
-function Verdict({ ok, okText, failText }) {
-  return (
-    <p className={`sp-flow-verdict ${ok ? 'is-ok' : 'is-fail'}`} role="status">
-      {ok ? okText : failText}
-    </p>
-  )
-}
-
 /**
- * @param {{ onOpenEdgeCases: () => void, onCloseHome?: () => void }} props
+ * @param {{ onOpenEdgeCases: () => void, onCloseHome?: () => void, onOpenReference?: (selection: object) => void }} props
  */
-export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
-  const { tr } = useLocale()
-  const [scenario, setScenario] = useState(() => pickRandomFlowScenario())
+export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenReference }) {
+  const { tr, locale } = useLocale()
+  const scenario = FLOW_SCENARIOS[0]
+  const [round, setRound] = useState(0)
   const testId = scenario.testId
 
   const [phase, setPhase] = useState('bob')
@@ -87,16 +81,28 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
     fetchApi(`/api/test_case/${testId}`, { signal: ac.signal })
       .then((data) => { if (!ac.signal.aborted) setCaseData({ ...data, scenarioId: scenario.id }) })
       .catch((e) => {
-        if (e.name !== 'AbortError') setLoadError(formatApiError(e, tr))
+        if (!ac.signal.aborted) setLoadError(e)
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoadingCase(false)
       })
     return () => ac.abort()
-  }, [testId, scenario.id, tr])
+  }, [testId, scenario.id, round])
 
   const ctx = useMemo(() => getScenarioContext(caseData), [caseData])
   const storyKind = ctx.storyKind
+
+  useEffect(() => () => {
+    sendAbort.current?.abort()
+    recvAbort.current?.abort()
+  }, [])
+
+  const cancelChecks = useCallback(() => {
+    sendAbort.current?.abort()
+    recvAbort.current?.abort()
+    setSendLoading(false)
+    setRecvLoading(false)
+  }, [])
 
   const runSend = useCallback(() => {
     sendAbort.current?.abort()
@@ -114,7 +120,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
         if (e.name !== 'AbortError' && !ac.signal.aborted) {
           const msg = formatApiError(e, tr)
           setSendError(msg)
-          setSendResult({ test_passed: false, error: msg })
+          setSendResult(null)
         }
       })
       .finally(() => {
@@ -138,7 +144,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
         if (e.name !== 'AbortError' && !ac.signal.aborted) {
           const msg = formatApiError(e, tr)
           setRecvError(msg)
-          setRecvResult({ test_passed: false, error: msg })
+          setRecvResult(null)
         }
       })
       .finally(() => {
@@ -146,18 +152,9 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
       })
   }, [testId, tr])
 
-  const liveOutputs = useMemo(() => {
-    if (sendResult) return Array.isArray(sendResult.outputs) ? sendResult.outputs : []
-    return resolveAliceOutputs(null, ctx.silentOutputs)
-  }, [sendResult, ctx.silentOutputs])
-
   const bobShare = ctx.bobShareAddresses[0] || ''
-  const bobReceivePreview = ctx.bobReceiveOnChain[0] || ''
-  const bobReceiveFound =
-    recvResult?.outputs?.[0]?.pub_key || liveOutputs[0] || bobReceivePreview || ''
 
   const sendComplete = isSendStepComplete(sendResult, storyKind)
-  const sendPassedStrict = !!sendResult?.test_passed
   const recvPassed = !!recvResult?.test_passed
   const done = recvPassed
 
@@ -181,35 +178,33 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
 
   const maxReachableIndex = useMemo(() => {
     const deriveIdx = STEPS.indexOf('derive')
-    if (!sendResult) return Math.min(Math.max(furthest, stepIndex), deriveIdx)
+    if (!sendComplete) return Math.min(Math.max(furthest, stepIndex), deriveIdx)
     return STEPS.length - 1
-  }, [furthest, stepIndex, sendResult])
+  }, [furthest, stepIndex, sendComplete])
 
   const goPhase = (id) => {
     const idx = STEPS.indexOf(id)
     if (idx === -1 || idx > maxReachableIndex) return
     if (id === 'scan' && !canRunReceiveCheck(sendResult, storyKind)) return
+    cancelChecks()
     setPhase(id)
   }
 
   const goNext = useCallback(() => {
+    cancelChecks()
     if (stepIndex < STEPS.length - 1) setPhase(STEPS[stepIndex + 1])
-  }, [stepIndex])
+  }, [stepIndex, cancelChecks])
 
   const goPrev = () => {
     if (stepIndex <= 0) return
-    sendAbort.current?.abort()
-    recvAbort.current?.abort()
-    setSendLoading(false)
-    setRecvLoading(false)
+    cancelChecks()
     setFurthest((f) => Math.max(f, stepIndex))
     setPhase(STEPS[stepIndex - 1])
   }
 
   const restartDemo = useCallback(() => {
-    sendAbort.current?.abort()
-    recvAbort.current?.abort()
-    setScenario((prev) => pickRandomFlowScenario(prev.id))
+    cancelChecks()
+    setRound((value) => value + 1)
     setLoadingCase(true)
     setCaseData(null)
     setLoadError('')
@@ -221,7 +216,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
       setRecvError,
       setFurthest,
     })
-  }, [])
+  }, [cancelChecks])
 
   const busy = sendLoading || recvLoading
   const canScan = canRunReceiveCheck(sendResult, storyKind)
@@ -279,17 +274,19 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
     return (
       <div className="flex items-center gap-3 rounded-lg border border-dashed border-bp-400 bg-bp-100 p-4 dark:border-bp-500/40 dark:bg-bp-700/35">
         <img src={alertIcon} alt="" className="sp-icon-blue h-8 w-8 shrink-0" />
-        <p className="text-sm font-medium text-bp-blue dark:text-bp-canvas">{loadError || tr('apiError')}</p>
+        <p className="text-sm font-medium text-bp-blue dark:text-bp-canvas">{loadError ? formatApiError(loadError, tr) : tr('apiError')}</p>
       </div>
     )
   }
 
   return (
     <div className="sp-flow-shell">
-      <FlowProgress steps={railSteps} maxIndex={maxReachableIndex} onSelect={goPhase} />
+      <p className="text-xs">{tr('learnSimulation')}</p>
+      <FlowProgress ariaLabel={tr('learnProgress')} steps={railSteps} maxIndex={maxReachableIndex} onSelect={goPhase} />
 
       <article className="sp-flow-card">
         <StoryStrip phase={phase} tr={tr} midIcon={midIcon} />
+        <WalkthroughLesson key={phase} phase={phase} caseData={caseData} />
 
         {showEdgeNote ? <p className="sp-flow-edge-note">{edgeNote}</p> : null}
 
@@ -334,27 +331,12 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
                 <p className="sp-flow-step-lead">{tr('flowDeriveLead')}</p>
               </StepHeader>
               {sendLoading ? <p className="sp-demo-running">{tr('flowDeriveRunning')}</p> : null}
-              {sendError ? <p className="sp-demo-error">{sendError}</p> : null}
+              {sendError ? <p role="alert" className="sp-demo-error">{tr('teachRequestError')}: {sendError}</p> : null}
               {sendResult?.note === 'zero key sum' ? <p className="sp-flow-note">{tr('zeroKeyNote')}</p> : null}
               {sendResult && !sendLoading ? (
                 <div className="space-y-2">
-                  <Verdict
-                    ok={sendComplete}
-                    okText={sendPassedStrict ? tr('flowVerifyOk') : tr('flowVerifyOkEdge')}
-                    failText={tr('flowVerifyFail')}
-                  />
-                  <DataBlock icon={FLOW_ICONS.receive} label={tr('flowDataPaymentOut')}>
-                    {liveOutputs.length ? (
-                      liveOutputs.map((hex) => <PubkeyOutput key={hex} pubkey={hex} />)
-                    ) : (
-                      <p className="sp-flow-muted text-[11px]">{tr('flowDataNoPaymentBuilt')}</p>
-                    )}
-                  </DataBlock>
-                  {!sendComplete ? (
-                    <Collapsible title={tr('flowVerifyFold')} nested>
-                      <DemoRunResults tr={tr} testType="send" testResults={sendResult} compact />
-                    </Collapsible>
-                  ) : null}
+                  <h4 className="font-bold">{tr('learnActual')}</h4>
+                  <DemoRunResults tr={tr} testType="send" testResults={sendResult} />
                 </div>
               ) : null}
             </>
@@ -367,23 +349,22 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
               </StepHeader>
               {!canScan && !recvResult ? <p className="sp-flow-note">{tr('flowScanNeedsSend')}</p> : null}
               {recvLoading ? <p className="sp-demo-running">{tr('flowScanRunning')}</p> : null}
-              {recvError ? <p className="sp-demo-error">{recvError}</p> : null}
+              {recvError ? <p role="alert" className="sp-demo-error">{tr('teachRequestError')}: {recvError}</p> : null}
               {recvResult && !recvLoading ? (
                 <div className="space-y-2">
-                  <Verdict ok={recvPassed} okText={tr('flowVerifyOk')} failText={tr('flowVerifyFail')} />
-                  {recvPassed && bobReceiveFound ? (
-                    <DataBlock icon={FLOW_ICONS.receive} label={tr('flowDataFound')} hint={tr('flowDataFoundHint')}>
-                      <PubkeyOutput pubkey={bobReceiveFound} />
-                    </DataBlock>
-                  ) : null}
-                  {!recvPassed ? (
-                    <Collapsible title={tr('flowVerifyFold')} nested>
-                      <DemoRunResults tr={tr} testType="receive" testResults={recvResult} compact />
-                    </Collapsible>
-                  ) : null}
+                  <h4 className="font-bold">{tr('learnActual')}</h4>
+                  <DemoRunResults tr={tr} testType="receive" testResults={recvResult} />
                 </div>
               ) : null}
-              {done ? <p className="sp-flow-done">{tr('flowCompleteBody')}</p> : null}
+              {done && <section className="space-y-3" data-testid="walkthrough-recap">
+                <p className="sp-flow-done">{tr('flowCompleteBody')}</p>
+                <h4 className="font-bold">{tr('learnRecap')}</h4>
+                <p className="text-sm">{tr('learnRecapBody')}</p>
+                <h4 className="font-bold">{tr('learnExplore')}</h4>
+                <ul className="space-y-2">{[[10, 'send'], [12, 'receive'], [23, 'receive'], [25, 'send']].map(([id, direction]) => <li key={id}>
+                  <button type="button" className="text-left text-sm underline underline-offset-2" onClick={() => onOpenReference?.({ id, direction, subcase: 0 })}>{referenceLessons[id][locale].title}</button>
+                </li>)}</ul>
+              </section>}
             </>
           ) : null}
         </div>

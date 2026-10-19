@@ -1,5 +1,13 @@
 export const teaching = {
   en: {
+    learnProgress: 'Progress', learnGoal: 'Learning goal', learnWho: 'Who knows what', learnOutcome: 'Expected outcome', learnHow: 'How it works',
+    learnConceptual: 'Conceptual explanation. The API does not return the intermediate shared-secret calculation; the values below, when present, are reference expectations.',
+    learnReference: 'Reference values before execution',
+    learnSimulation: 'This server runs both roles using public fixture keys. Nothing is broadcast. Keys created by the separate address generator are also visible to the server.',
+    learnActual: 'Actual check results', learnRecap: 'What you learned',
+    learnRecapBody: 'Bob shared one reusable address. Alice derived a payment from her inputs. Bob recognized the output and verified a synthetic spending signature. The reusable address and the payment output serve different purposes.',
+    learnExplore: 'Explore related examples',
+
     teachInputs: '1. Inputs', teachExpected: '2. Expected behavior', teachRun: '3. Run check', teachActual: '4. Actual result',
     teachWhy: 'Why it matters', teachTechnical: 'Technical details', teachFixture: 'Public test data: these example private keys are published fixtures. Never use them for funds.',
     teachSource: 'Pinned BIP-352 source', teachCopyLink: 'Copy example link', teachLinkError: 'Could not copy the link. Copy it from the browser address bar.',
@@ -16,6 +24,14 @@ export const teaching = {
     teachNotRun: 'Reference expectations only. Run the check to see actual results.', teachWait: 'Choose an example. No check runs automatically.',
   },
   it: {
+    learnProgress: 'Avanzamento', learnGoal: 'Obiettivo', learnWho: 'Chi conosce cosa', learnOutcome: 'Risultato atteso', learnHow: 'Come funziona',
+    learnConceptual: 'Spiegazione concettuale. L’API non restituisce il calcolo intermedio del segreto condiviso; i valori seguenti, quando presenti, sono aspettative di riferimento.',
+    learnReference: 'Valori di riferimento prima della verifica',
+    learnSimulation: 'Il server esegue entrambi i ruoli usando chiavi di test pubbliche. Non viene trasmesso nulla. Anche le chiavi create dal generatore separato di indirizzi sono visibili al server.',
+    learnActual: 'Risultati effettivi della verifica', learnRecap: 'Cosa hai imparato',
+    learnRecapBody: 'Bob ha condiviso un indirizzo riutilizzabile. Alice ha ricavato un pagamento dai propri input. Bob ha riconosciuto l’output e verificato una firma di spesa sintetica. L’indirizzo riutilizzabile e l’output di pagamento hanno scopi diversi.',
+    learnExplore: 'Esplora esempi collegati',
+
     teachInputs: '1. Input', teachExpected: '2. Comportamento atteso', teachRun: '3. Esegui la verifica', teachActual: '4. Risultato effettivo',
     teachWhy: 'Perché è importante', teachTechnical: 'Dettagli tecnici', teachFixture: 'Dati di test pubblici: queste chiavi private sono esempi pubblicati. Non usarle mai per fondi.',
     teachSource: 'Fonte BIP-352 fissata', teachCopyLink: 'Copia il link dell’esempio', teachLinkError: 'Impossibile copiare il link. Copialo dalla barra degli indirizzi.',
