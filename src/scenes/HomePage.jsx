@@ -1,3 +1,4 @@
+import { privacyContent } from '../features/privacy/content'
 import { BRAND, ICON, STORY } from '../assets/icons'
 import { useLocale } from '../i18n/useLocale'
 import { pageURL } from '../utils/navigation'
@@ -6,7 +7,8 @@ import AppLink from '../components/AppLink'
 import BpIcon from '../components/BpIcon'
 
 export default function HomePage({ onGenerate, headingRef }) {
-  const { tr } = useLocale()
+  const { tr, locale } = useLocale()
+  const lesson = privacyContent[locale] || privacyContent.en
   return <>
     <section className="sp-home-hero">
       <div className="sp-home-intro">
@@ -14,7 +16,8 @@ export default function HomePage({ onGenerate, headingRef }) {
         <h1 ref={headingRef} tabIndex={-1} className="sp-hero-title">{tr('uiHeroTitle')}</h1>
         <p className="sp-lead">{tr('uiHeroLead')}</p>
         <div className="sp-hero-actions">
-          <AppLink href={pageURL('walkthrough').href} className="sp-btn-solid">{tr('cardTests')} <span aria-hidden>→</span></AppLink>
+          <AppLink href={pageURL('privacy').href} className="sp-btn-solid">{lesson.start} <span aria-hidden>→</span></AppLink>
+          <AppLink href={pageURL('walkthrough').href} className="sp-btn-outline">{tr('cardTests')} <span aria-hidden>→</span></AppLink>
           <AppLink href={pageURL('reference').href} className="sp-btn-outline">{tr('referenceTitle')}</AppLink>
         </div>
         <p className="sp-description mt-3 text-sm">{tr('uiGuideHint')}</p>
@@ -43,6 +46,10 @@ export default function HomePage({ onGenerate, headingRef }) {
         </div>)}
         <div className="sp-story-preview-brand"><img src={BRAND.cowIconBlue} alt="" className="sp-icon-blue h-5 w-5" /><span>{tr('uiHeroNote')}</span></div>
       </figure>
+    </section>
+    <section className="sp-learning-path" aria-labelledby="journey-heading">
+      <div><p className="sp-eyebrow">{lesson.journey}</p><h2 id="journey-heading" className="text-2xl font-bold mt-3">{lesson.homeTitle}</h2><p className="sp-description mt-2">{lesson.homeLead}</p></div>
+      <ol>{['privacy', 'walkthrough', 'reference'].map((target, index) => <li key={target}><AppLink href={pageURL(target).href}><span aria-hidden>0{index + 1}</span><strong>{lesson.steps[index]}</strong><span aria-hidden>↗</span></AppLink></li>)}</ol>
     </section>
     <section className="sp-home-tools" aria-labelledby="tools-heading">
       <div className="mb-5"><h2 id="tools-heading" className="text-2xl font-bold">{tr('toolsHeading')}</h2><p className="sp-description mt-2">{tr('uiToolsLead')}</p></div>

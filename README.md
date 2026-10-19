@@ -118,3 +118,9 @@ python3 scripts/smoke-preview.py https://YOUR-PREVIEW --revision YOUR-COMMIT
 ```
 
 Packaging normally requires a clean committed tree. `--allow-dirty` is only for local verification and marks the revision with `-dirty`. The optional preview workflow can reuse its verified prebuilt binary without installing Rust again; direct Git deployments build from source instead.
+
+### Interactive privacy learning path
+
+Start at `?view=privacy` for a bilingual, browser-only simulation of address reuse, fresh receiving addresses, and Silent Payments. Add up to six symbolic payments, inspect equal destinations, switch between an outside observer and Bob’s wallet, and simulate recognition with private scanning information. The model uses illustrative identifiers, never real addresses or keys; no API or blockchain connection is needed. Public amounts and privacy limitations remain visible. Restart resets the entire exercise.
+
+The homepage links the privacy lab to the existing guided BIP-352 walkthrough and pinned reference explorer. The conceptual exercise is implemented in `src/features/privacy/`; protocol execution remains in the existing API and reference runner.

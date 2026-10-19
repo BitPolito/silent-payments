@@ -2,13 +2,13 @@ import { DEFAULT_REFERENCE, referenceURL } from './referenceLinks'
 
 export function currentView(search) {
   const view = new URLSearchParams(search).get('view')
-  return view === 'reference' || view === 'walkthrough' ? view : 'home'
+  return view === 'reference' || view === 'walkthrough' || view === 'privacy' ? view : 'home'
 }
 
 export function pageURL(view, href = window.location.href) {
   if (view === 'reference') return referenceURL(DEFAULT_REFERENCE, href)
   const url = referenceURL(null, href)
-  if (view === 'walkthrough') url.searchParams.set('view', 'walkthrough')
+  if (view === 'walkthrough' || view === 'privacy') url.searchParams.set('view', view)
   return url
 }
 

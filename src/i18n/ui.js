@@ -1,6 +1,6 @@
 export const ui = {
   en: {
-    uiHome: 'Home', uiLearn: 'Learn', uiReference: 'Reference explorer', uiMainNav: 'Main navigation', uiLearningNav: 'Learning tools', uiSkip: 'Skip to content',
+    uiPrivacy: 'Privacy lab', uiHome: 'Home', uiLearn: 'Learn', uiReference: 'Reference explorer', uiMainNav: 'Main navigation', uiLearningNav: 'Learning tools', uiSkip: 'Skip to content',
     uiHeroTitle: 'One address. A fresh payment every time.',
     uiHeroLead: 'Learn how Alice pays Bob with Silent Payments. Follow the story, explore real protocol examples, or try the address tools.',
     uiHeroNote: 'An interactive introduction to BIP-352, by BitPolito.',
@@ -15,7 +15,7 @@ export const ui = {
     uiResultPage: 'Output details',
   },
   it: {
-    uiHome: 'Home', uiLearn: 'Impara', uiReference: 'Esplora i riferimenti', uiMainNav: 'Navigazione principale', uiLearningNav: 'Strumenti didattici', uiSkip: 'Vai al contenuto',
+    uiPrivacy: 'Laboratorio privacy', uiHome: 'Home', uiLearn: 'Impara', uiReference: 'Esplora i riferimenti', uiMainNav: 'Navigazione principale', uiLearningNav: 'Strumenti didattici', uiSkip: 'Vai al contenuto',
     uiHeroTitle: 'Un indirizzo. Un nuovo pagamento ogni volta.',
     uiHeroLead: 'Scopri come Alice paga Bob con Silent Payments. Segui la storia, esplora esempi reali del protocollo o prova gli strumenti per gli indirizzi.',
     uiHeroNote: 'Un’introduzione interattiva a BIP-352, a cura di BitPolito.',

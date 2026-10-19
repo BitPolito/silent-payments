@@ -40,6 +40,7 @@ export default function LearningPage({ view, initialSearch, headingRef }) {
       <span className="sp-page-badge">BIP-352 · {tr('uiDemoOnly')}</span>
     </div>
     <nav className="sp-learning-nav" aria-label={tr('uiLearningNav')}>
+      <AppLink href={pageURL('privacy').href}>{tr('uiPrivacy')}</AppLink>
       <AppLink href={pageURL('walkthrough').href} aria-current={isWalkthrough ? 'page' : undefined}>{tr('demoTitle')}</AppLink>
       <AppLink href={pageURL('reference').href} aria-current={!isWalkthrough ? 'page' : undefined}>{tr('referenceTitle')}</AppLink>
     </nav>

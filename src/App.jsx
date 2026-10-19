@@ -8,6 +8,7 @@ import ThemeToggle from './components/ThemeToggle'
 import { useLocale } from './i18n/useLocale'
 import GenerateAddrModal from './scenes/GenerateAddr'
 import LearningPage from './scenes/LearningPage'
+import PrivacyLab from './features/privacy/PrivacyLab'
 import HomePage from './scenes/HomePage'
 import { currentView, pageURL } from './utils/navigation'
 
@@ -31,7 +32,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'auto' })
   }, [search])
   useEffect(() => {
-    document.title = `${view === 'home' ? tr('title') : tr(view === 'walkthrough' ? 'demoTitle' : 'referenceTitle')} · BitPolito`
+    document.title = `${view === 'home' ? tr('title') : tr(view === 'privacy' ? 'uiPrivacy' : view === 'walkthrough' ? 'demoTitle' : 'referenceTitle')} · BitPolito`
   }, [view, tr])
   return <div className="sp-app">
     <a className="sp-skip-link" href="#main-content">{tr('uiSkip')}</a>
@@ -42,7 +43,7 @@ export default function App() {
           <span>{tr('title')}</span>
         </AppLink>
         <nav className="sp-primary-nav" aria-label={tr('uiMainNav')}>
-          {[['home', 'uiHome'], ['walkthrough', 'uiLearn'], ['reference', 'uiReference']].map(([target, label]) => <AppLink key={target} href={pageURL(target).href} aria-current={view === target ? 'page' : undefined}>{tr(label)}</AppLink>)}
+          {[['home', 'uiHome'], ['privacy', 'uiPrivacy'], ['walkthrough', 'uiLearn'], ['reference', 'uiReference']].map(([target, label]) => <AppLink key={target} href={pageURL(target).href} aria-current={view === target ? 'page' : undefined}>{tr(label)}</AppLink>)}
         </nav>
         <div className="sp-header-controls"><LangToggle /><ThemeToggle ariaLabel={tr('themeAria')} /></div>
       </div>
@@ -50,7 +51,7 @@ export default function App() {
     <main id="main-content" tabIndex={-1} className={`sp-main ${view === 'home' ? '' : 'sp-learning-page'}`}>
       {view === 'home'
         ? <HomePage headingRef={headingRef} onGenerate={setGenerator} />
-        : <LearningPage key={search} view={view} initialSearch={search} headingRef={headingRef} />}
+        : view === 'privacy' ? <PrivacyLab headingRef={headingRef} /> : <LearningPage key={search} view={view} initialSearch={search} headingRef={headingRef} />}
     </main>
     <div className="sp-resource-links"><a href="https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki" target="_blank" rel="noopener noreferrer">{tr('bipCta')} ↗</a><a href={BITPOLITO_URL} target="_blank" rel="noopener noreferrer">bitpolito.it ↗</a></div>
     <AppFooter />
