@@ -1,3 +1,4 @@
+import { visualContent } from './visualContent'
 export const studioContent = {
   en: {
     referenceNav: 'Reference', explore: 'Explore', tools: 'Tools', title: 'Change an input. Discover the difference.', intro: 'Explore Bitcoin address privacy through real, small experiments.', start: 'Start exploring', payment: 'Payments', address: 'Addresses', labels: 'Labels', scan: 'Scanning',
@@ -22,5 +23,7 @@ export const studioContent = {
     batch: 'Sei transazioni sintetiche', skipped: 'Ignorata', no_match: 'Scansionata · nessuna corrispondenza', found_status: 'Pagamento trovato', rejected: 'Operazione rifiutata', base: 'Pagamento all’indirizzo base', labeled: 'Pagamento etichettato', unrelated: 'Output non correlato', no_inputs: 'Nessun input idoneo', future_witness: 'Versione witness non supportata', zero_sum: 'Somma finale degli input nulla', preview: 'Scegli i controlli → Esegui → Esamina gli output', technical: 'Chiavi complete, prove e JSON',
   },
 }
+Object.assign(studioContent.en, { title: visualContent.en.title, intro: visualContent.en.intro, objectives: { payment: 'Choose Alice’s coins. See how Bob finds a payment.', address: 'Try an address and discover what it contains.', labels: 'Give Bob’s wallet a pocket for each purpose.', scan: 'Open the cards to discover which payments Bob recognizes.' }, derive: visualContent.en.derive, discover: visualContent.en.discover, verify: visualContent.en.verify, inspect: visualContent.en.inspect, labelScan: visualContent.en.labelScan, run: visualContent.en.run, actual: visualContent.en.actual, equal: visualContent.en.equal, different: visualContent.en.different, loadSample: visualContent.en.sample })
+Object.assign(studioContent.it, { title: visualContent.it.title, intro: visualContent.it.intro, objectives: { payment: 'Scegli le monete di Alice. Scopri come Bob trova un pagamento.', address: 'Prova un indirizzo e scopri cosa contiene.', labels: 'Dai al wallet di Bob una tasca per ogni scopo.', scan: 'Apri le schede e scopri quali pagamenti Bob riconosce.' }, derive: visualContent.it.derive, discover: visualContent.it.discover, verify: visualContent.it.verify, inspect: visualContent.it.inspect, labelScan: visualContent.it.labelScan, run: visualContent.it.run, actual: visualContent.it.actual, equal: visualContent.it.equal, different: visualContent.it.different, loadSample: visualContent.it.sample })
 export const TOOLS = ['payment', 'address', 'labels', 'scan']
 export const PRESETS = { payment: ['default', 'mutation'], address: ['default'], labels: ['default'], scan: ['default'] }
