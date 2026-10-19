@@ -24,7 +24,7 @@ export default function ThemeToggle({ ariaLabel }) {
       aria-checked={dark}
       aria-label={ariaLabel}
       onClick={toggle}
-      className="relative flex h-8 w-14 shrink-0 items-center rounded-full border border-bp-200 bg-bp-canvas px-1 shadow-sm transition hover:border-bp-300 dark:border-bp-500/45 dark:bg-bp-800/80 dark:hover:border-bp-400/60"
+      className="relative flex h-11 w-14 shrink-0 items-center rounded-full border border-bp-200 bg-bp-canvas px-1 shadow-sm transition hover:border-bp-300 dark:border-bp-500/45 dark:bg-bp-800/80 dark:hover:border-bp-400/60"
     >
       <span
         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-bp-200 bg-bp-canvas shadow-md transition-[margin] duration-200 ease-out dark:border-bp-canvas/30 dark:bg-bp-canvas ${

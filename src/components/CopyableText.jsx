@@ -56,7 +56,7 @@ export default function CopyableText({ value, className = '', emptyLabel = '—'
       onClick={copy}
       disabled={!canCopy}
       title={canCopy ? tr('copyHint') : undefined}
-      className={`group relative mt-1 block w-full rounded-lg border border-bp-200 bg-bp-50 p-3 text-left font-mono text-xs text-bp-blue shadow-sm transition dark:border-bp-500/45 dark:bg-bp-700/55 dark:text-bp-canvas ${
+      className={`group relative mt-1 block min-h-[44px] w-full rounded-lg border border-bp-200 bg-bp-50 p-3 text-left font-mono text-xs text-bp-blue shadow-sm transition dark:border-bp-500/45 dark:bg-bp-700/55 dark:text-bp-canvas ${
         canCopy
           ? 'cursor-pointer hover:border-bp-blue/40 hover:bg-bp-100 hover:ring-2 hover:ring-bp-blue/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bp-blue dark:hover:border-bp-canvas/35 dark:hover:bg-bp-700/80 dark:hover:ring-bp-canvas/30 dark:focus-visible:ring-bp-canvas'
           : 'cursor-default opacity-70'

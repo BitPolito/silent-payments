@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { BinaryBitmap, HybridBinarizer, RGBLuminanceSource, QRCodeReader } from '@zxing/library'
+import { BinaryBitmap, DecodeHintType, HybridBinarizer, RGBLuminanceSource, QRCodeReader } from '@zxing/library'
 
 async function openGenerator(page) {
   await page.goto('/')
   await page.getByRole('button', { name: /^Generate address/ }).click()
-  await expect(page.getByRole('checkbox')).toBeChecked()
+  await expect(page.getByRole('radio', {name:/^Testnet/})).toBeChecked()
 }
 async function generate(page) {
   const response = page.waitForResponse((r) => r.url().endsWith('/api/get_sp_address') && r.request().method() === 'POST')
@@ -18,21 +18,21 @@ async function generate(page) {
 
 test('guided sender and receiver walkthrough', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: /^Guided demo/ }).click()
-  const dialog = page.getByRole('dialog')
-  await dialog.getByRole('button', { name: 'Continue', exact: true }).click()
-  await dialog.getByRole('button', { name: 'Continue', exact: true }).click()
-  await dialog.getByRole('button', { name: 'Run sender check', exact: true }).click()
-  await expect(dialog.getByText('Matches reference', { exact: true })).toBeVisible()
-  await dialog.getByRole('button', { name: 'Continue', exact: true }).click()
-  await dialog.getByRole('button', { name: 'Run receiver check', exact: true }).click()
-  await expect(dialog.getByText('Donation flow complete. Demo only.')).toBeVisible()
+  await page.getByRole('link', { name: /^Guided demo/ }).click()
+  const walkthrough = page.getByRole('main')
+  await walkthrough.getByRole('button', { name: 'Continue', exact: true }).click()
+  await walkthrough.getByRole('button', { name: 'Continue', exact: true }).click()
+  await walkthrough.getByRole('button', { name: 'Run sender check', exact: true }).click()
+  await expect(walkthrough.getByText('Matches reference', { exact: true })).toBeVisible()
+  await walkthrough.getByRole('button', { name: 'Continue', exact: true }).click()
+  await walkthrough.getByRole('button', { name: 'Run receiver check', exact: true }).click()
+  await expect(walkthrough.getByText('Donation flow complete. Demo only.')).toBeVisible()
 })
 
 test('advanced cases include subcases and expected rejection', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: /^Guided demo/ }).click()
-  await page.getByRole('button', { name: 'All reference cases' }).click()
+  await page.getByRole('link', { name: /^Guided demo/ }).click()
+  await page.getByRole('link', { name: 'All reference cases', exact: true }).click()
   await expect(page.getByRole('combobox', { name: 'Reference case', exact: true }).locator('option')).toHaveCount(28)
   await page.getByRole('combobox', { name: 'Reference case', exact: true }).selectOption('18')
   await page.getByLabel('Direction', { exact: true }).selectOption('receive')
@@ -53,6 +53,7 @@ test('generation, clipboard, QR, PDF and both networks', async ({ page }) => {
   const qrDownload = page.waitForEvent('download')
   await page.getByRole('button', { name: /QR code \(PNG\)/ }).click()
   const png = await readFile(await (await qrDownload).path())
+  expect(png.equals(Buffer.from(data.qr_png_base64, 'base64'))).toBe(true)
   const pixels = await page.evaluate(async (base64) => {
     const image = new Image()
     image.src = `data:image/png;base64,${base64}`
@@ -64,7 +65,8 @@ test('generation, clipboard, QR, PDF and both networks', async ({ page }) => {
     return {width:image.width,height:image.height,gray:Array.from({length:image.width*image.height},(_,i)=>rgba[i*4])}
   }, png.toString('base64'))
   const bitmap = new BinaryBitmap(new HybridBinarizer(new RGBLuminanceSource(Uint8ClampedArray.from(pixels.gray),pixels.width,pixels.height)))
-  expect(new QRCodeReader().decode(bitmap).getText()).toBe(data.addresses[0])
+  // The download is a clean generated barcode, not a photograph requiring finder detection.
+  expect(new QRCodeReader().decode(bitmap, new Map([[DecodeHintType.PURE_BARCODE, true]])).getText()).toBe(data.addresses[0])
   const pdfDownload = page.waitForEvent('download')
   await page.getByRole('button', { name: /Backup \(PDF\)/ }).click()
   const pdf = await getDocument({data:new Uint8Array(await readFile(await (await pdfDownload).path())), useSystemFonts:true}).promise
@@ -73,7 +75,7 @@ test('generation, clipboard, QR, PDF and both networks', async ({ page }) => {
   const compact=content.replace(/\s/g,'')
   for(const value of [data.addresses[0],data.key_material.scan_priv_key,data.key_material.spend_priv_key]) expect(compact).toContain(value)
   await pdf.destroy()
-  await page.getByRole('checkbox').uncheck()
+  await page.getByRole('radio', {name:/^Mainnet/}).check()
   const mainnet=await generate(page)
   expect(mainnet.addresses[0]).toMatch(/^sp1qq/)
 })
@@ -115,7 +117,7 @@ test('closed or superseded generation cannot display stale results', async ({ pa
   await page.getByRole('button', { name: /^Generate address/ }).click()
   release()
   await expect(page.getByRole('button', {name:/Backup \(PDF\)/})).toHaveCount(0)
-  await expect(page.getByRole('checkbox')).toBeChecked()
+  await expect(page.getByRole('radio', {name:/^Testnet/})).toBeChecked()
 })
 
 test('short real vanity search returns a valid testnet export', async ({page})=>{

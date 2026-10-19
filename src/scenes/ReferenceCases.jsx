@@ -41,12 +41,13 @@ function ReferenceLesson({ selection, upstream }) {
   const inputs = data?.[direction === 'send' ? 'sending' : 'receiving']
   return <div className="min-w-0 space-y-4" data-testid="reference-lesson">
     <header className="space-y-2">
-      <h3 className="text-lg font-bold">{lesson.title}</h3>
+      <h2 className="text-2xl font-bold">{lesson.title}</h2>
       <p>{lesson.demonstrates}</p>
       <p className="text-sm"><strong>{tr('teachWhy')}: </strong>{lesson.why}</p>
     </header>
-    <section className="sp-surface space-y-2 rounded-lg p-3">
-      <h4 className="font-bold">{tr('teachInputs')}</h4>
+    <div className="sp-reference-story">
+    <section className="sp-surface space-y-3 rounded-xl p-5">
+      <h3 className="font-bold">{tr('teachInputs')}</h3>
       {!data ? <p>{tr(error ? 'teachRequestError' : 'loadingScenario')}</p> : <dl className="grid grid-cols-2 gap-2 text-sm">
         {[[tr('teachInputCount'), inputs?.vin?.length ?? 0],
           [tr(direction === 'send' ? 'teachRecipientCount' : 'teachTransactionCount'), (inputs?.recipients || inputs?.outputs || []).length],
@@ -59,18 +60,19 @@ function ReferenceLesson({ selection, upstream }) {
         {data && inputsOpen && <RawJSON value={data} />}
       </details>
     </section>
-    <section className="sp-surface space-y-2 rounded-lg p-3">
-      <h4 className="font-bold">{tr('teachExpected')}</h4>
+    <section className="sp-surface space-y-3 rounded-xl p-5">
+      <h3 className="font-bold">{tr('teachExpected')}</h3>
       <p>{lesson[direction === 'send' ? 'sending' : 'receiving']}</p>
       <p className="text-xs">{tr('teachNotRun')}</p>
     </section>
-    <section className="space-y-2">
-      <h4 className="font-bold">{tr('teachRun')}</h4>
+    </div>
+    <section className="sp-reference-run">
+      <h3 className="font-bold">{tr('teachRun')}</h3>
       <button className="sp-btn-solid" disabled={busy || !data || !inputs} onClick={run}>{busy ? tr('loadingScenario') : tr('referenceRun')}</button>
     </section>
     {error && <p role="alert"><strong>{tr('teachRequestError')}: </strong>{formatApiError(error, tr)}</p>}
     {result && <section className="min-w-0 space-y-3" data-testid="reference-result">
-      <h4 className="font-bold">{tr('teachActual')}</h4>
+      <h3 className="font-bold">{tr('teachActual')}</h3>
       <DemoRunResults tr={tr} testType={direction} testResults={result} />
       <details onToggle={(event) => setRawOpen(event.currentTarget.open)}><summary>{tr('teachRaw')}</summary>{rawOpen && <RawJSON value={result} />}</details>
     </section>}
@@ -84,6 +86,7 @@ function RawJSON({ value }) {
 export default function ReferenceCases({ initialSearch = window.location.search }) {
   const { tr, locale } = useLocale()
   const [loaded, setLoaded] = useState(null)
+  const [controlsOpen, setControlsOpen] = useState(() => window.matchMedia('(min-width: 1024px)').matches)
   const [loadError, setLoadError] = useState(null)
   const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState(false)
@@ -119,11 +122,14 @@ export default function ReferenceCases({ initialSearch = window.location.search 
       setCopyError(false)
     } catch { setCopyError(true) }
   }
-  const selectClass = 'mt-1 w-full rounded border border-bp-200 bg-white p-2 text-bp-blue dark:border-bp-500 dark:bg-bp-800 dark:text-bp-canvas'
-  return <section className="min-w-0 space-y-4">
-    <p className="text-xs">{tr('referenceIntro')}</p>
-    <p className="text-sm">{tr('teachWait')}</p>
+  const selectClass = 'sp-input mt-2 w-full'
+  return <section className="sp-reference-layout">
+    <aside className="sp-reference-sidebar sp-surface">
     {invalid && <p role="alert">{tr('teachInvalidLink')}</p>}
+    <details className="sp-reference-options" open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
+    <summary aria-label={tr('uiChooseExample')}><span className="block font-bold">{tr('uiChooseExample')}</span><span className="sp-description mt-1 block text-xs">{selection.id} · {tr(selection.direction === 'send' ? 'referenceSend' : 'referenceReceive')} · {selection.subcase + 1}/{count}</span></summary>
+    <div className="sp-reference-filter-body">
+    <p className="sp-description text-sm">{tr('teachWait')}</p>
     <label className="block text-sm">{tr('referenceCase')}
       <select aria-label={tr('referenceCase')} className={selectClass} value={selection.id} onChange={(event) => change({ ...selection, id: Number(event.target.value), subcase: 0 })}>
         {cases.map((entry) => <option key={entry.id} value={entry.id}>{entry.id}: {lessons[entry.id][locale].title}</option>)}
@@ -141,9 +147,13 @@ export default function ReferenceCases({ initialSearch = window.location.search 
         </select>
       </label>
     </div>
-    <button className="sp-btn-solid" onClick={copyLink}>{tr('teachCopyLink')}</button>
+    <p className="sp-description text-xs">{tr('referenceIntro')}</p>
+    </div>
+    </details>
+    <button className="sp-btn-outline w-full" onClick={copyLink}>{tr('teachCopyLink')}</button>
     {copied && <span role="status" className="ml-2 text-xs">{tr('copied')}</span>}
     {copyError && <p role="alert">{tr('teachLinkError')}</p>}
+    </aside>
     <ReferenceLesson key={`${selection.id}-${selection.direction}-${selection.subcase}`} selection={selection} upstream={group.comment} />
   </section>
 }

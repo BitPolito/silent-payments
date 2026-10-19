@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 async function open(page) {
   await page.goto('/')
-  await page.getByRole('button', { name: /^Guided demo/ }).click()
+  await page.getByRole('link', { name: /^Guided demo/ }).click()
   await expect(page.getByTestId('stage-teaching')).toBeVisible()
 }
 async function derive(page) {
@@ -22,7 +22,7 @@ async function receive(page) {
 test('walkthrough separates learning goals, conceptual explanations, expectations and real results', async ({ page }) => {
   await open(page)
   await expect(page.getByText(/This server runs both roles/)).toBeVisible()
-  await expect(page.getByRole('button', { name: '4. 4 Receipt', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: '4 Receipt', exact: true })).toBeDisabled()
   await expect(page.getByTestId('stage-teaching')).toContainText('Alice needs only the public Silent Payments address')
   await page.getByText('How it works', { exact: true }).click()
   await expect(page.getByText('Scan key', { exact: true })).toBeVisible()
@@ -50,7 +50,7 @@ test('restart reloads the same fixture and clears results and progress', async (
   await expect(page.getByTestId('stage-teaching')).toContainText('Learn what Bob shares')
   await expect(page.getByTestId('comparison')).toHaveCount(0)
   await expect(page.getByTestId('walkthrough-recap')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '4. 4 Receipt', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: '4 Receipt', exact: true })).toBeDisabled()
   await derive(page)
   await expect(page.getByRole('button', { name: 'Run sender check', exact: true })).toBeEnabled()
 })
@@ -99,7 +99,7 @@ test('navigating away from a pending sender check discards its late response', a
   await expect(page.getByTestId('comparison')).toHaveCount(0)
 })
 
-test('closing a pending receiver check cannot populate a reopened walkthrough', async ({ page }) => {
+test('leaving a pending receiver check cannot populate a reopened walkthrough', async ({ page }) => {
   let release, started
   const gate = new Promise((resolve) => { release = resolve })
   const received = new Promise((resolve) => { started = resolve })
@@ -114,8 +114,8 @@ test('closing a pending receiver check cannot populate a reopened walkthrough', 
   await send(page)
   await page.getByRole('button', { name: 'Run receiver check', exact: true }).click()
   await received
-  await page.getByRole('button', { name: 'Close', exact: true }).click()
-  await page.getByRole('button', { name: /^Guided demo/ }).click()
+  await page.getByRole('link', { name: 'Back to home', exact: false }).click()
+  await page.getByRole('link', { name: /^Guided demo/ }).click()
   release()
   await expect(page.getByTestId('stage-teaching')).toContainText('Learn what Bob shares')
   await expect(page.getByTestId('comparison')).toHaveCount(0)
@@ -129,14 +129,14 @@ test('walkthrough request errors do not pretend to be reference mismatches', asy
   await page.getByRole('button', { name: 'Run sender check', exact: true }).click()
   await expect(page.getByRole('alert')).toHaveText('Request error: Offline')
   await expect(page.getByTestId('comparison')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '4. 4 Receipt', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: '4 Receipt', exact: true })).toBeDisabled()
 })
 
 test('walkthrough Italian explanations support a narrow screen and keyboard navigation', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.addInitScript(() => { localStorage.setItem('sp-locale', 'it'); localStorage.setItem('theme', 'dark') })
   await page.goto('/')
-  await page.getByRole('button', { name: /^Demo guidata/ }).click()
+  await page.getByRole('link', { name: /^Demo guidata/ }).click()
   await expect(page.getByRole('heading', { name: 'Obiettivo', exact: true })).toBeVisible()
   await page.getByText('Come funziona', { exact: true }).click()
   await expect(page.getByText('Chiave di scansione', { exact: true })).toBeVisible()
@@ -144,5 +144,5 @@ test('walkthrough Italian explanations support a narrow screen and keyboard navi
   await page.getByRole('button', { name: 'Continua', exact: true }).focus()
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('stage-teaching')).toContainText('input della transazione di Alice')
-  expect(await page.getByRole('dialog').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+  expect(await page.getByRole('main').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
 })

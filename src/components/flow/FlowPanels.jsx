@@ -9,7 +9,7 @@ export function StepHeader({ icon, title, children }) {
     <header className="sp-flow-step-head">
       <img src={icon} alt="" className="sp-flow-step-icon" />
       <div className="min-w-0 flex-1">
-        <h3 className="sp-flow-heading">{title}</h3>
+        <h2 className="sp-flow-heading">{title}</h2>
         {children}
       </div>
     </header>

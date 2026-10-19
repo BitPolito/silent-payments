@@ -7,8 +7,8 @@ const TERMS = { bob: ['scan', 'spend', 'outputs'], alice: ['inputs'], derive: ['
 export default function WalkthroughLesson({ phase, caseData }) {
   const { locale, tr } = useLocale()
   const lesson = teaching[locale].stages[phase]
-  return <section className="sp-surface space-y-3 rounded-xl p-3 text-sm" data-testid="stage-teaching">
-    <h3 className="font-bold">{tr('learnGoal')}</h3>
+  return <section className="sp-lesson-aside sp-surface space-y-4 rounded-xl p-5 text-sm" data-testid="stage-teaching">
+    <h2 className="font-bold">{tr('learnGoal')}</h2>
     <p>{lesson.goal}</p>
     <p><strong>{tr('learnWho')}: </strong>{lesson.knows}</p>
     <p><strong>{tr('learnOutcome')}: </strong>{lesson.outcome}</p>

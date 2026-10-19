@@ -1,4 +1,5 @@
 import { teaching } from './teaching'
+import { ui } from './ui'
 
 /** @typedef {'en' | 'it'} Locale */
 
@@ -6,6 +7,7 @@ import { teaching } from './teaching'
 export const strings = {
   en: {
     ...teaching.en,
+    ...ui.en,
     referenceTitle: "All reference cases",
     referenceIntro: "Pinned BIP-352 v1.1.1 vectors. Public example keys only; nothing is broadcast.",
     referenceCase: "Reference case",
@@ -205,6 +207,7 @@ export const strings = {
   },
   it: {
     ...teaching.it,
+    ...ui.it,
     referenceTitle: "Tutti i casi di riferimento",
     referenceIntro: "Vettori BIP-352 v1.1.1 fissati. Solo chiavi di esempio pubbliche; niente viene trasmesso.",
     referenceCase: "Caso di riferimento",

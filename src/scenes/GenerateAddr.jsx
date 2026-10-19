@@ -27,11 +27,11 @@ import { preloadFxAssets } from '../fx/presets'
 const alertIcon = '/bitpolito/alert.svg'
 
 const BTN_PRIMARY =
-  'rounded-md border border-bp-blue bg-bp-blue px-3 py-1.5 text-xs font-semibold text-bp-canvas transition hover:opacity-90 disabled:opacity-40 dark:border-bp-canvas dark:bg-bp-canvas dark:text-bp-blue'
+  'sp-btn-solid'
 const BTN_GHOST =
   'rounded-md border border-bp-200/80 px-2.5 py-1 text-[11px] font-semibold text-bp-blue transition hover:bg-bp-50 dark:border-bp-500/40 dark:text-bp-canvas dark:hover:bg-bp-700/50'
 const INPUT =
-  'rounded-md border border-bp-200 bg-white px-2.5 py-1.5 font-mono text-xs dark:border-bp-500/40 dark:bg-bp-800 dark:text-bp-canvas'
+  'sp-input font-mono'
 const COPY_COMPACT =
   'mt-0 !p-2 !text-[11px] !bg-bp-50 dark:!bg-bp-700/70 dark:!text-bp-canvas dark:hover:!bg-bp-700/90'
 function downloadPngBase64(b64, filename) {
@@ -66,6 +66,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
   const [patternError, setPatternError] = useState('')
   const [fxPreset, setFxPreset] = useState(/** @type {import('../fx/presets').FxPresetId | null} */ (null))
   const abortRef = useRef(/** @type {AbortController | null} */ (null))
+  const resultRef = useRef(null)
   const patternRef = useRef(/** @type {HTMLInputElement | null} */ (null))
 
   const showResult = !!genResult?.addresses?.[0]
@@ -210,6 +211,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
       (!!patternError || !isBech32m(vanityEffective) || vanityEffective.length > vanityLimits.maxPattern))
 
   const addr = genResult?.addresses?.[0]
+  useEffect(() => { if (addr) resultRef.current?.focus() }, [addr])
   const isTestnetAddr =
     genResult?.network === 'testnet' || (addr && addr.toLowerCase().startsWith('tsp1'))
   const vanityHighlight =
@@ -227,53 +229,19 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
   return (
     <>
     <ModalShell open={open} onClose={onClose} title={modalTitle} subtitle={modalSubtitle} closeLabel={tr('close')}>
-      <div className="flex gap-0.5 rounded-md border border-bp-200 bg-bp-50 p-0.5 dark:border-bp-500/30 dark:bg-bp-800/40">
-        <button
-          type="button"
-          onClick={() => {
-            setTab('random')
-            resetResults()
-          }}
-          className={`flex-1 rounded px-2.5 py-1 text-[11px] font-semibold transition ${
-            tab === 'random'
-              ? 'bg-bp-blue text-bp-canvas dark:bg-bp-canvas dark:text-bp-blue'
-              : 'text-bp-blue/60 hover:text-bp-blue dark:text-bp-canvas/60 dark:hover:text-bp-canvas'
-          }`}
-        >
-      <p className="mb-3 text-xs">{tr('serverKeysNotice')}</p>
-      {loading && <p role="status" className="mb-3 text-xs">{tr('searchCancellationNotice')}</p>}
-          {tr('genTabRandom')}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setTab('vanity')
-            resetResults()
-          }}
-          className={`flex-1 rounded px-2.5 py-1 text-[11px] font-semibold transition ${
-            tab === 'vanity'
-              ? 'bg-bp-blue text-bp-canvas dark:bg-bp-canvas dark:text-bp-blue'
-              : 'text-bp-blue/60 hover:text-bp-blue dark:text-bp-canvas/60 dark:hover:text-bp-canvas'
-          }`}
-        >
-          {tr('genTabVanity')}
-        </button>
+      <div className="sp-mode-switch" role="group" aria-label={tr('uiMode')}>
+        {['random', 'vanity'].map((mode) => <button key={mode} type="button" aria-pressed={tab === mode} onClick={() => { setTab(mode); resetResults() }}>{tr(mode === 'random' ? 'genTabRandom' : 'genTabVanity')}</button>)}
       </div>
-
-      {phase !== 'loading' ? (
-        <label className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-bp-200/80 bg-bp-50/50 px-2.5 py-2 text-[11px] font-semibold text-bp-blue dark:border-bp-500/35 dark:bg-bp-800/30 dark:text-bp-canvas">
-          <span className="inline-flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={testnet}
-              onChange={(e) => { resetResults(); setTestnet(e.target.checked) }}
-              className="rounded border-bp-300"
-            />
-            {tr('testnet')}
-          </span>
-          <span className="font-normal text-bp-500 dark:text-bp-canvas/70">{tr('testnetHint')}</span>
-        </label>
-      ) : null}
+      <p className="sp-notice mt-4 text-sm">{tr('serverKeysNotice')}</p>
+      {loading && <p role="status" className="sp-description mt-3 text-sm">{tr('searchCancellationNotice')}</p>}
+      {phase !== 'loading' && <fieldset className="sp-network-choice">
+        <legend>{tr('uiNetwork')}</legend>
+        <div className="grid grid-cols-2 gap-3">{[true, false].map((network) => <label key={String(network)}>
+          <input type="radio" name="network" value={network ? 'testnet' : 'mainnet'} checked={testnet === network} onChange={() => { resetResults(); setTestnet(network) }} />
+          <span>{tr(network ? 'networkTestnet' : 'networkMainnet')}</span>
+        </label>)}</div>
+        <p className="sp-description mt-2 text-xs">{tr('testnetHint')}</p>
+      </fieldset>}
 
       {apiStatus === 'offline' ? (
         <div className="mt-4 flex items-start gap-3 rounded-md border border-bp-200 bg-bp-50 p-2 dark:border-bp-500/40 dark:bg-bp-700/40">
@@ -287,7 +255,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
       {error ? (
         <div className="mt-4 flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-2 dark:border-red-900/40 dark:bg-red-950/30">
           <img src={alertIcon} alt="" className="sp-icon-blue mt-0.5 h-5 w-5 shrink-0" />
-          <p className="text-xs font-medium text-red-800 dark:text-red-200">{error}</p>
+          <p role="alert" className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
         </div>
       ) : null}
 
@@ -399,13 +367,13 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
               {qrSrc ? (
                 <div className="shrink-0 rounded-md border border-bp-200 bg-white p-1 dark:border-bp-500/30">
-                  <img src={qrSrc} alt="" className="h-20 w-20" />
+                  <img src={qrSrc} alt="" className="h-28 w-28" />
                 </div>
               ) : null}
               <div className="min-w-0 flex-1 w-full">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-bp-500 dark:text-bp-canvas/75">
+                <h3 ref={resultRef} tabIndex={-1} className="mb-2 text-sm font-semibold">
                   {tr('address')}
-                </p>
+                </h3>
                 <CopyableText value={addr} highlight={vanityHighlight} className={COPY_COMPACT} />
               </div>
             </div>
