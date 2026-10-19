@@ -34,7 +34,7 @@ else:
 
 @app.after_request
 def private_responses(response):
-    if request.path.startswith(('/api/get_sp_address', '/api/vanity_address', '/api/test_case', '/api/single_test')):
+    if request.path.startswith(('/api/get_sp_address', '/api/vanity_address', '/api/test_case', '/api/single_test', '/api/experiments')):
         response.headers['Cache-Control'] = 'no-store'
     return response
 
@@ -358,3 +358,24 @@ def qr_code():
 		raise ValueError('address query parameter is required')
 	except Exception as e:
 		return api_error(e)
+
+@app.route('/api/experiments', methods=['GET'])
+def experiment_metadata():
+    from core.experiments import metadata
+    return jsonify(metadata())
+
+
+@app.route('/api/experiments/<tool>', methods=['POST'])
+def experiment_run(tool):
+    from core.experiments import execute, ExperimentInputError
+    from werkzeug.exceptions import RequestEntityTooLarge
+    request.max_content_length = 8192
+    if request.content_length and request.content_length > 8192:
+        raise RequestEntityTooLarge()
+    body = json_body()
+    try:
+        return jsonify(execute(tool, body))
+    except ExperimentInputError:
+        raise
+    except ValueError as exc:
+        raise RuntimeError('Experiment computation failed') from exc

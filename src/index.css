@@ -812,3 +812,7 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-studio-results textarea { width: 100%; min-height: 100px; overflow-wrap: anywhere; }
 @media (max-width: 1023px) { .sp-experiment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sp-studio-layout { grid-template-columns: 1fr; } }
 @media (max-width: 639px) { .sp-experiment-card { padding: 18px; } .sp-experiment-card h2 { font-size: 18px; } .sp-studio-columns { grid-template-columns: 1fr; } .sp-studio-tabs { gap: 6px; } .sp-studio-tabs a { padding: 10px; font-size: 12px; } }
+.sp-studio-results { grid-template-columns: minmax(0, 1fr); }
+.sp-studio-results > *, .sp-studio-details { min-width: 0; max-width: 100%; }
+.sp-studio-details pre { width: 100%; max-width: 100%; }
+@media (max-width: 1023px) { .sp-studio-layout { grid-template-columns: minmax(0, 1fr); } }
