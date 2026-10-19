@@ -1,3 +1,4 @@
+import ObserverChallenge from './ObserverChallenge'
 import { useState } from 'react'
 import AppLink from '../../components/AppLink'
 import { useLocale } from '../../i18n/useLocale'
@@ -14,8 +15,9 @@ export default function PrivacyLab({ headingRef }) {
   const [perspective, setPerspective] = useState('observer')
   const [scanned, setScanned] = useState(0)
   const [answer, setAnswer] = useState(null)
+  const [round, setRound] = useState(0)
   const model = paymentModel(strategy, count, selected)
-  const reset = () => { setStrategy('reuse'); setCount(2); setSelected(0); setPerspective('observer'); setScanned(0); setAnswer(null) }
+  const reset = () => { setStrategy('reuse'); setCount(2); setSelected(0); setPerspective('observer'); setScanned(0); setAnswer(null); setRound((value) => value + 1) }
   return <>
     <div className="sp-page-header"><div>
       <AppLink className="sp-back-link" href={pageURL('home').href}>← {tr('uiBackHome')}</AppLink>
@@ -58,6 +60,7 @@ export default function PrivacyLab({ headingRef }) {
         </>}</div>}
       </section>
     </div>
+    <ObserverChallenge key={round} />
     <section className="sp-lab-check sp-surface" aria-labelledby="lab-quiz"><div><p className="sp-eyebrow">{t.quizTitle}</p><h2 id="lab-quiz" className="text-xl font-bold mt-3">{t.question}</h2><div className="flex flex-wrap gap-3 mt-5">
       {['yes', 'no'].map((choice) => <button className="sp-btn-outline" aria-pressed={answer === choice} key={choice} onClick={() => setAnswer(choice)}>{t[choice]}</button>)}
     </div>{answer && <p className="sp-notice mt-4" role="status">{t[answer === 'no' ? 'correct' : 'incorrect']}</p>}</div>
