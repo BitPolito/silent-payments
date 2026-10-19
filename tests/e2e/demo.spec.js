@@ -4,7 +4,7 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { BinaryBitmap, DecodeHintType, HybridBinarizer, RGBLuminanceSource, QRCodeReader } from '@zxing/library'
 
 async function openGenerator(page) {
-  await page.goto('/')
+  await page.goto('/?view=tools')
   await page.getByRole('button', { name: /^Generate address/ }).click()
   await expect(page.getByRole('radio', {name:/^Testnet/})).toBeChecked()
 }
@@ -89,13 +89,14 @@ test('themes and languages persist after reload', async ({ page }) => {
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('lang','it')
   await expect(page.locator('html')).toHaveAttribute('class',dark || '')
+  await page.getByRole('link', { name: 'Strumenti', exact: true }).click()
   await page.getByRole('button', { name: /^Genera indirizzo/ }).click()
   await expect(page.getByText(/Il server genera e vede/)).toBeVisible()
 })
 
 test('vanity displays JSON timeout errors', async ({ page }) => {
   await page.route('**/api/vanity_address', (route) => route.fulfill({status:504,json:{error:'Vanity search timed out',code:'SEARCH_TIMEOUT'}}))
-  await page.goto('/')
+  await page.goto('/?view=tools')
   await page.getByRole('button', { name: /^Vanity address/ }).click()
   await page.getByRole('textbox').fill('q')
   await page.getByRole('button', { name: 'Generate', exact: true }).click()
@@ -121,7 +122,7 @@ test('closed or superseded generation cannot display stale results', async ({ pa
 })
 
 test('short real vanity search returns a valid testnet export', async ({page})=>{
-  await page.goto('/')
+  await page.goto('/?view=tools')
   await page.getByRole('button',{name:/^Vanity address/}).click()
   await page.getByRole('textbox').fill('q')
   const response=page.waitForResponse((r)=>r.url().endsWith('/api/vanity_address'))

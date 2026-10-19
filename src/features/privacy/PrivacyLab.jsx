@@ -16,6 +16,7 @@ export default function PrivacyLab({ headingRef }) {
   const [scanned, setScanned] = useState(0)
   const [answer, setAnswer] = useState(null)
   const [round, setRound] = useState(0)
+  const [observerOpen, setObserverOpen] = useState(() => window.location.hash === '#observer')
   const model = paymentModel(strategy, count, selected)
   const reset = () => { setStrategy('reuse'); setCount(2); setSelected(0); setPerspective('observer'); setScanned(0); setAnswer(null); setRound((value) => value + 1) }
   return <>
@@ -31,7 +32,7 @@ export default function PrivacyLab({ headingRef }) {
         </div>
         <p className="sp-description text-sm">{t.descriptions[strategy]}</p>
         <div className="sp-notice mt-5"><p className="sp-eyebrow">{t.shared}</p><p className="mt-2 font-bold">{t.destinations[strategy]}</p></div>
-        <p className="sp-description mt-5 text-xs">{t.disclosure}</p>
+        <details className="sp-studio-details"><summary>{locale === 'it' ? 'Dettagli e limiti' : 'Details and limits'}</summary><p className="text-xs">{t.disclosure}</p></details>
         <a className="sp-back-link" href="https://bips.dev/352/#overview" target="_blank" rel="noopener noreferrer">{t.source} ↗</a>
       </section>
       <section className="sp-lab-workbench" aria-labelledby="lab-stage">
@@ -60,7 +61,7 @@ export default function PrivacyLab({ headingRef }) {
         </>}</div>}
       </section>
     </div>
-    <ObserverChallenge key={round} />
+    <details id="observer" open={observerOpen} onToggle={(event) => setObserverOpen(event.currentTarget.open)} className="sp-studio-details"><summary>{locale === 'it' ? 'Prova la vista dell’osservatore' : 'Try the observer’s view'}</summary><ObserverChallenge key={round} /></details>
     <section className="sp-lab-check sp-surface" aria-labelledby="lab-quiz"><div><p className="sp-eyebrow">{t.quizTitle}</p><h2 id="lab-quiz" className="text-xl font-bold mt-3">{t.question}</h2><div className="flex flex-wrap gap-3 mt-5">
       {['yes', 'no'].map((choice) => <button className="sp-btn-outline" aria-pressed={answer === choice} key={choice} onClick={() => setAnswer(choice)}>{t[choice]}</button>)}
     </div>{answer && <p className="sp-notice mt-4" role="status">{t[answer === 'no' ? 'correct' : 'incorrect']}</p>}</div>

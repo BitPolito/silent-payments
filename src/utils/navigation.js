@@ -2,13 +2,15 @@ import { DEFAULT_REFERENCE, referenceURL } from './referenceLinks'
 
 export function currentView(search) {
   const view = new URLSearchParams(search).get('view')
-  return view === 'reference' || view === 'walkthrough' || view === 'privacy' ? view : 'home'
+  return ['reference', 'walkthrough', 'privacy', 'studio', 'tools'].includes(view) ? view : 'home'
 }
 
 export function pageURL(view, href = window.location.href) {
-  if (view === 'reference') return referenceURL(DEFAULT_REFERENCE, href)
   const url = referenceURL(null, href)
-  if (view === 'walkthrough' || view === 'privacy') url.searchParams.set('view', view)
+  url.searchParams.delete('tool')
+  url.searchParams.delete('preset')
+  if (view === 'reference') return referenceURL(DEFAULT_REFERENCE, url.href)
+  if (['walkthrough', 'privacy', 'studio', 'tools'].includes(view)) url.searchParams.set('view', view)
   return url
 }
 

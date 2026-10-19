@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('investigate reuse, reveal evidence, compare silent outputs, and reset', async ({ page }) => {
   await page.goto('/?view=privacy')
+  await page.locator('#observer > summary').click()
   const challenge = page.getByRole('region', { name: 'Can you find Bob?' })
   const cards = challenge.locator('.sp-evidence-card')
   await expect(cards).toHaveCount(8)
@@ -38,6 +39,7 @@ test('Italian challenge is keyboard accessible on a narrow dark screen without t
   await page.addInitScript(() => { localStorage.setItem('sp-locale', 'it'); localStorage.setItem('theme', 'dark') })
   await page.route('**/api/**', (route) => route.abort())
   await page.goto('/?view=privacy')
+  await page.locator('#observer > summary').click()
   const challenge = page.getByRole('region', { name: 'Riesci a trovare Bob?' })
   const card = challenge.getByRole('button', { name: 'Seleziona output sospetto 1', exact: true })
   await card.focus()
