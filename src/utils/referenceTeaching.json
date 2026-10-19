@@ -1,0 +1,450 @@
+{
+  "0": {
+    "en": {
+      "title": "Two inputs, one payment",
+      "demonstrates": "Both sides derive the same payment using the transaction inputs and Bob’s reusable address.",
+      "why": "A reusable address can lead to a fresh payment output without another message from Bob.",
+      "sending": "Alice derives the recipient’s payment public keys from the eligible input keys.",
+      "receiving": "Bob scans the transaction and recovers the matching public keys and spending tweaks."
+    },
+    "it": {
+      "title": "Due input, un pagamento",
+      "demonstrates": "Entrambe le parti ricavano lo stesso pagamento dagli input della transazione e dall’indirizzo riutilizzabile di Bob.",
+      "why": "Un indirizzo riutilizzabile può produrre un nuovo output di pagamento senza un altro messaggio di Bob.",
+      "sending": "Alice ricava le chiavi pubbliche di pagamento del destinatario dalle chiavi degli input validi.",
+      "receiving": "Bob analizza la transazione e trova le chiavi pubbliche corrispondenti e i tweak per spenderle."
+    }
+  },
+  "1": {
+    "en": {
+      "title": "Reordered transaction inputs",
+      "demonstrates": "The same inputs are presented in a different order, or require byte-wise outpoint ordering.",
+      "why": "Both sides must agree on the input hash regardless of transaction input order.",
+      "sending": "Alice uses the specified outpoint ordering to derive the payment.",
+      "receiving": "Bob follows the same ordering rule and discovers the reference payment."
+    },
+    "it": {
+      "title": "Input della transazione riordinati",
+      "demonstrates": "Gli stessi input sono presentati in ordine diverso o richiedono l’ordinamento degli outpoint per byte.",
+      "why": "Entrambe le parti devono ottenere lo stesso hash degli input indipendentemente dal loro ordine.",
+      "sending": "Alice usa l’ordinamento degli outpoint previsto dalla specifica per ricavare il pagamento.",
+      "receiving": "Bob applica lo stesso ordinamento e riconosce il pagamento di riferimento."
+    }
+  },
+  "2": {
+    "en": {
+      "title": "Two coins from one transaction",
+      "demonstrates": "Two outpoints reference different outputs of the same earlier transaction.",
+      "why": "A reusable address can lead to a fresh payment output without another message from Bob.",
+      "sending": "Alice derives the recipient’s payment public keys from the eligible input keys.",
+      "receiving": "Bob scans the transaction and recovers the matching public keys and spending tweaks."
+    },
+    "it": {
+      "title": "Due monete da una transazione",
+      "demonstrates": "Due outpoint indicano output diversi della stessa transazione precedente.",
+      "why": "Un indirizzo riutilizzabile può produrre un nuovo output di pagamento senza un altro messaggio di Bob.",
+      "sending": "Alice ricava le chiavi pubbliche di pagamento del destinatario dalle chiavi degli input validi.",
+      "receiving": "Bob analizza la transazione e trova le chiavi pubbliche corrispondenti e i tweak per spenderle."
+    }
+  },
+  "3": {
+    "en": {
+      "title": "Same-transaction inputs, reversed",
+      "demonstrates": "The same inputs are presented in a different order, or require byte-wise outpoint ordering.",
+      "why": "Both sides must agree on the input hash regardless of transaction input order.",
+      "sending": "Alice uses the specified outpoint ordering to derive the payment.",
+      "receiving": "Bob follows the same ordering rule and discovers the reference payment."
+    },
+    "it": {
+      "title": "Input della stessa transazione, invertiti",
+      "demonstrates": "Gli stessi input sono presentati in ordine diverso o richiedono l’ordinamento degli outpoint per byte.",
+      "why": "Entrambe le parti devono ottenere lo stesso hash degli input indipendentemente dal loro ordine.",
+      "sending": "Alice usa l’ordinamento degli outpoint previsto dalla specifica per ricavare il pagamento.",
+      "receiving": "Bob applica lo stesso ordinamento e riconosce il pagamento di riferimento."
+    }
+  },
+  "4": {
+    "en": {
+      "title": "Outpoints are ordered by bytes",
+      "demonstrates": "The same inputs are presented in a different order, or require byte-wise outpoint ordering.",
+      "why": "Both sides must agree on the input hash regardless of transaction input order.",
+      "sending": "Alice uses the specified outpoint ordering to derive the payment.",
+      "receiving": "Bob follows the same ordering rule and discovers the reference payment."
+    },
+    "it": {
+      "title": "Gli outpoint si ordinano per byte",
+      "demonstrates": "Gli stessi input sono presentati in ordine diverso o richiedono l’ordinamento degli outpoint per byte.",
+      "why": "Entrambe le parti devono ottenere lo stesso hash degli input indipendentemente dal loro ordine.",
+      "sending": "Alice usa l’ordinamento degli outpoint previsto dalla specifica per ricavare il pagamento.",
+      "receiving": "Bob applica lo stesso ordinamento e riconosce il pagamento di riferimento."
+    }
+  },
+  "5": {
+    "en": {
+      "title": "Repeated input public key",
+      "demonstrates": "Two eligible inputs use the same public key; both contribute to the sum.",
+      "why": "A reusable address can lead to a fresh payment output without another message from Bob.",
+      "sending": "Alice derives the recipient’s payment public keys from the eligible input keys.",
+      "receiving": "Bob scans the transaction and recovers the matching public keys and spending tweaks."
+    },
+    "it": {
+      "title": "Chiave pubblica ripetuta negli input",
+      "demonstrates": "Due input ammessi usano la stessa chiave pubblica; entrambi contribuiscono alla somma.",
+      "why": "Un indirizzo riutilizzabile può produrre un nuovo output di pagamento senza un altro messaggio di Bob.",
+      "sending": "Alice ricava le chiavi pubbliche di pagamento del destinatario dalle chiavi degli input validi.",
+      "receiving": "Bob analizza la transazione e trova le chiavi pubbliche corrispondenti e i tweak per spenderle."
+    }
+  },
+  "6": {
+    "en": {
+      "title": "Taproot keys with even parity",
+      "demonstrates": "Taproot input keys must account for the parity of their elliptic-curve points.",
+      "why": "Correct key normalization lets sender and receiver derive the same shared secret.",
+      "sending": "Alice normalizes eligible Taproot keys before deriving payment outputs.",
+      "receiving": "Bob extracts the corresponding public keys and finds the expected outputs."
+    },
+    "it": {
+      "title": "Chiavi Taproot con parità pari",
+      "demonstrates": "Le chiavi degli input Taproot devono tenere conto della parità dei punti sulla curva ellittica.",
+      "why": "La corretta normalizzazione delle chiavi permette di ottenere lo stesso segreto condiviso.",
+      "sending": "Alice normalizza le chiavi Taproot valide prima di ricavare gli output.",
+      "receiving": "Bob estrae le chiavi pubbliche corrispondenti e trova gli output attesi."
+    }
+  },
+  "7": {
+    "en": {
+      "title": "Taproot keys with mixed parity",
+      "demonstrates": "Taproot input keys must account for the parity of their elliptic-curve points.",
+      "why": "Correct key normalization lets sender and receiver derive the same shared secret.",
+      "sending": "Alice normalizes eligible Taproot keys before deriving payment outputs.",
+      "receiving": "Bob extracts the corresponding public keys and finds the expected outputs."
+    },
+    "it": {
+      "title": "Chiavi Taproot con parità mista",
+      "demonstrates": "Le chiavi degli input Taproot devono tenere conto della parità dei punti sulla curva ellittica.",
+      "why": "La corretta normalizzazione delle chiavi permette di ottenere lo stesso segreto condiviso.",
+      "sending": "Alice normalizza le chiavi Taproot valide prima di ricavare gli output.",
+      "receiving": "Bob estrae le chiavi pubbliche corrispondenti e trova gli output attesi."
+    }
+  },
+  "8": {
+    "en": {
+      "title": "Even Taproot and another input type",
+      "demonstrates": "Taproot input keys must account for the parity of their elliptic-curve points.",
+      "why": "Correct key normalization lets sender and receiver derive the same shared secret.",
+      "sending": "Alice normalizes eligible Taproot keys before deriving payment outputs.",
+      "receiving": "Bob extracts the corresponding public keys and finds the expected outputs."
+    },
+    "it": {
+      "title": "Taproot pari e un altro tipo di input",
+      "demonstrates": "Le chiavi degli input Taproot devono tenere conto della parità dei punti sulla curva ellittica.",
+      "why": "La corretta normalizzazione delle chiavi permette di ottenere lo stesso segreto condiviso.",
+      "sending": "Alice normalizza le chiavi Taproot valide prima di ricavare gli output.",
+      "receiving": "Bob estrae le chiavi pubbliche corrispondenti e trova gli output attesi."
+    }
+  },
+  "9": {
+    "en": {
+      "title": "Odd Taproot and another input type",
+      "demonstrates": "Taproot input keys must account for the parity of their elliptic-curve points.",
+      "why": "Correct key normalization lets sender and receiver derive the same shared secret.",
+      "sending": "Alice normalizes eligible Taproot keys before deriving payment outputs.",
+      "receiving": "Bob extracts the corresponding public keys and finds the expected outputs."
+    },
+    "it": {
+      "title": "Taproot dispari e un altro tipo di input",
+      "demonstrates": "Le chiavi degli input Taproot devono tenere conto della parità dei punti sulla curva ellittica.",
+      "why": "La corretta normalizzazione delle chiavi permette di ottenere lo stesso segreto condiviso.",
+      "sending": "Alice normalizza le chiavi Taproot valide prima di ricavare gli output.",
+      "receiving": "Bob estrae le chiavi pubbliche corrispondenti e trova gli output attesi."
+    }
+  },
+  "10": {
+    "en": {
+      "title": "Several payments to one recipient",
+      "demonstrates": "One transaction can create several distinct Silent Payments outputs.",
+      "why": "The comparison must include every payment, including repeated values when present.",
+      "sending": "Alice derives all recipient outputs, advancing the counter within each scan-key group.",
+      "receiving": "Bob discovers his outputs while ignoring payments belonging to other recipients."
+    },
+    "it": {
+      "title": "Più pagamenti a un destinatario",
+      "demonstrates": "Una transazione può creare più output Silent Payments distinti.",
+      "why": "Il confronto deve includere ogni pagamento, contando anche eventuali valori ripetuti.",
+      "sending": "Alice ricava tutti gli output dei destinatari, incrementando il contatore in ogni gruppo di chiavi di scansione.",
+      "receiving": "Bob riconosce i propri output e ignora i pagamenti destinati ad altri."
+    }
+  },
+  "11": {
+    "en": {
+      "title": "Several recipients in one transaction",
+      "demonstrates": "One transaction can create several distinct Silent Payments outputs.",
+      "why": "The comparison must include every payment, including repeated values when present.",
+      "sending": "Alice derives all recipient outputs, advancing the counter within each scan-key group.",
+      "receiving": "Bob discovers his outputs while ignoring payments belonging to other recipients."
+    },
+    "it": {
+      "title": "Più destinatari in una transazione",
+      "demonstrates": "Una transazione può creare più output Silent Payments distinti.",
+      "why": "Il confronto deve includere ogni pagamento, contando anche eventuali valori ripetuti.",
+      "sending": "Alice ricava tutti gli output dei destinatari, incrementando il contatore in ogni gruppo di chiavi di scansione.",
+      "receiving": "Bob riconosce i propri output e ignora i pagamenti destinati ad altri."
+    }
+  },
+  "12": {
+    "en": {
+      "title": "A label with even parity",
+      "demonstrates": "Labels let Bob distinguish payment purposes while retaining the same scan key.",
+      "why": "Label handling must preserve both output discovery and the exact spending tweak.",
+      "sending": "Alice pays the labeled public address without needing Bob’s private label information.",
+      "receiving": "Bob checks the supplied labels and recovers the matching outputs and label-adjusted tweaks."
+    },
+    "it": {
+      "title": "Un’etichetta con parità pari",
+      "demonstrates": "Le etichette permettono a Bob di distinguere lo scopo dei pagamenti mantenendo la stessa chiave di scansione.",
+      "why": "Le etichette devono permettere il riconoscimento degli output e il calcolo esatto del tweak di spesa.",
+      "sending": "Alice paga l’indirizzo pubblico con etichetta senza conoscere le informazioni private dell’etichetta di Bob.",
+      "receiving": "Bob verifica le etichette fornite e ricava gli output corrispondenti e i tweak modificati dalle etichette."
+    }
+  },
+  "13": {
+    "en": {
+      "title": "A label with odd parity",
+      "demonstrates": "Labels let Bob distinguish payment purposes while retaining the same scan key.",
+      "why": "Label handling must preserve both output discovery and the exact spending tweak.",
+      "sending": "Alice pays the labeled public address without needing Bob’s private label information.",
+      "receiving": "Bob checks the supplied labels and recovers the matching outputs and label-adjusted tweaks."
+    },
+    "it": {
+      "title": "Un’etichetta con parità dispari",
+      "demonstrates": "Le etichette permettono a Bob di distinguere lo scopo dei pagamenti mantenendo la stessa chiave di scansione.",
+      "why": "Le etichette devono permettere il riconoscimento degli output e il calcolo esatto del tweak di spesa.",
+      "sending": "Alice paga l’indirizzo pubblico con etichetta senza conoscere le informazioni private dell’etichetta di Bob.",
+      "receiving": "Bob verifica le etichette fornite e ricava gli output corrispondenti e i tweak modificati dalle etichette."
+    }
+  },
+  "14": {
+    "en": {
+      "title": "A large label number",
+      "demonstrates": "Labels let Bob distinguish payment purposes while retaining the same scan key.",
+      "why": "Label handling must preserve both output discovery and the exact spending tweak.",
+      "sending": "Alice pays the labeled public address without needing Bob’s private label information.",
+      "receiving": "Bob checks the supplied labels and recovers the matching outputs and label-adjusted tweaks."
+    },
+    "it": {
+      "title": "Un numero di etichetta grande",
+      "demonstrates": "Le etichette permettono a Bob di distinguere lo scopo dei pagamenti mantenendo la stessa chiave di scansione.",
+      "why": "Le etichette devono permettere il riconoscimento degli output e il calcolo esatto del tweak di spesa.",
+      "sending": "Alice paga l’indirizzo pubblico con etichetta senza conoscere le informazioni private dell’etichetta di Bob.",
+      "receiving": "Bob verifica le etichette fornite e ricava gli output corrispondenti e i tweak modificati dalle etichette."
+    }
+  },
+  "15": {
+    "en": {
+      "title": "Labeled and unlabeled payments",
+      "demonstrates": "Labels let Bob distinguish payment purposes while retaining the same scan key.",
+      "why": "Label handling must preserve both output discovery and the exact spending tweak.",
+      "sending": "Alice pays the labeled public address without needing Bob’s private label information.",
+      "receiving": "Bob checks the supplied labels and recovers the matching outputs and label-adjusted tweaks."
+    },
+    "it": {
+      "title": "Pagamenti con e senza etichetta",
+      "demonstrates": "Le etichette permettono a Bob di distinguere lo scopo dei pagamenti mantenendo la stessa chiave di scansione.",
+      "why": "Le etichette devono permettere il riconoscimento degli output e il calcolo esatto del tweak di spesa.",
+      "sending": "Alice paga l’indirizzo pubblico con etichetta senza conoscere le informazioni private dell’etichetta di Bob.",
+      "receiving": "Bob verifica le etichette fornite e ricava gli output corrispondenti e i tweak modificati dalle etichette."
+    }
+  },
+  "16": {
+    "en": {
+      "title": "Several payments to a labeled address",
+      "demonstrates": "Labels let Bob distinguish payment purposes while retaining the same scan key.",
+      "why": "Label handling must preserve both output discovery and the exact spending tweak.",
+      "sending": "Alice pays the labeled public address without needing Bob’s private label information.",
+      "receiving": "Bob checks the supplied labels and recovers the matching outputs and label-adjusted tweaks."
+    },
+    "it": {
+      "title": "Più pagamenti a un indirizzo con etichetta",
+      "demonstrates": "Le etichette permettono a Bob di distinguere lo scopo dei pagamenti mantenendo la stessa chiave di scansione.",
+      "why": "Le etichette devono permettere il riconoscimento degli output e il calcolo esatto del tweak di spesa.",
+      "sending": "Alice paga l’indirizzo pubblico con etichetta senza conoscere le informazioni private dell’etichetta di Bob.",
+      "receiving": "Bob verifica le etichette fornite e ricava gli output corrispondenti e i tweak modificati dalle etichette."
+    }
+  },
+  "17": {
+    "en": {
+      "title": "Mixed labeled payments",
+      "demonstrates": "Labels let Bob distinguish payment purposes while retaining the same scan key.",
+      "why": "Label handling must preserve both output discovery and the exact spending tweak.",
+      "sending": "Alice pays the labeled public address without needing Bob’s private label information.",
+      "receiving": "Bob checks the supplied labels and recovers the matching outputs and label-adjusted tweaks."
+    },
+    "it": {
+      "title": "Pagamenti con etichette diverse",
+      "demonstrates": "Le etichette permettono a Bob di distinguere lo scopo dei pagamenti mantenendo la stessa chiave di scansione.",
+      "why": "Le etichette devono permettere il riconoscimento degli output e il calcolo esatto del tweak di spesa.",
+      "sending": "Alice paga l’indirizzo pubblico con etichetta senza conoscere le informazioni private dell’etichetta di Bob.",
+      "receiving": "Bob verifica le etichette fornite e ricava gli output corrispondenti e i tweak modificati dalle etichette."
+    }
+  },
+  "18": {
+    "en": {
+      "title": "Silent Payments for sender change",
+      "demonstrates": "The sender uses a labeled Silent Payments address for change and can discover that change.",
+      "why": "Label handling must preserve both output discovery and the exact spending tweak.",
+      "sending": "Alice pays the labeled public address without needing Bob’s private label information.",
+      "receiving": "Bob checks the supplied labels and recovers the matching outputs and label-adjusted tweaks."
+    },
+    "it": {
+      "title": "Silent Payments per il resto del mittente",
+      "demonstrates": "Il mittente usa un indirizzo Silent Payments con etichetta per il resto e può riconoscerlo.",
+      "why": "Le etichette devono permettere il riconoscimento degli output e il calcolo esatto del tweak di spesa.",
+      "sending": "Alice paga l’indirizzo pubblico con etichetta senza conoscere le informazioni private dell’etichetta di Bob.",
+      "receiving": "Bob verifica le etichette fornite e ricava gli output corrispondenti e i tweak modificati dalle etichette."
+    }
+  },
+  "19": {
+    "en": {
+      "title": "Taproot with an unspendable internal key",
+      "demonstrates": "A NUMS internal key does not imply knowledge of a spendable internal private key. Input extraction follows the Taproot witness rules.",
+      "why": "Sender and receiver must extract exactly the same eligible keys.",
+      "sending": "Alice derives outputs using only input keys eligible under BIP-352.",
+      "receiving": "Bob applies the input-extraction rules before scanning the transaction."
+    },
+    "it": {
+      "title": "Taproot con chiave interna non spendibile",
+      "demonstrates": "Una chiave interna NUMS non implica la conoscenza di una chiave privata interna spendibile. L’estrazione segue le regole del witness Taproot.",
+      "why": "Mittente e destinatario devono estrarre esattamente le stesse chiavi valide.",
+      "sending": "Alice ricava gli output usando solo le chiavi degli input ammesse da BIP-352.",
+      "receiving": "Bob applica le regole di estrazione delle chiavi prima di analizzare la transazione."
+    }
+  },
+  "20": {
+    "en": {
+      "title": "Public-key extraction from P2PKH",
+      "demonstrates": "Public-key extraction handles the malleated P2PKH script form in this fixture.",
+      "why": "Sender and receiver must extract exactly the same eligible keys.",
+      "sending": "Alice derives outputs using only input keys eligible under BIP-352.",
+      "receiving": "Bob applies the input-extraction rules before scanning the transaction."
+    },
+    "it": {
+      "title": "Estrazione della chiave pubblica da P2PKH",
+      "demonstrates": "L’estrazione della chiave pubblica gestisce la forma alterata dello script P2PKH presente nel caso.",
+      "why": "Mittente e destinatario devono estrarre esattamente le stesse chiavi valide.",
+      "sending": "Alice ricava gli output usando solo le chiavi degli input ammesse da BIP-352.",
+      "receiving": "Bob applica le regole di estrazione delle chiavi prima di analizzare la transazione."
+    }
+  },
+  "21": {
+    "en": {
+      "title": "Uncompressed keys are skipped",
+      "demonstrates": "Uncompressed public keys in P2PKH and P2WPKH inputs are excluded.",
+      "why": "Sender and receiver must extract exactly the same eligible keys.",
+      "sending": "Alice derives outputs using only input keys eligible under BIP-352.",
+      "receiving": "Bob applies the input-extraction rules before scanning the transaction."
+    },
+    "it": {
+      "title": "Le chiavi non compresse vengono ignorate",
+      "demonstrates": "Le chiavi pubbliche non compresse negli input P2PKH e P2WPKH vengono escluse.",
+      "why": "Mittente e destinatario devono estrarre esattamente le stesse chiavi valide.",
+      "sending": "Alice ricava gli output usando solo le chiavi degli input ammesse da BIP-352.",
+      "receiving": "Bob applica le regole di estrazione delle chiavi prima di analizzare la transazione."
+    }
+  },
+  "22": {
+    "en": {
+      "title": "Invalid P2SH inputs are skipped",
+      "demonstrates": "P2SH inputs that do not contain an eligible nested witness key are excluded.",
+      "why": "Sender and receiver must extract exactly the same eligible keys.",
+      "sending": "Alice derives outputs using only input keys eligible under BIP-352.",
+      "receiving": "Bob applies the input-extraction rules before scanning the transaction."
+    },
+    "it": {
+      "title": "Gli input P2SH non validi vengono ignorati",
+      "demonstrates": "Gli input P2SH che non contengono una chiave witness annidata ammessa vengono esclusi.",
+      "why": "Mittente e destinatario devono estrarre esattamente le stesse chiavi valide.",
+      "sending": "Alice ricava gli output usando solo le chiavi degli input ammesse da BIP-352.",
+      "receiving": "Bob applica le regole di estrazione delle chiavi prima di analizzare la transazione."
+    }
+  },
+  "23": {
+    "en": {
+      "title": "Ignore unrelated outputs",
+      "demonstrates": "The transaction includes outputs that do not belong to Bob.",
+      "why": "Output discovery must identify owned payments without accepting unrelated outputs.",
+      "sending": "Alice derives the intended payment outputs; the receiving fixture also includes unrelated outputs.",
+      "receiving": "Bob returns only the payments he recognizes, not every transaction output."
+    },
+    "it": {
+      "title": "Ignorare gli output estranei",
+      "demonstrates": "La transazione contiene output che non appartengono a Bob.",
+      "why": "Il riconoscimento deve trovare i propri pagamenti senza accettare output estranei.",
+      "sending": "Alice ricava gli output previsti; il caso di ricezione contiene anche output estranei.",
+      "receiving": "Bob restituisce solo i pagamenti riconosciuti, non tutti gli output della transazione."
+    }
+  },
+  "24": {
+    "en": {
+      "title": "No eligible inputs, no payment",
+      "demonstrates": "None of the transaction inputs contributes an eligible Silent Payments key.",
+      "why": "A valid empty result is different from rejecting an invalid key sum.",
+      "sending": "Alice successfully returns no payment outputs: there are no eligible inputs.",
+      "receiving": "Bob successfully discovers no owned outputs. This is an empty result, not an error."
+    },
+    "it": {
+      "title": "Nessun input ammesso, nessun pagamento",
+      "demonstrates": "Nessun input della transazione fornisce una chiave valida per Silent Payments.",
+      "why": "Un risultato vuoto valido è diverso dal rifiuto di una somma di chiavi non valida.",
+      "sending": "Alice restituisce correttamente zero output di pagamento: non ci sono input ammessi.",
+      "receiving": "Bob non trova output propri. È un risultato vuoto valido, non un errore."
+    }
+  },
+  "25": {
+    "en": {
+      "title": "A zero final key sum",
+      "demonstrates": "The final sum of the eligible input keys is zero, corresponding to the point at infinity.",
+      "why": "This final sum cannot be used to derive a Silent Payments shared secret.",
+      "sending": "Alice must reject sending. The specifically expected rejection counts as a matching reference result.",
+      "receiving": "Bob skips the transaction and returns no owned outputs; receiving is not rejected."
+    },
+    "it": {
+      "title": "Una somma finale delle chiavi nulla",
+      "demonstrates": "La somma finale delle chiavi degli input validi è zero e corrisponde al punto all’infinito.",
+      "why": "Questa somma finale non può essere usata per ricavare un segreto condiviso Silent Payments.",
+      "sending": "Alice deve rifiutare l’invio. Il rifiuto specificamente atteso corrisponde al riferimento.",
+      "receiving": "Bob salta la transazione e non restituisce output propri; la ricezione non viene rifiutata."
+    }
+  },
+  "26": {
+    "en": {
+      "title": "A zero intermediate key sum",
+      "demonstrates": "A partial key sum is zero, but adding the remaining keys produces a valid nonzero final sum.",
+      "why": "Rejecting an intermediate zero would incorrectly discard a valid transaction.",
+      "sending": "Alice continues summing all eligible keys and successfully derives the outputs.",
+      "receiving": "Bob uses the valid final public-key sum and discovers the payment."
+    },
+    "it": {
+      "title": "Una somma intermedia delle chiavi nulla",
+      "demonstrates": "Una somma parziale delle chiavi è zero, ma le chiavi successive producono una somma finale valida e non nulla.",
+      "why": "Rifiutare uno zero intermedio scarterebbe erroneamente una transazione valida.",
+      "sending": "Alice completa la somma di tutte le chiavi ammesse e ricava correttamente gli output.",
+      "receiving": "Bob usa la somma finale valida delle chiavi pubbliche e riconosce il pagamento."
+    }
+  },
+  "27": {
+    "en": {
+      "title": "The per-group recipient limit",
+      "demonstrates": "The fixture requests 2,324 matches in one scan-key group, exceeding the 2,323-recipient limit.",
+      "why": "The group limit bounds derivation and scanning work while keeping both sides consistent.",
+      "sending": "Alice must reject the over-limit recipient group. This expected rejection is a passing reference check.",
+      "receiving": "Bob discovers the first 2,323 outputs and does not scan beyond the group limit."
+    },
+    "it": {
+      "title": "Il limite dei destinatari per gruppo",
+      "demonstrates": "Il caso richiede 2.324 corrispondenze in un gruppo di chiavi di scansione, oltre il limite di 2.323 destinatari.",
+      "why": "Il limite del gruppo limita il lavoro di derivazione e scansione mantenendo coerenti le due parti.",
+      "sending": "Alice deve rifiutare il gruppo oltre il limite. Questo rifiuto atteso supera la verifica di riferimento.",
+      "receiving": "Bob riconosce i primi 2.323 output e non continua oltre il limite del gruppo."
+    }
+  }
+}

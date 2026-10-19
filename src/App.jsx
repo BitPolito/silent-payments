@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BRAND, ICON, STORY } from './assets/icons'
 import { BITPOLITO_URL } from './config/site'
 import ActionCard from './components/ActionCard'
@@ -9,6 +9,7 @@ import ThemeToggle from './components/ThemeToggle'
 import { useLocale } from './i18n/useLocale'
 import GenerateAddrModal from './scenes/GenerateAddr'
 import ProtocolDemoModal from './scenes/ProtocolDemo'
+import { writeReferenceSelection } from './utils/referenceLinks'
 
 const BIP352_URL = 'https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki'
 
@@ -18,7 +19,16 @@ function StoryIcon({ src, className = 'h-4 w-4 shrink-0' }) {
 
 export default function App() {
   const { tr } = useLocale()
-  const [showTests, setShowTests] = useState(false)
+  const [showTests, setShowTests] = useState(() => new URLSearchParams(window.location.search).get('view') === 'reference')
+  const [referenceEntry, setReferenceEntry] = useState(() => window.location.search)
+  useEffect(() => {
+    const followURL = () => {
+      setReferenceEntry(window.location.search)
+      setShowTests(new URLSearchParams(window.location.search).get('view') === 'reference')
+    }
+    window.addEventListener('popstate', followURL)
+    return () => window.removeEventListener('popstate', followURL)
+  }, [])
   const [showAddr, setShowAddr] = useState(false)
   const [addrTab, setAddrTab] = useState(/** @type {'random' | 'vanity'} */ ('random'))
 
@@ -130,8 +140,12 @@ export default function App() {
       <AppFooter />
 
       {showTests && <ProtocolDemoModal
+        key={referenceEntry}
+        initialSearch={referenceEntry}
         open={showTests}
         onClose={() => {
+          writeReferenceSelection(null)
+          setReferenceEntry('')
           setShowTests(false)
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }}

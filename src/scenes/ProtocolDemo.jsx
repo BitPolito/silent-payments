@@ -8,6 +8,7 @@ import { fetchApi, formatApiError } from '../utils/api'
 import EdgeScenarioFlow from './EdgeScenarioFlow'
 import PaymentFlow from './PaymentFlow'
 import ReferenceCases from './ReferenceCases'
+import { writeReferenceSelection } from '../utils/referenceLinks'
 
 const SCENARIO_ICONS = {
   no_outputs: STORY.wallet,
@@ -16,9 +17,9 @@ const SCENARIO_ICONS = {
 
 const alertIcon = '/bitpolito/alert.svg'
 
-export default function ProtocolDemoModal({ open, onClose }) {
+export default function ProtocolDemoModal({ open, onClose, initialSearch = '' }) {
   const { tr } = useLocale()
-  const [view, setView] = useState('flow')
+  const [view, setView] = useState(() => new URLSearchParams(initialSearch).get('view') === 'reference' ? 'reference' : 'flow')
   const [selectedScenarioId, setSelectedScenarioId] = useState(/** @type {string | null} */ (null))
   const [caseData, setCaseData] = useState(null)
   const [caseLoading, setCaseLoading] = useState(false)
@@ -76,8 +77,8 @@ export default function ProtocolDemoModal({ open, onClose }) {
       subtitle={modalSubtitle}
       closeLabel={tr('close')}
     >
-      <nav className="mb-4 flex gap-4 text-sm"><button onClick={() => setView('flow')}>{tr('demoTitle')}</button><button onClick={() => setView('reference')}>{tr('referenceTitle')}</button></nav>
-      {view === 'reference' && <ReferenceCases />}
+      <nav className="mb-4 flex gap-4 text-sm"><button onClick={() => { writeReferenceSelection(null); setView('flow') }}>{tr('demoTitle')}</button><button onClick={() => setView('reference')}>{tr('referenceTitle')}</button></nav>
+      {view === 'reference' && <ReferenceCases initialSearch={initialSearch} />}
       {view === 'flow' ? (
         apiStatus === 'offline' ? (
           <div className="flex items-center gap-3 rounded-lg border border-bp-200 bg-bp-50 p-4 dark:border-bp-500/40 dark:bg-bp-700/40">

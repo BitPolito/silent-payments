@@ -1,126 +1,57 @@
+import { useState } from 'react'
 import CopyableText from '../CopyableText'
+import { compareReferenceResult } from '../../utils/referenceComparison'
 
-function CompareRow({ title, expectedLabel, receivedLabel, expected, got, match, matchOk, matchFail }) {
-  return (
-    <div className="sp-surface rounded-lg p-3">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-bp-500 dark:text-bp-300">{title}</p>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <div>
-          <p className="text-[10px] font-bold text-bp-600 dark:text-bp-200">{expectedLabel}</p>
-          <CopyableText value={expected} className="mt-1 bg-bp-50 dark:bg-bp-700/50" />
-        </div>
-        <div>
-          <p className="text-[10px] font-bold text-bp-600 dark:text-bp-200">{receivedLabel}</p>
-          <CopyableText value={got} className="mt-1 bg-bp-50 dark:bg-bp-700/50" />
-        </div>
-      </div>
-      <p className="mt-2 text-xs font-bold text-bp-blue dark:text-bp-canvas">
-        {match ? `✓ ${matchOk}` : `✗ ${matchFail}`}
-      </p>
+const STATUS_KEYS = { matched: 'teachMatched', missing: 'teachMissing', unexpected: 'teachUnexpected', different: 'teachDifferent' }
+
+function ValuePair({ title, expected, actual, tr }) {
+  return <div className="min-w-0">
+    <h5 className="text-xs font-bold">{title}</h5>
+    <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+      <div className="min-w-0"><p className="text-xs">{tr('expected')}</p><CopyableText value={expected} /></div>
+      <div className="min-w-0"><p className="text-xs">{tr('received')}</p><CopyableText value={actual} /></div>
     </div>
-  )
+  </div>
 }
 
-function sendExpectedOutputs(expected_outputs) {
-  if (!expected_outputs?.length) return []
-  return Array.isArray(expected_outputs[0]) ? expected_outputs[0] : expected_outputs
-}
-
-/**
- * @param {{
- *   tr: (k: string) => string
- *   testType: 'send' | 'receive'
- *   testResults: object
- *   compact?: boolean
- * }} props
- */
 export default function DemoRunResults({ tr, testType, testResults, compact }) {
+  const [page, setPage] = useState(0)
   if (!testResults) return null
-  const passed = !!testResults.test_passed
-  const isSend = testType === 'send'
-  const matchOk = tr('passed')
-  const matchFail = tr('failed')
-
-  if (compact) {
-    return (
-      <div className="flex flex-col gap-1">
-        <p className={`sp-demo-verify ${passed ? 'is-ok' : 'is-fail'}`}>
-          {passed ? tr('demoVerifyOk') : tr('demoVerifyFail')}
-          {testResults.note === 'zero key sum' ? ` · ${tr('zeroKeyNote')}` : ''}
-        </p>
-        {testResults.error ? (
-          <p className="sp-demo-error text-[11px] leading-relaxed">{testResults.error}</p>
-        ) : null}
-      </div>
-    )
-  }
-
-  return (
-    <div className="sp-demo-results">
-      <p className="sp-demo-results-title">{tr('demoVerifyTitle')}</p>
-      {testResults.error ? (
-        <p className="mt-1 text-xs font-medium text-bp-700 dark:text-bp-200">{testResults.error}</p>
-      ) : null}
-      {isSend ? (
-        <div className="mt-2 flex flex-col gap-2">
-          {sendExpectedOutputs(testResults.expected_outputs).map((hex, i) => {
-            const got = testResults.outputs?.[i] ?? '—'
-            return (
-              <CompareRow
-                key={`${hex}-${i}`}
-                title={`${tr('outputN')} ${i + 1}`}
-                expectedLabel={tr('expected')}
-                receivedLabel={tr('received')}
-                expected={hex}
-                got={got}
-                match={got === hex}
-                matchOk={matchOk}
-                matchFail={matchFail}
-              />
-            )
-          })}
-        </div>
-      ) : (
-        <div className="mt-2 flex flex-col gap-3">
-          <CompareRow
-            title={tr('address')}
-            expectedLabel={tr('expected')}
-            receivedLabel={tr('received')}
-            expected={testResults.expected_addresses?.[0] ?? '—'}
-            got={testResults.addresses?.[0] ?? '—'}
-            match={testResults.addresses?.[0] === testResults.expected_addresses?.[0]}
-            matchOk={matchOk}
-            matchFail={matchFail}
-          />
-          {testResults.expected_outputs?.map((exp, i) => {
-            const got = testResults.outputs?.[i]
-            return (
-              <div key={i} className="flex flex-col gap-2">
-                <CompareRow
-                  title={`${tr('outputN')} ${i + 1} · ${tr('recvPk')}`}
-                  expectedLabel={tr('expected')}
-                  receivedLabel={tr('received')}
-                  expected={exp.pub_key}
-                  got={got?.pub_key ?? '—'}
-                  match={got?.pub_key === exp.pub_key}
-                  matchOk={matchOk}
-                  matchFail={matchFail}
-                />
-                <CompareRow
-                  title={`${tr('outputN')} ${i + 1} · ${tr('recvTweak')}`}
-                  expectedLabel={tr('expected')}
-                  receivedLabel={tr('received')}
-                  expected={exp.priv_key_tweak}
-                  got={got?.priv_key_tweak ?? '—'}
-                  match={got?.priv_key_tweak === exp.priv_key_tweak}
-                  matchOk={matchOk}
-                  matchFail={matchFail}
-                />
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
+  const comparison = compareReferenceResult(testResults, testType)
+  const totalPages = Math.max(1, Math.ceil(comparison.rows.length / 50))
+  const currentPage = Math.min(page, totalPages - 1)
+  const status = testResults.test_passed ? testResults.expected_failure ? 'teachRejected' : 'teachMatches' : 'teachMismatch'
+  const missing = comparison.rows.filter((row) => row.status === 'missing').length
+  const unexpected = comparison.rows.filter((row) => row.status === 'unexpected').length
+  return <div className="min-w-0 space-y-3" data-testid="comparison">
+    <p role="status" className="font-bold">{tr(status)}</p>
+    {testResults.error && <p role="alert">{testResults.error}</p>}
+    {testResults.test_passed && !testResults.expected_failure && comparison.actual.length === 0 && <p>{tr('teachEmpty')}</p>}
+    <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+      {[[tr('teachExpectedCount'), comparison.expected.length], [tr('teachActualCount'), comparison.actual.length], [tr('teachMissingCount'), missing], [tr('teachUnexpectedCount'), unexpected]].map(([label, count]) =>
+        <div key={label}><dt>{label}</dt><dd className="font-mono font-bold">{count}</dd></div>)}
+    </dl>
+    {!compact && <>
+      {comparison.alternatives > 1 && <p className="text-xs">{tr('teachAlternative').replace('{n}', comparison.index + 1).replace('{total}', comparison.alternatives)}</p>}
+      {comparison.addresses.map((row, index) => <section key={index} className="sp-surface space-y-2 rounded-lg p-3" data-testid="address-comparison">
+        <p className="text-xs font-bold">{tr(STATUS_KEYS[row.status])}</p>
+        <ValuePair title={`${tr('teachAddress')} ${index + 1}`} expected={row.expected} actual={row.actual} tr={tr} />
+      </section>)}
+      {comparison.rows.slice(currentPage * 50, (currentPage + 1) * 50).map((row, index) => <section key={currentPage * 50 + index} className="sp-surface min-w-0 space-y-2 rounded-lg p-3" data-testid="output-comparison">
+        <h4 className="text-sm font-bold">{tr('teachOutput')} {currentPage * 50 + index + 1} · {tr(STATUS_KEYS[row.status])}</h4>
+        {testType === 'send'
+          ? <ValuePair title={tr('teachKey')} expected={row.expected} actual={row.actual} tr={tr} />
+          : <>
+            <ValuePair title={tr('teachKey')} expected={row.expected?.pub_key} actual={row.actual?.pub_key} tr={tr} />
+            <ValuePair title={tr('teachTweak')} expected={row.expected?.priv_key_tweak} actual={row.actual?.priv_key_tweak} tr={tr} />
+            {row.actual?.signature && <details><summary>{tr('teachSignature')}</summary><p className="text-xs">{tr('teachSignatureNote')}</p><CopyableText value={row.actual.signature} /></details>}
+          </>}
+      </section>)}
+      {totalPages > 1 && <nav aria-label={tr('teachPage').replace('{n}', currentPage + 1).replace('{total}', totalPages)} className="flex flex-wrap items-center gap-3">
+        <button className="sp-btn-solid" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>{tr('teachPrevious')}</button>
+        <span className="text-sm">{tr('teachPage').replace('{n}', currentPage + 1).replace('{total}', totalPages)}</span>
+        <button className="sp-btn-solid" disabled={currentPage + 1 >= totalPages} onClick={() => setPage(currentPage + 1)}>{tr('teachNext')}</button>
+      </nav>}
+    </>}
+  </div>
 }
