@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 const selection = (id = 0, direction = 'send', subcase = 0) => `/?campaign=workshop&view=reference&case=${id}&direction=${direction}&subcase=${subcase}`
 
-test('reference links select without execution, copy safely, and clear on close', async ({ page }) => {
+test('reference links select without execution, copy safely, and clear on home navigation', async ({ page }) => {
   const executions = []
   page.on('request', (request) => { if (request.url().includes('/api/single_test/')) executions.push(request.url()) })
   await page.goto(selection(18, 'receive', 1))
@@ -21,9 +21,9 @@ test('reference links select without execution, copy safely, and clear on close'
   await page.getByRole('button', { name: 'Run reference check' }).click()
   await expect(page.getByTestId('reference-result').getByRole('status')).toHaveText('Matches reference')
   await expect(page.getByTestId('output-comparison')).not.toHaveCount(0)
-  await page.getByRole('button', { name: 'Close', exact: true }).click()
+  await page.getByRole('link', { name: 'Back to home', exact: false }).click()
   expect(new URL(page.url()).search).toBe('?campaign=workshop')
-  await page.getByRole('button', { name: /^Guided demo/ }).click()
+  await page.getByRole('link', { name: /^Guided demo/ }).click()
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeVisible()
 })
 
@@ -62,7 +62,7 @@ test('recipient-limit receiving paginates every output and shows signature evide
   await expect(page.getByTestId('reference-result').locator('pre')).toContainText(result.outputs[2322].pub_key)
 })
 
-test('selection changes and closing discard delayed reference responses', async ({ page }) => {
+test('selection changes and leaving discard delayed reference responses', async ({ page }) => {
   let release
   const gate = new Promise((resolve) => { release = resolve })
   let received
@@ -80,9 +80,9 @@ test('selection changes and closing discard delayed reference responses', async 
   release()
   await expect(page.getByRole('button', { name: 'Run reference check' })).toBeEnabled()
   await expect(page.getByTestId('reference-result')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Close', exact: true }).click()
-  await page.getByRole('button', { name: /^Guided demo/ }).click()
-  await page.getByRole('button', { name: 'All reference cases' }).click()
+  await page.getByRole('link', { name: 'Back to home', exact: false }).click()
+  await page.getByRole('link', { name: /^Guided demo/ }).click()
+  await page.getByRole('link', { name: 'All reference cases', exact: true }).click()
   await expect(page.getByTestId('reference-result')).toHaveCount(0)
 })
 
@@ -105,6 +105,7 @@ test('Italian and dark theme remain readable on a narrow screen with keyboard co
   await page.goto(selection())
   await expect(page.getByRole('heading', { name: 'Due input, un pagamento' })).toBeVisible()
   await expect(page.getByText('Perché è importante', { exact: false })).toBeVisible()
+  await page.getByLabel('Scegli un esempio', { exact: true }).click()
   const select = page.getByLabel('Direzione', { exact: true })
   await select.focus()
   await select.press('ArrowDown')
@@ -113,5 +114,5 @@ test('Italian and dark theme remain readable on a narrow screen with keyboard co
   await page.getByRole('button', { name: 'Verifica il riferimento' }).focus()
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('reference-result').getByRole('status')).toHaveText('Corrisponde al riferimento')
-  expect(await page.getByRole('dialog').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+  expect(await page.getByRole('main').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
 })

@@ -25,17 +25,23 @@ Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run 
 - Generate random mainnet or testnet addresses, copy the address or keys, and export a public QR or private PDF backup.
 - Search for a short vanity substring. A one-character pattern is suitable for smoke tests. Five-character patterns can legitimately exhaust the deployed deadline.
 
+### Navigation and layout
+
+Learning uses full pages: `/?view=walkthrough` and the existing `/?view=reference&case=0&direction=send&subcase=0` links. The header and learning navigation support normal links, new tabs, and browser Back/Forward. Desktop layouts place explanations and reference selectors beside the results; mobile uses normal page scrolling and collapsible reference controls. Walkthrough actions stay within reach as you read.
+
+Address tools remain in a keyboard-accessible dialog. Escape closes it, Tab stays within it, and closing returns focus to the opener. Testnet/Mainnet are explicit radio choices; changing network clears the current result. New results receive focus at their address heading. The server-key notice is separate from generation-mode controls. Light/dark themes, English/Italian, reduced motion, and public QR/private PDF exports remain available.
+
 ### Guided learning
 
 The four-stage donation walkthrough always uses reference group 0. Each stage explains its learning goal, who knows which keys, and its expected outcome before showing technical data. Expand **How it works** for the glossary or **Reference values before execution** for published expectations. Actual sender/receiver comparisons appear only after their checks run.
 
-This server simulates both roles using public fixture keys; the API does not expose every intermediate shared-secret calculation and nothing is broadcast. The completion recap links to multiple payments, labels, unrelated outputs, and zero-sum rejection in the reference explorer. Restart resets progress and results; navigating or closing aborts browser requests and discards late responses.
+This server simulates both roles using public fixture keys; the API does not expose every intermediate shared-secret calculation and nothing is broadcast. The completion recap links to multiple payments, labels, unrelated outputs, and zero-sum rejection in the reference explorer. Restart resets progress and results; leaving the page aborts browser requests and discards late responses.
 
 ### Learning from reference cases
 
-Open **Guided demo → All reference cases** to explore all 28 pinned groups in English or Italian. Each lesson explains its inputs, expected behavior, and why the case matters before you run it. Published fixture keys are public test data; never use them for funds.
+Open **Learn → All reference cases** to explore all 28 pinned groups in English or Italian. Each lesson explains its inputs, expected behavior, and why the case matters before you run it. Published fixture keys are public test data; never use them for funds.
 
-Copy an example link to share a selection, such as `/?view=reference&case=18&direction=receive&subcase=1`. Links select the group, direction, and zero-based subcase without executing a check. Invalid selections fall back visibly to case 0, sending, subcase 0. Closing the dialog removes the selection parameters while retaining unrelated URL parameters.
+Copy an example link to share a selection, such as `/?view=reference&case=18&direction=receive&subcase=1`. Links select the group, direction, and zero-based subcase without executing a check. Invalid selections fall back visibly to case 0, sending, subcase 0. Returning home removes the selection parameters while retaining unrelated URL parameters. Browser Back and Forward restore the selected page and reference example without automatically running a check.
 
 The runner determines pass/fail. Detailed comparisons account for output order, duplicate counts, all receiving addresses, and exact public-key/tweak pairs. Expected rejection and successful empty discovery have distinct explanations. Large output lists use 50 rows per page; complete JSON and randomized signature evidence remain available in expandable details. Technical details link to the pinned protocol revision.
 
@@ -112,3 +118,11 @@ python3 scripts/smoke-preview.py https://YOUR-PREVIEW --revision YOUR-COMMIT
 ```
 
 Packaging normally requires a clean committed tree. `--allow-dirty` is only for local verification and marks the revision with `-dirty`. The optional preview workflow can reuse its verified prebuilt binary without installing Rust again; direct Git deployments build from source instead.
+
+### Interactive privacy learning path
+
+Start at `?view=privacy` for a bilingual, browser-only simulation of address reuse, fresh receiving addresses, and Silent Payments. Add up to six symbolic payments, inspect equal destinations, switch between an outside observer and Bob’s wallet, and simulate recognition with private scanning information. The model uses illustrative identifiers, never real addresses or keys; no API or blockchain connection is needed. Public amounts and privacy limitations remain visible. Restart resets the entire exercise.
+
+The homepage links the privacy lab to the existing guided BIP-352 walkthrough and pinned reference explorer. The conceptual exercise is implemented in `src/features/privacy/`; protocol execution remains in the existing API and reference runner.
+
+The privacy lab includes **Can you find Bob?**, an observer challenge with eight mixed outputs and three simulated Bob payments. Compare address reuse with distinct Silent Payments output keys, select suspects, optionally reveal a public receipt, and compare the hypothesis with the simulated wallet. The reveal reports correct, missed, and wrongly attributed payments rather than a privacy score. Ownership is local teaching data, not a security boundary; no cryptography is performed. Changing strategies clears guesses and clues while retaining the scenario. A new board or lab restart clears the exercise.

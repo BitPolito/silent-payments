@@ -11,7 +11,7 @@ export default function ActionCard({ title, description, onClick, icon }) {
     <button
       type="button"
       onClick={onClick}
-      className="sp-surface group flex w-full items-center gap-3.5 rounded-xl px-4 py-4 text-left transition hover:border-bp-blue/30 hover:shadow-md active:scale-[0.99] dark:hover:border-bp-canvas/45 sm:px-5"
+      className="sp-surface sp-action-card group flex w-full items-center gap-3.5 rounded-xl px-4 py-4 text-left transition hover:border-bp-blue/30 hover:shadow-md active:scale-[0.99] dark:hover:border-bp-canvas/45 sm:px-5"
     >
       {icon ? (
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-bp-50 text-bp-blue ring-1 ring-bp-200 transition group-hover:bg-bp-100 dark:bg-bp-600/70 dark:text-bp-canvas dark:ring-bp-canvas/25 dark:group-hover:bg-bp-600/90">

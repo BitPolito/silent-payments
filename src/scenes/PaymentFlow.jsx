@@ -60,6 +60,8 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
   const scenario = FLOW_SCENARIOS[0]
   const [round, setRound] = useState(0)
   const testId = scenario.testId
+  const panelRef = useRef(null)
+  const previousPhase = useRef('bob')
 
   const [phase, setPhase] = useState('bob')
   const [caseData, setCaseData] = useState(null)
@@ -88,6 +90,13 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
       })
     return () => ac.abort()
   }, [testId, scenario.id, round])
+
+  useEffect(() => {
+    if (previousPhase.current === phase) return
+    previousPhase.current = phase
+    panelRef.current?.focus({ preventScroll: true })
+    panelRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' })
+  }, [phase])
 
   const ctx = useMemo(() => getScenarioContext(caseData), [caseData])
   const storyKind = ctx.storyKind
@@ -281,16 +290,15 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
 
   return (
     <div className="sp-flow-shell">
-      <p className="text-xs">{tr('learnSimulation')}</p>
+      <p className="sp-description text-sm">{tr('learnSimulation')}</p>
       <FlowProgress ariaLabel={tr('learnProgress')} steps={railSteps} maxIndex={maxReachableIndex} onSelect={goPhase} />
 
-      <article className="sp-flow-card">
-        <StoryStrip phase={phase} tr={tr} midIcon={midIcon} />
+      <article ref={panelRef} tabIndex={-1} role="region" aria-label={tr(`flowStep_${phase}`)} className="sp-walkthrough-grid">
         <WalkthroughLesson key={phase} phase={phase} caseData={caseData} />
-
-        {showEdgeNote ? <p className="sp-flow-edge-note">{edgeNote}</p> : null}
-
-        <div key={`${scenario.id}-${phase}`} className="sp-flow-panel">
+        <div className="sp-flow-card">
+          <StoryStrip phase={phase} tr={tr} midIcon={midIcon} />
+          {showEdgeNote ? <p className="sp-flow-edge-note">{edgeNote}</p> : null}
+          <div key={`${scenario.id}-${phase}`} className="sp-flow-panel">
           {phase === 'bob' ? (
             <>
               <StepHeader icon={FLOW_ICONS.bob} title={tr('flowBobTitle')}>
@@ -367,10 +375,11 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
               </section>}
             </>
           ) : null}
+          </div>
         </div>
       </article>
 
-      <div className="flex items-center gap-2">
+      <div className="sp-walkthrough-actions">
         <button
           type="button"
           onClick={goPrev}
@@ -381,7 +390,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
           {tr('demoNavBack')}
         </button>
         {showCompleteActions ? (
-          <div className="ml-auto flex flex-1 flex-wrap justify-end gap-2 sm:flex-none">
+          <div className="ml-auto flex basis-full flex-wrap justify-end gap-2 sm:basis-auto sm:flex-none">
             <button
               type="button"
               onClick={restartDemo}
@@ -406,7 +415,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
               if (primaryAction.run) primaryAction.run()
               else if (!primaryAction.disabled) goNext()
             }}
-            className="ml-auto min-w-[10rem] flex-1 rounded-[10px] bg-bp-blue px-4 py-2.5 text-sm font-bold text-bp-canvas disabled:opacity-45 dark:bg-bp-canvas dark:text-bp-blue sm:flex-none sm:flex-initial"
+            className="ml-auto min-w-0 flex-1 rounded-[10px] bg-bp-blue px-4 py-2.5 text-sm font-bold text-bp-canvas disabled:opacity-45 dark:bg-bp-canvas dark:text-bp-blue sm:flex-none sm:flex-initial"
           >
             {primaryAction.label}
           </button>

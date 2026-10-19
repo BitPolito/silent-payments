@@ -20,7 +20,7 @@ const SOCIAL_LEFT = SOCIAL_LINKS.slice(0, 3)
 const SOCIAL_RIGHT = SOCIAL_LINKS.slice(3)
 
 const socialBtnClass =
-  'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-bp-200 bg-white shadow-sm transition hover:border-bp-400 hover:bg-bp-50 dark:border-bp-canvas/45 dark:bg-bp-canvas/15 dark:hover:border-bp-canvas dark:hover:bg-bp-canvas/25'
+  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-bp-200 bg-white shadow-sm transition hover:border-bp-400 hover:bg-bp-50 dark:border-bp-canvas/45 dark:bg-bp-canvas/15 dark:hover:border-bp-canvas dark:hover:bg-bp-canvas/25'
 
 const socialIconSlotClass = 'inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center'
 
@@ -56,7 +56,7 @@ export default function AppFooter() {
 
   return (
     <footer className="site-footer">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-2">
             <img
@@ -78,7 +78,7 @@ export default function AppFooter() {
             </p>
           </div>
 
-          <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Social and contact">
+          <nav className="flex flex-wrap items-center justify-center gap-2" aria-label={tr('uiSocial')}>
             {SOCIAL_LEFT.map((item) => (
               <SocialLink key={item.href} {...item} />
             ))}
