@@ -8,7 +8,7 @@ import { fetchApi, formatApiError } from '../utils/api'
 import EdgeScenarioFlow from './EdgeScenarioFlow'
 import PaymentFlow from './PaymentFlow'
 import ReferenceCases from './ReferenceCases'
-import { writeReferenceSelection } from '../utils/referenceLinks'
+import { referenceURL, writeReferenceSelection } from '../utils/referenceLinks'
 
 const SCENARIO_ICONS = {
   no_outputs: STORY.wallet,
@@ -20,6 +20,7 @@ const alertIcon = '/bitpolito/alert.svg'
 export default function ProtocolDemoModal({ open, onClose, initialSearch = '' }) {
   const { tr } = useLocale()
   const [view, setView] = useState(() => new URLSearchParams(initialSearch).get('view') === 'reference' ? 'reference' : 'flow')
+  const [referenceSearch, setReferenceSearch] = useState(initialSearch)
   const [selectedScenarioId, setSelectedScenarioId] = useState(/** @type {string | null} */ (null))
   const [caseData, setCaseData] = useState(null)
   const [caseLoading, setCaseLoading] = useState(false)
@@ -56,6 +57,12 @@ export default function ProtocolDemoModal({ open, onClose, initialSearch = '' })
     setView('detail')
   }
 
+  const openReference = (selection = { id: 0, direction: 'send', subcase: 0 }) => {
+    writeReferenceSelection(selection)
+    setReferenceSearch(referenceURL(selection).search)
+    setView('reference')
+  }
+
   const selectedScenario = EDGE_SCENARIOS.find((s) => s.id === selectedScenarioId)
 
   const modalTitle =
@@ -77,8 +84,8 @@ export default function ProtocolDemoModal({ open, onClose, initialSearch = '' })
       subtitle={modalSubtitle}
       closeLabel={tr('close')}
     >
-      <nav className="mb-4 flex gap-4 text-sm"><button onClick={() => { writeReferenceSelection(null); setView('flow') }}>{tr('demoTitle')}</button><button onClick={() => setView('reference')}>{tr('referenceTitle')}</button></nav>
-      {view === 'reference' && <ReferenceCases initialSearch={initialSearch} />}
+      <nav className="mb-4 flex gap-4 text-sm"><button onClick={() => { writeReferenceSelection(null); setView('flow') }}>{tr('demoTitle')}</button><button onClick={() => openReference()}>{tr('referenceTitle')}</button></nav>
+      {view === 'reference' && <ReferenceCases key={referenceSearch} initialSearch={referenceSearch} />}
       {view === 'flow' ? (
         apiStatus === 'offline' ? (
           <div className="flex items-center gap-3 rounded-lg border border-bp-200 bg-bp-50 p-4 dark:border-bp-500/40 dark:bg-bp-700/40">
@@ -91,6 +98,7 @@ export default function ProtocolDemoModal({ open, onClose, initialSearch = '' })
           <PaymentFlow
             onOpenEdgeCases={() => setView('edges')}
             onCloseHome={onClose}
+            onOpenReference={openReference}
           />
         )
       ) : null}

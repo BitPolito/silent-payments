@@ -1,0 +1,110 @@
+{
+  "en": {
+    "stages": {
+      "bob": {
+        "goal": "Learn what Bob shares before a payment.",
+        "knows": "Bob keeps his scan and spend private keys. Alice needs only the public Silent Payments address.",
+        "outcome": "Alice has a reusable destination. This address is not the public key of a particular transaction output."
+      },
+      "alice": {
+        "goal": "Learn why Alice’s transaction inputs participate in deriving the payment.",
+        "knows": "Alice knows the private keys for the eligible coins she spends. Bob can extract their public counterparts from transaction data.",
+        "outcome": "The eligible input keys and a deterministically selected outpoint bind the derivation to this transaction."
+      },
+      "derive": {
+        "goal": "Learn how Alice derives a payment without asking Bob for another address.",
+        "knows": "Alice combines her eligible input private keys with Bob’s public scan key. She does not need Bob’s private keys.",
+        "outcome": "The sender check should produce the reference payment public key. Its actual value appears only after running the check."
+      },
+      "scan": {
+        "goal": "Learn how Bob recognizes and can spend the payment.",
+        "knows": "Bob combines his private scan key with eligible public input keys to derive the same shared secret. His private spend key and the recovered tweak let him spend.",
+        "outcome": "The receiver check should discover the reference output and spending tweak, then verify a synthetic spending signature."
+      }
+    },
+    "terms": {
+      "scan": {
+        "title": "Scan key",
+        "definition": "Bob uses the private scan key to recognize payments from public transaction data. The reusable address contains its public counterpart."
+      },
+      "spend": {
+        "title": "Spend key",
+        "definition": "Bob combines the private spend key with a discovered spending tweak to sign for an owned output. Knowing an address does not reveal this private key."
+      },
+      "inputs": {
+        "title": "Transaction inputs",
+        "definition": "Inputs identify coins Alice spends. BIP-352 includes only eligible input keys in the derivation; inputs are distinct from the new payment outputs."
+      },
+      "secret": {
+        "title": "Shared secret",
+        "definition": "Alice derives it from eligible private input keys and Bob’s public scan key. Bob derives the same value from his private scan key and public input keys, using the same input hash. It is not sent as a message."
+      },
+      "tweak": {
+        "title": "Spending tweak",
+        "definition": "A hash of the shared secret and output counter produces a scalar used to derive a payment key. A label can adjust the final spending tweak. Receiving results expose the recovered final tweak, not every intermediate calculation."
+      },
+      "labels": {
+        "title": "Labels",
+        "definition": "Bob can publish labeled addresses for different payment purposes while keeping the same scan key. This basic walkthrough uses the unlabeled reference example; related labeled cases are linked at the end."
+      },
+      "outputs": {
+        "title": "Payment outputs",
+        "definition": "The shared secret determines a tweak added to Bob’s public spend key. The resulting payment public key belongs in a transaction output; it differs from Bob’s reusable address. This demo returns key data without creating or broadcasting a funded transaction."
+      }
+    }
+  },
+  "it": {
+    "stages": {
+      "bob": {
+        "goal": "Capire cosa condivide Bob prima di un pagamento.",
+        "knows": "Bob conserva le chiavi private di scansione e spesa. Ad Alice basta l’indirizzo pubblico Silent Payments.",
+        "outcome": "Alice dispone di una destinazione riutilizzabile. Questo indirizzo non è la chiave pubblica di uno specifico output della transazione."
+      },
+      "alice": {
+        "goal": "Capire perché gli input della transazione di Alice partecipano alla derivazione del pagamento.",
+        "knows": "Alice conosce le chiavi private delle monete ammesse che spende. Bob può estrarre le corrispondenti chiavi pubbliche dai dati della transazione.",
+        "outcome": "Le chiavi degli input ammessi e un outpoint scelto in modo deterministico legano la derivazione a questa transazione."
+      },
+      "derive": {
+        "goal": "Capire come Alice ricava un pagamento senza chiedere a Bob un altro indirizzo.",
+        "knows": "Alice combina le chiavi private dei propri input ammessi con la chiave pubblica di scansione di Bob. Non le servono le chiavi private di Bob.",
+        "outcome": "La verifica del mittente deve produrre la chiave pubblica di pagamento di riferimento. Il valore effettivo appare solo dopo la verifica."
+      },
+      "scan": {
+        "goal": "Capire come Bob riconosce il pagamento e può spenderlo.",
+        "knows": "Bob combina la propria chiave privata di scansione con le chiavi pubbliche degli input ammessi per ricavare lo stesso segreto condiviso. La chiave privata di spesa e il tweak trovato gli permettono di spendere.",
+        "outcome": "La verifica del destinatario deve riconoscere l’output e il tweak di spesa di riferimento, quindi verificare una firma di spesa sintetica."
+      }
+    },
+    "terms": {
+      "scan": {
+        "title": "Chiave di scansione",
+        "definition": "Bob usa la chiave privata di scansione per riconoscere i pagamenti dai dati pubblici della transazione. L’indirizzo riutilizzabile contiene la corrispondente chiave pubblica."
+      },
+      "spend": {
+        "title": "Chiave di spesa",
+        "definition": "Bob combina la chiave privata di spesa con il tweak trovato per firmare un proprio output. Conoscere l’indirizzo non rivela questa chiave privata."
+      },
+      "inputs": {
+        "title": "Input della transazione",
+        "definition": "Gli input identificano le monete spese da Alice. BIP-352 include nella derivazione solo le chiavi degli input ammessi; gli input sono distinti dai nuovi output di pagamento."
+      },
+      "secret": {
+        "title": "Segreto condiviso",
+        "definition": "Alice lo ricava dalle chiavi private degli input ammessi e dalla chiave pubblica di scansione di Bob. Bob ottiene lo stesso valore dalla propria chiave privata di scansione e dalle chiavi pubbliche degli input, usando lo stesso hash degli input. Non viene inviato come messaggio."
+      },
+      "tweak": {
+        "title": "Tweak di spesa",
+        "definition": "Un hash del segreto condiviso e del contatore degli output produce uno scalare usato per ricavare una chiave di pagamento. Un’etichetta può modificare il tweak finale di spesa. I risultati di ricezione mostrano il tweak finale trovato, non ogni calcolo intermedio."
+      },
+      "labels": {
+        "title": "Etichette",
+        "definition": "Bob può pubblicare indirizzi con etichetta per scopi diversi mantenendo la stessa chiave di scansione. Il percorso base usa l’esempio senza etichetta; i casi con etichetta sono collegati alla fine."
+      },
+      "outputs": {
+        "title": "Output di pagamento",
+        "definition": "Il segreto condiviso determina un tweak aggiunto alla chiave pubblica di spesa di Bob. La chiave pubblica di pagamento risultante appartiene a un output della transazione ed è diversa dall’indirizzo riutilizzabile di Bob. La demo restituisce dati delle chiavi senza creare o trasmettere una transazione finanziata."
+      }
+    }
+  }
+}

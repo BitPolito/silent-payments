@@ -1,9 +1,9 @@
 /**
- * @param {{ steps: { id: string, label: string, done: boolean, current: boolean }[], maxIndex: number, onSelect: (id: string) => void }} props
+ * @param {{ steps: { id: string, label: string, done: boolean, current: boolean }[], maxIndex: number, onSelect: (id: string) => void, ariaLabel?: string }} props
  */
-export default function FlowProgress({ steps, maxIndex, onSelect }) {
+export default function FlowProgress({ steps, maxIndex, onSelect, ariaLabel = 'Progress' }) {
   return (
-    <nav className="sp-flow-rail" aria-label="Progress">
+    <nav className="sp-flow-rail" aria-label={ariaLabel}>
       <ol className="flex items-center gap-0">
         {steps.map((step, i) => {
           const reachable = i <= maxIndex

@@ -25,6 +25,12 @@ Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run 
 - Generate random mainnet or testnet addresses, copy the address or keys, and export a public QR or private PDF backup.
 - Search for a short vanity substring. A one-character pattern is suitable for smoke tests. Five-character patterns can legitimately exhaust the deployed deadline.
 
+### Guided learning
+
+The four-stage donation walkthrough always uses reference group 0. Each stage explains its learning goal, who knows which keys, and its expected outcome before showing technical data. Expand **How it works** for the glossary or **Reference values before execution** for published expectations. Actual sender/receiver comparisons appear only after their checks run.
+
+This server simulates both roles using public fixture keys; the API does not expose every intermediate shared-secret calculation and nothing is broadcast. The completion recap links to multiple payments, labels, unrelated outputs, and zero-sum rejection in the reference explorer. Restart resets progress and results; navigating or closing aborts browser requests and discards late responses.
+
 ### Learning from reference cases
 
 Open **Guided demo → All reference cases** to explore all 28 pinned groups in English or Italian. Each lesson explains its inputs, expected behavior, and why the case matters before you run it. Published fixture keys are public test data; never use them for funds.
