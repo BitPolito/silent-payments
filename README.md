@@ -25,6 +25,14 @@ Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run 
 - Generate random mainnet or testnet addresses, copy the address or keys, and export a public QR or private PDF backup.
 - Search for a short vanity substring. A one-character pattern is suitable for smoke tests. Five-character patterns can legitimately exhaust the deployed deadline.
 
+### Learning from reference cases
+
+Open **Guided demo → All reference cases** to explore all 28 pinned groups in English or Italian. Each lesson explains its inputs, expected behavior, and why the case matters before you run it. Published fixture keys are public test data; never use them for funds.
+
+Copy an example link to share a selection, such as `/?view=reference&case=18&direction=receive&subcase=1`. Links select the group, direction, and zero-based subcase without executing a check. Invalid selections fall back visibly to case 0, sending, subcase 0. Closing the dialog removes the selection parameters while retaining unrelated URL parameters.
+
+The runner determines pass/fail. Detailed comparisons account for output order, duplicate counts, all receiving addresses, and exact public-key/tweak pairs. Expected rejection and successful empty discovery have distinct explanations. Large output lists use 50 rows per page; complete JSON and randomized signature evidence remain available in expandable details. Technical details link to the pinned protocol revision.
+
 ### Vanity semantics and limits
 
 The simple UI searches for a substring. The API and CLI additionally support `prefix` and `suffix`. Prefix/contains searches begin after `sp1qq` or `tsp1qq`; suffix matching includes the checksum. Compressed scan-key encoding restricts the first prefix symbol to **gf2tvdw0**. Other initial prefix symbols are rejected as impossible.

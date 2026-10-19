@@ -1,8 +1,11 @@
+import { teaching } from './teaching'
+
 /** @typedef {'en' | 'it'} Locale */
 
 /** @type {Record<Locale, Record<string, string>>} */
 export const strings = {
   en: {
+    ...teaching.en,
     referenceTitle: "All reference cases",
     referenceIntro: "Pinned BIP-352 v1.1.1 vectors. Public example keys only; nothing is broadcast.",
     referenceCase: "Reference case",
@@ -201,6 +204,7 @@ export const strings = {
     apiNotJsonProd: 'Unexpected server response. Please try again.',
   },
   it: {
+    ...teaching.it,
     referenceTitle: "Tutti i casi di riferimento",
     referenceIntro: "Vettori BIP-352 v1.1.1 fissati. Solo chiavi di esempio pubbliche; niente viene trasmesso.",
     referenceCase: "Caso di riferimento",
