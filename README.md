@@ -1,138 +1,92 @@
-# Silent-Payments
+# Silent Payments educational PoC
 
-This project is a proof-of-concept of [BIP 352: Silent Payments](https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki), a method for receiving Bitcoin privately via a static address, without having to communicate directly with the sender.
+A React + Flask + Rust demonstration of [BIP-352 v1.1.1](https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki). It derives silent-payment outputs, scans synthetic transactions, verifies spending signatures, and generates random or vanity addresses. Nothing is broadcast and no blockchain service is required.
 
-The repo includes various scenarios to evaluate the correctness and flexibility of Silent Payments, including different input types, taproot combinations, label handling, and more, as outlined in the [test_list.json](src/test_list.json).
+The UI defaults to testnet; mainnet remains selectable. **The server generates and sees private keys.** This is an educational tool, not a production wallet. Exports contain independent raw scan/spend keys, not a seed or BIP32 wallet. QR images contain only the public address; PDF backups contain private keys.
 
-### Project Structure
-```bash
-silent-payments/
-│
-├── .gitignore							# Ignore file for github
-├── .vercelignore						# Ignore file for vercel
-├──	vercel.json							# Settings file for vercel
-├── package.json						# Depedencies file for vite
-├── README.md							# Project documentation
-├── public/								# Assets for the frontend
-├──	src/								# React frontend
-├── api/								# Python backend
-	├── index.py						# main for flask api
-	├── requirements.txt				# Dependencies file for python
-	├── vanity/							# Rust functions to generate the vanity address
-	├── core/							# source code for python
-		├── send.py						# sender's functions
-		├── receive.py					# receiver's functions
-		├── utils/
-			├── hardened_keys.py		# hardkeys function gen
-			├── schnorr_lib.py			# schnorr-ref-lib
-			├── segwit_addr.py			# bech32m enc/dec reference
-			├── utils.py				# useful functions
-			├── vanity_python.py		# functions in python for the vanity address 
-		├── test/
-			├── test_legend.json 		# .json file for test legend
-			├── test_list.json   		# .json file for test list
-			├── test_vectors.json		# .json file for test vectors
-			├── test.ipynb       		# Jupyter notebook to easly test
-			└── test.py          		# main test file
-```
+## Local setup
 
-### How to install and run code
-1. **Clone this repository** to your local machine:
-   ```bash
-   git clone https://www.github.com/BitPolito/silent-payments
-   cd silent-payments
-   ```
-2. Create a virtual environment (optional but recommended):
-   ```bash
-   cd api
-   python3 -m venv venv
-   source venv/bin/activate 
-   ```
-3. Install dependencies:
-   ```bash
-   cd api
-   pip install -r requirements.txt
-   ```
-4. Install Rust and Cargo (only for vanity address)
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
+Use Node **22.14 or newer**, Python **3.13**, and Rust **1.97.1**. `.nvmrc`, `.python-version`, and `rust-toolchain.toml` record these defaults. Rustup installs the pinned toolchain when Cargo is invoked.
 
-### Running the scripts
-
-Execute tests running
-```bash
-cd api
-python3 -m core.test.test
-```
-and follow the instructions.
-
-Exectute sending tests with the debug option
-```bash
-cd api
-python3 -m core.send --filename=core/test/test_vectors.json --test_id=the_id_of_the_test --debug
-```
-
-Exectute receiving tests with the debug option
-```bash
-cd api
-python3 -m core.receive	--function {run,scan,generate_sp_address,get_spending_key} --debug
-```
-
-### Jupyter
-Select the "test.ipynb" from you folders and execute all the send and receive tests
-
-
-### Generate a Silent-Payments vanity address
-Perform a brute-force search for a vanity address:
-```bash
-cd api
-python3 -m core.utils.vanity_python your_vanity_string
-```
-
-Command line option:
-
-**--mode**: select mode from prefix, suffix and contains (default contains).
-
-**--threads**: select threads number (0 is max threads) Only for rust implementation.
-
-**--python-only**: execute the python version.
-
-Rust implementation benchmark and test:
-```bash
-cd api/vanity
-cargo bench
-```
-All results are also displyed in vanity/target/criterion
-```bash
-cd api/vanity
-cargo test
-```
-You can find the tests in vanity/tests/integration_tests.rs 
-
-### Webapp
-
-The webapp has been deployed on Vercel at: https://silent-payments.vercel.app/
-
-Install node 20
-```bash
-
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-
-source ~/.bashrc
-nvm install 20
-nvm use 20
-```
-
-Resfresh node_modules
-
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-Launch the webapp locally at http://localhost:5173
-
-```bash
+```sh
+npm ci
+python3.13 -m venv api/venv
+api/venv/bin/pip install -r api/requirements-test.txt
+npm run build:vanity
 npm run dev
 ```
+
+Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run dev` starts both servers and builds Rust; the backend finds the fresh executable under `api/vanity/target`. It never copies over `api/bin/vanity`. Production uses pinned dependencies from `api/requirements.txt`; `api/requirements-dev.txt` additionally supports the legacy notebooks.
+
+## What to try
+
+- Complete the guided sender/receiver walkthrough and the two curated edge cases.
+- Open **All reference cases** to select any of the 28 pinned scenario groups, sending/receiving direction, and individual subcase. A successful expected rejection is shown explicitly. Large reference results can be inspected in the expandable actual/expected output.
+- Generate random mainnet or testnet addresses, copy the address or keys, and export a public QR or private PDF backup.
+- Search for a short vanity substring. A one-character pattern is suitable for smoke tests. Five-character patterns can legitimately exhaust the deployed deadline.
+
+### Vanity semantics and limits
+
+The simple UI searches for a substring. The API and CLI additionally support `prefix` and `suffix`. Prefix/contains searches begin after `sp1qq` or `tsp1qq`; suffix matching includes the checksum. Compressed scan-key encoding restricts the first prefix symbol to **gf2tvdw0**. Other initial prefix symbols are rejected as impossible.
+
+```sh
+api/vanity/target/release/vanity g --mode prefix --threads 2 --timeout 10 --testnet
+api/venv/bin/python -m flask --app api.index run --port 5328
+```
+
+`VANITY_MAX_PATTERN_LEN`, `VANITY_TIMEOUT_SEC`, and `VANITY_MAX_THREADS` configure local limits (defaults 5 symbols, 600 seconds, 4 workers; hard caps 64 symbols, 86,400 seconds, 64 workers). Vercel defaults/caps the search to 50 seconds and two workers, with a subprocess guard five seconds later, inside a 60-second function limit. Pattern length remains capped at 64; practical deployed default is 5. Invalid environment values fall back to defaults; integer values are clamped to supported bounds.
+
+Closing or changing a request discards its result in the browser. It does not cancel a running serverless function; Rust stops at its deadline. The local Python fallback is bounded as well. Vercel requires a runnable, self-tested Rust executable.
+
+## API compatibility
+
+Successful generation responses retain `addresses`, `key_material`, `network`, `elapsed`, `message`, and `qr_png_base64`. Both keys are lowercase 64-character hex strings, valid scalars strictly between zero and the secp256k1 order.
+
+- `POST /api/get_sp_address`: `{ "testnet": true }`; legacy GET with `?testnet=1` remains supported. Omitted network flags preserve the backend's mainnet default.
+- `POST /api/vanity_address`: `{ "pattern": "g", "mode": "prefix", "testnet": true, "threads": 2 }`; the legacy GET route remains supported.
+- `GET /api/reference_cases`: group IDs, comments, and direction-specific subcase counts.
+- `GET /api/test_case/18?case_index=1`: selected reference details and counts.
+- `GET /api/single_test/receive/18?case_index=1`: exact comparison for the selected subcase. Existing routes default to subcase zero. Expected sender failures set `expected_failure: true` and a descriptive `note`.
+- `GET /api/health`: protocol version, packaged source revision, runnable binary availability, and runtime limits.
+
+Errors use `{ "error": "…", "code": "…" }`: 400 invalid input, 503 unavailable generator, 504 search deadline, sanitized 500 unexpected failure. Generated-key and reference-detail responses carry `Cache-Control: no-store`.
+
+### Old key exports
+
+Earlier random generation returned 64-byte HMAC outputs and silently truncated them during public-key derivation. Those values are not valid raw secp256k1 private keys. This version rejects them and does not automatically convert or migrate old backups. Recovery is outside this PoC's scope. New exports always contain valid 32-byte keys.
+
+## Verification
+
+```sh
+cargo test --locked --manifest-path api/vanity/Cargo.toml
+api/venv/bin/python -m pytest -m 'not slow' -q
+api/venv/bin/python -m pytest -m slow -q
+npm run lint
+npm test
+npm run build
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+The slow job executes the full official 2,323-output recipient-limit vector. All vectors run without network access. `api/core/test/provenance.json` records upstream commit and source digest; existing scenario IDs 0–25 are preserved and the two new cases are IDs 26–27. The official fixture includes counted recipients and compact expectations, which the shared runner handles explicitly.
+
+Cross-language fixtures verify actual Python/Rust address encoding and checksums. Generated-key tests derive synthetic payments, scan them, and independently verify signatures with libsecp256k1. Production arithmetic uses pinned `coincurve`; protocol logic and signature demonstration remain in Python.
+
+Playwright serves the production build and covers the guided flow, advanced subcases and expected rejections, both networks, clipboard, QR decoding, PDF text/keys, language/theme persistence, timeout errors, stale requests, and a short real vanity search. Set `SP_PYTHON` to an alternative test-environment interpreter if needed. PR CI runs these checks without deployment secrets; the recipient-limit job has its own 60-minute timeout.
+
+## Preview delivery
+
+Compiled binaries are ignored rather than committed. The **Verified preview** workflow is manually triggered from a reviewed repository branch. It first runs correctness CI, builds a static `x86_64-unknown-linux-musl` executable, and copies only required source and the fresh binary into an isolated `.preview-stage` directory. A manifest records the source revision and binary SHA-256. It never packages an existing developer binary.
+
+Configure GitHub Actions secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` for the existing Vercel project. If preview protection is enabled, also configure `VERCEL_AUTOMATION_BYPASS_SECRET`. Then run **Verified preview**. It uses Vercel CLI 64.5.0 to pull preview settings, build, deploy with `--prebuilt`, and verify revision, runnable generator, reference cases, generation, and browser exports. The preview URL appears in the workflow summary. **It does not promote or deploy production.**
+
+For a local packaging check after a musl build:
+
+```sh
+python3 scripts/prepare-preview.py \
+  --binary api/vanity/target/x86_64-unknown-linux-musl/release/vanity \
+  --output .preview-stage
+python3 scripts/smoke-preview.py https://YOUR-PREVIEW --revision YOUR-COMMIT
+```
+
+Packaging normally requires a clean committed tree. `--allow-dirty` is only for local verification and marks the revision with `-dirty`. Do not use the old direct Vercel Git deployment path for a release: it cannot include a newly built ignored binary. Adopt the reviewed packaging pipeline before a future production rollout.

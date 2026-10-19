@@ -205,11 +205,16 @@ dist-ssr
 *.sw?
 
 api/vanity/target/
-api/vanity/Cargo.lock
-vanity/Cargo.lock
 
 *.csv
 silent_payment_qr.png
 
 # Local build output (Vite)
 dist/
+# Generated runtime binaries and verification artifacts
+api/bin/vanity
+api/build-info.json
+.preview-stage/
+.vercel/
+playwright-report/
+test-results/

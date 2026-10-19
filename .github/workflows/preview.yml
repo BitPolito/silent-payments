@@ -1,0 +1,60 @@
+name: Verified preview
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+  preview:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: preview
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build a static Linux generator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+          rustup target add x86_64-unknown-linux-musl
+          cargo build --locked --release --target x86_64-unknown-linux-musl --manifest-path api/vanity/Cargo.toml
+          api/vanity/target/x86_64-unknown-linux-musl/release/vanity --self-test
+      - name: Verify the isolated static runtime
+        run: |
+          python -m pip install -r api/requirements-test.txt
+          python -m pytest api/tests/test_packaging.py -q
+      - name: Stage the reviewed revision
+        run: python scripts/prepare-preview.py --binary api/vanity/target/x86_64-unknown-linux-musl/release/vanity --output .preview-stage
+      - name: Build and deploy preview
+        id: deploy
+        working-directory: .preview-stage
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "$VERCEL_TOKEN" && test -n "$VERCEL_ORG_ID" && test -n "$VERCEL_PROJECT_ID"
+          npx --yes vercel@64.5.0 pull --yes --environment=preview --token "$VERCEL_TOKEN"
+          npx --yes vercel@64.5.0 build --token "$VERCEL_TOKEN"
+          preview_url=$(npx --yes vercel@64.5.0 deploy --prebuilt --token "$VERCEL_TOKEN")
+          echo "url=$preview_url" >> "$GITHUB_OUTPUT"
+          echo "Preview: $preview_url" >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify deployed API and revision
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: python scripts/smoke-preview.py "$PREVIEW_URL" --revision "$GITHUB_SHA"
+      - run: npm ci && npx playwright install --with-deps chromium
+      - name: Verify deployed browser flows
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: npm run test:e2e

@@ -1,0 +1,42 @@
+name: Correctness
+on: [push, pull_request, workflow_call]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: api/requirements*.txt
+      - run: python -m venv api/venv
+      - run: api/venv/bin/pip install -r api/requirements-test.txt
+      - run: cargo test --locked --manifest-path api/vanity/Cargo.toml
+      - run: api/venv/bin/python -m pytest -m 'not slow' -q
+      - run: npm ci
+      - run: npm run lint && npm test && npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failures
+          path: test-results/
+  reference-limit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r api/requirements-test.txt
+      - run: python -m pytest -m slow -q
