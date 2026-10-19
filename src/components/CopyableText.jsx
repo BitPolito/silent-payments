@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useLocale } from '../i18n/LocaleContext'
+import { useLocale } from '../i18n/useLocale'
 
 /**
  * @param {{ value: string, className?: string, emptyLabel?: string, highlight?: { start: number, end: number } | null }} props

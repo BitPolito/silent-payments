@@ -9,9 +9,8 @@ import ModalShell from '../components/ModalShell'
 import AmbientOverlay from '../components/AmbientOverlay'
 import { useApiOnline } from '../hooks/useApiOnline'
 import { useVanityLimits } from '../hooks/useVanityLimits'
-import { useLocale } from '../i18n/LocaleContext'
+import { useLocale } from '../i18n/useLocale'
 import { fetchSpAddress, fetchVanityAddress, formatApiError } from '../utils/api'
-import { buildAndSaveGenBackupPdf } from '../utils/genBackupPdf'
 import { normalizeGenResponse, qrImageUrl } from '../utils/normalizeGen'
 import {
   DEFAULT_VANITY_PATTERN,
@@ -62,7 +61,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
   const [genResult, setGenResult] = useState(null)
   const [pattern, setPattern] = useState('')
   const [lastVanityPattern, setLastVanityPattern] = useState('')
-  const [testnet, setTestnet] = useState(false)
+  const [testnet, setTestnet] = useState(true)
   const [error, setError] = useState('')
   const [patternError, setPatternError] = useState('')
   const [fxPreset, setFxPreset] = useState(/** @type {import('../fx/presets').FxPresetId | null} */ (null))
@@ -79,23 +78,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
     setFxPreset(null)
   }, [])
 
-  useEffect(() => {
-    if (open) setTab(initialTab)
-  }, [open, initialTab])
-
-  useEffect(() => {
-    if (!open) {
-      abortRef.current?.abort()
-      setPattern('')
-      setLastVanityPattern('')
-      setTestnet(false)
-      setError('')
-      setPatternError('')
-      setGenResult(null)
-      setLoading(false)
-      setFxPreset(null)
-    }
-  }, [open])
+  useEffect(() => () => abortRef.current?.abort(), [])
 
   useEffect(() => {
     if (open) preloadFxAssets()
@@ -124,9 +107,9 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
     setError('')
     setGenResult(null)
     fetchSpAddress({ testnet }, { signal: ac.signal })
-      .then(applyResult)
+      .then((data) => { if (!ac.signal.aborted) applyResult(data) })
       .catch((e) => {
-        if (e.name !== 'AbortError') setError(formatApiError(e, tr))
+        if (!ac.signal.aborted && e.name !== 'AbortError') setError(formatApiError(e, tr))
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false)
@@ -152,13 +135,14 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
       { signal: ac.signal },
     )
       .then((data) => {
+        if (ac.signal.aborted) return
         applyResult(data)
         const ok = !!normalizeGenResponse(data)?.addresses?.[0]
         const fx = resolveVanityFx(p)
         if (ok && fx) setFxPreset(fx)
       })
       .catch((e) => {
-        if (e.name !== 'AbortError') setError(formatApiError(e, tr))
+        if (!ac.signal.aborted && e.name !== 'AbortError') setError(formatApiError(e, tr))
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false)
@@ -167,21 +151,11 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
 
   const onPatternChange = (e) => {
     const { value } = parsePatternInput(e.target.value, vanityLimits.maxPattern)
+    resetResults()
     setPattern(value)
-    setGenResult(null)
     const effective = effectiveVanityPattern(value, vanityLimits.maxPattern)
     setPatternError(patternValidationError(effective, tr, vanityLimits.maxPattern))
   }
-
-  useEffect(() => {
-    if (!open) return
-    if (!pattern.trim()) return
-    const trimmed = pattern.slice(0, vanityLimits.maxPattern)
-    if (trimmed !== pattern) {
-      setPattern(trimmed)
-      setPatternError(patternValidationError(effectiveVanityPattern(trimmed, vanityLimits.maxPattern), tr, vanityLimits.maxPattern))
-    }
-  }, [open, vanityLimits.maxPattern, pattern, tr])
 
   const handleDownloadQr = async () => {
     const addr = genResult?.addresses?.[0]
@@ -210,6 +184,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
   const handleDownloadResults = async () => {
     if (!genResult?.addresses?.[0]) return
     try {
+      const { buildAndSaveGenBackupPdf } = await import('../utils/genBackupPdf')
       await buildAndSaveGenBackupPdf({ genResult, tr })
     } catch {
       window.alert(tr('pdfError'))
@@ -265,6 +240,8 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
               : 'text-bp-blue/60 hover:text-bp-blue dark:text-bp-canvas/60 dark:hover:text-bp-canvas'
           }`}
         >
+      <p className="mb-3 text-xs">{tr('serverKeysNotice')}</p>
+      {loading && <p role="status" className="mb-3 text-xs">{tr('searchCancellationNotice')}</p>}
           {tr('genTabRandom')}
         </button>
         <button
@@ -289,7 +266,7 @@ export default function GenerateAddrModal({ open, onClose, initialTab = 'random'
             <input
               type="checkbox"
               checked={testnet}
-              onChange={(e) => setTestnet(e.target.checked)}
+              onChange={(e) => { resetResults(); setTestnet(e.target.checked) }}
               className="rounded border-bp-300"
             />
             {tr('testnet')}

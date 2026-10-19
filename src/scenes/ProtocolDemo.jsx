@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { STORY } from '../assets/icons'
 import ModalShell from '../components/ModalShell'
-import { useLocale } from '../i18n/LocaleContext'
+import { useLocale } from '../i18n/useLocale'
 import { useApiOnline } from '../hooks/useApiOnline'
 import { EDGE_SCENARIOS } from '../utils/demoScenarios'
 import { fetchApi, formatApiError } from '../utils/api'
 import EdgeScenarioFlow from './EdgeScenarioFlow'
 import PaymentFlow from './PaymentFlow'
+import ReferenceCases from './ReferenceCases'
 
 const SCENARIO_ICONS = {
   no_outputs: STORY.wallet,
@@ -18,7 +19,6 @@ const alertIcon = '/bitpolito/alert.svg'
 export default function ProtocolDemoModal({ open, onClose }) {
   const { tr } = useLocale()
   const [view, setView] = useState('flow')
-  const [flowEpoch, setFlowEpoch] = useState(0)
   const [selectedScenarioId, setSelectedScenarioId] = useState(/** @type {string | null} */ (null))
   const [caseData, setCaseData] = useState(null)
   const [caseLoading, setCaseLoading] = useState(false)
@@ -26,31 +26,18 @@ export default function ProtocolDemoModal({ open, onClose }) {
   const apiStatus = useApiOnline(open && (view === 'detail' || view === 'flow'))
 
   useEffect(() => {
-    if (open) {
-      setFlowEpoch((n) => n + 1)
-      return
-    }
-    setView('flow')
-    setSelectedScenarioId(null)
-    setCaseData(null)
-  }, [open])
-
-  useEffect(() => {
     if (!open || !selectedScenarioId || view !== 'detail') return
     const scenario = EDGE_SCENARIOS.find((s) => s.id === selectedScenarioId)
     if (!scenario) return
 
     const ac = new AbortController()
-    setCaseLoading(true)
-    setCaseError('')
-    setCaseData(null)
     fetchApi(`/api/test_case/${scenario.testId}`, { signal: ac.signal })
       .then((data) => ({
         ...data,
         title: tr(`edgeCard_${scenario.id}_title`),
         scenarioId: scenario.id,
       }))
-      .then(setCaseData)
+      .then((data) => { if (!ac.signal.aborted) setCaseData(data) })
       .catch((e) => {
         if (e.name !== 'AbortError') setCaseError(formatApiError(e, tr))
       })
@@ -61,6 +48,9 @@ export default function ProtocolDemoModal({ open, onClose }) {
   }, [open, selectedScenarioId, view, tr])
 
   const openScenario = (scenarioId) => {
+    setCaseLoading(true)
+    setCaseError('')
+    setCaseData(null)
     setSelectedScenarioId(scenarioId)
     setView('detail')
   }
@@ -68,7 +58,7 @@ export default function ProtocolDemoModal({ open, onClose }) {
   const selectedScenario = EDGE_SCENARIOS.find((s) => s.id === selectedScenarioId)
 
   const modalTitle =
-    view === 'flow' ? tr('demoTitle') : view === 'edges' ? tr('flowEdgeTitle') : tr('demoDetailTitle')
+    view === 'reference' ? tr('referenceTitle') : view === 'flow' ? tr('demoTitle') : view === 'edges' ? tr('flowEdgeTitle') : tr('demoDetailTitle')
   const modalSubtitle =
     view === 'flow'
       ? tr('demoSubtitle')
@@ -86,6 +76,8 @@ export default function ProtocolDemoModal({ open, onClose }) {
       subtitle={modalSubtitle}
       closeLabel={tr('close')}
     >
+      <nav className="mb-4 flex gap-4 text-sm"><button onClick={() => setView('flow')}>{tr('demoTitle')}</button><button onClick={() => setView('reference')}>{tr('referenceTitle')}</button></nav>
+      {view === 'reference' && <ReferenceCases />}
       {view === 'flow' ? (
         apiStatus === 'offline' ? (
           <div className="flex items-center gap-3 rounded-lg border border-bp-200 bg-bp-50 p-4 dark:border-bp-500/40 dark:bg-bp-700/40">
@@ -96,7 +88,6 @@ export default function ProtocolDemoModal({ open, onClose }) {
           </div>
         ) : (
           <PaymentFlow
-            key={flowEpoch}
             onOpenEdgeCases={() => setView('edges')}
             onCloseHome={onClose}
           />
@@ -158,6 +149,7 @@ export default function ProtocolDemoModal({ open, onClose }) {
           </div>
         ) : caseData && selectedScenario ? (
           <EdgeScenarioFlow
+            key={selectedScenario.id}
             caseData={caseData}
             scenarioId={selectedScenario.id}
             testId={selectedScenario.testId}

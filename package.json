@@ -4,21 +4,24 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.14.0"
   },
   "scripts": {
     "dev:frontend": "vite",
     "dev:backend": "cd api && ./venv/bin/flask --app index run -p 5328",
-    "dev:rust": "cd api/vanity && cargo build --release && cp -f target/release/vanity ../bin/vanity",
-    "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:rust\"",
+    "dev:rust": "cargo build --locked --release --manifest-path api/vanity/Cargo.toml",
+    "dev": "npm run build:vanity && concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "vite build",
     "lint": "eslint src",
     "prune:i18n": "node scripts/prune-i18n.mjs",
     "prune:i18n:unused": "node scripts/prune-unused-i18n.mjs",
-    "verify:errors": "node scripts/verify-formatApiError.mjs",
-    "build:vanity": "cd api/vanity && cargo build --release && cp -f target/release/vanity ../bin/vanity",
+    "verify:errors": "vitest run src/utils/api.test.js",
+    "build:vanity": "cargo build --locked --release --manifest-path api/vanity/Cargo.toml",
     "vercel-build": "npm run build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:api": "api/venv/bin/python -m pytest"
   },
   "dependencies": {
     "jspdf": "^4.2.1",
@@ -27,17 +30,21 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.58.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "@zxing/library": "^0.21.3",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
+    "pdfjs-dist": "^5.4.624",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vitest": "^4.1.11"
   }
 }

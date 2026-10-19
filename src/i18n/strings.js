@@ -3,6 +3,19 @@
 /** @type {Record<Locale, Record<string, string>>} */
 export const strings = {
   en: {
+    referenceTitle: "All reference cases",
+    referenceIntro: "Pinned BIP-352 v1.1.1 vectors. Public example keys only; nothing is broadcast.",
+    referenceCase: "Reference case",
+    referenceDirection: "Direction",
+    referenceSend: "Sending",
+    referenceReceive: "Receiving",
+    referenceSubcase: "Subcase",
+    referenceRun: "Run reference check",
+    referenceExpectedFailure: "Expected rejection",
+    referenceActual: "Actual and expected results",
+    serverKeysNotice: "Educational demo. The server generates and sees these private keys. Exports contain raw keys, not a recoverable seed.",
+    searchCancellationNotice: "Closing discards this result. Server work stops at its configured deadline.",
+
     title: 'Silent Payments',
     headerBitpolitoAria: 'BitPolito website',
     heroKicker: 'Proof of concept · BIP-352',
@@ -188,6 +201,19 @@ export const strings = {
     apiNotJsonProd: 'Unexpected server response. Please try again.',
   },
   it: {
+    referenceTitle: "Tutti i casi di riferimento",
+    referenceIntro: "Vettori BIP-352 v1.1.1 fissati. Solo chiavi di esempio pubbliche; niente viene trasmesso.",
+    referenceCase: "Caso di riferimento",
+    referenceDirection: "Direzione",
+    referenceSend: "Invio",
+    referenceReceive: "Ricezione",
+    referenceSubcase: "Sottocaso",
+    referenceRun: "Verifica il riferimento",
+    referenceExpectedFailure: "Rifiuto previsto",
+    referenceActual: "Risultati effettivi e attesi",
+    serverKeysNotice: "Demo didattica. Il server genera e vede queste chiavi private. Le esportazioni contengono chiavi grezze, non un seed recuperabile.",
+    searchCancellationNotice: "La chiusura scarta il risultato. Il server si ferma entro il limite configurato.",
+
     title: 'Silent Payments',
     headerBitpolitoAria: 'Sito web BitPolito',
     heroKicker: 'Proof of concept · BIP-352',

@@ -1,6 +1,6 @@
 import { BRAND, ICON, SOCIAL } from '../assets/icons'
 import BpIcon from './BpIcon'
-import { useLocale } from '../i18n/LocaleContext'
+import { useLocale } from '../i18n/useLocale'
 
 const SOCIAL_LINKS = [
   { href: 'https://t.me/BitPolitoForum', icon: SOCIAL.telegram, label: 'Telegram' },

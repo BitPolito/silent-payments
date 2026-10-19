@@ -29,6 +29,11 @@ export function normalizeGenResponse(data) {
         ? 'testnet'
         : 'mainnet'
 
+  const validKey = (key) => typeof key === 'string' && /^[0-9a-f]{64}$/.test(key) &&
+    BigInt(`0x${key}`) > 0n && BigInt(`0x${key}`) < 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n
+  if (!keyMaterial || !validKey(keyMaterial.scan_priv_key) || !validKey(keyMaterial.spend_priv_key)) return null
+  if (network === 'testnet' ? !/^tsp1qq[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{111}$/.test(addr) : !/^sp1qq[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{111}$/.test(addr)) return null
+
   return {
     ...raw,
     addresses: [addr],

@@ -5,7 +5,7 @@ import DemoRunResults from '../components/protocol/DemoRunResults'
 import { FLOW_ICONS } from '../assets/flowIcons'
 import FlowProgress from '../components/flow/FlowProgress'
 import { DataBlock, PubkeyOutput, SilentAddressField, StepHeader, UtxoList } from '../components/flow/FlowPanels'
-import { useLocale } from '../i18n/LocaleContext'
+import { useLocale } from '../i18n/useLocale'
 import { fetchApi, formatApiError } from '../utils/api'
 import { pickRandomFlowScenario } from '../utils/demoScenarios'
 import { canRunReceiveCheck, isSendStepComplete } from '../utils/flowDisplay'
@@ -84,11 +84,8 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
 
   useEffect(() => {
     const ac = new AbortController()
-    setLoadingCase(true)
-    setLoadError('')
-    setCaseData(null)
     fetchApi(`/api/test_case/${testId}`, { signal: ac.signal })
-      .then((data) => setCaseData({ ...data, scenarioId: scenario.id }))
+      .then((data) => { if (!ac.signal.aborted) setCaseData({ ...data, scenarioId: scenario.id }) })
       .catch((e) => {
         if (e.name !== 'AbortError') setLoadError(formatApiError(e, tr))
       })
@@ -171,18 +168,6 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
 
   const stepIndex = STEPS.indexOf(phase)
 
-  useEffect(() => {
-    setFurthest((f) => Math.max(f, stepIndex))
-  }, [stepIndex])
-
-  useEffect(() => {
-    if (sendResult) setFurthest((f) => Math.max(f, STEPS.length - 1))
-  }, [sendResult])
-
-  useEffect(() => {
-    if (recvPassed) setFurthest((f) => Math.max(f, STEPS.length - 1))
-  }, [recvPassed])
-
   const railSteps = STEPS.map((id) => ({
     id,
     label: tr(`flowStep_${id}`),
@@ -196,9 +181,9 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
 
   const maxReachableIndex = useMemo(() => {
     const deriveIdx = STEPS.indexOf('derive')
-    if (!sendResult) return Math.min(furthest, deriveIdx)
-    return furthest
-  }, [furthest, sendResult])
+    if (!sendResult) return Math.min(Math.max(furthest, stepIndex), deriveIdx)
+    return STEPS.length - 1
+  }, [furthest, stepIndex, sendResult])
 
   const goPhase = (id) => {
     const idx = STEPS.indexOf(id)
@@ -217,6 +202,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
     recvAbort.current?.abort()
     setSendLoading(false)
     setRecvLoading(false)
+    setFurthest((f) => Math.max(f, stepIndex))
     setPhase(STEPS[stepIndex - 1])
   }
 
@@ -224,6 +210,9 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
     sendAbort.current?.abort()
     recvAbort.current?.abort()
     setScenario((prev) => pickRandomFlowScenario(prev.id))
+    setLoadingCase(true)
+    setCaseData(null)
+    setLoadError('')
     resetFlowState({
       setPhase,
       setSendResult,
