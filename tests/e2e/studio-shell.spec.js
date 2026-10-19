@@ -1,0 +1,20 @@
+import { test, expect } from '@playwright/test'
+test('compact studio opens presets, keeps three navigation destinations, and shares public identifiers', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link')).toHaveCount(3)
+  await page.getByRole('link', { name: /Start exploring/ }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Payments' })).toBeFocused()
+  await page.getByRole('link', { name: 'Addresses', exact: true }).click()
+  await page.getByRole('button', { name: 'Copy example link' }).click()
+  const copied = await page.evaluate(() => navigator.clipboard.readText())
+  expect(Object.fromEntries(new URL(copied).searchParams)).toEqual({ view: 'studio', tool: 'address', preset: 'default' })
+  await page.goBack()
+  await expect(page.getByRole('heading', { level: 1, name: 'Payments' })).toBeVisible()
+  await page.getByRole('link', { name: 'Tools', exact: true }).click()
+  await expect(page.getByRole('button', { name: /^Generate address/ })).toBeVisible()
+})
+test('invalid studio examples fall back visibly', async ({ page }) => {
+  await page.goto('/?view=studio&tool=scan&preset=unknown')
+  await expect(page.getByRole('alert')).toContainText('Unknown example')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Payments')
+})

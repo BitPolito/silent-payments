@@ -9,11 +9,15 @@ import { useLocale } from './i18n/useLocale'
 import GenerateAddrModal from './scenes/GenerateAddr'
 import LearningPage from './scenes/LearningPage'
 import PrivacyLab from './features/privacy/PrivacyLab'
+import Studio from './features/studio/Studio'
+import Tools from './features/studio/Tools'
+import { useStudioText } from './features/studio/useStudioText'
 import HomePage from './scenes/HomePage'
 import { currentView, pageURL } from './utils/navigation'
 
 export default function App() {
   const { tr } = useLocale()
+  const t = useStudioText()
   const [search, setSearch] = useState(() => window.location.search)
   const [generator, setGenerator] = useState(null)
   const headingRef = useRef(null)
@@ -32,8 +36,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'auto' })
   }, [search])
   useEffect(() => {
-    document.title = `${view === 'home' ? tr('title') : tr(view === 'privacy' ? 'uiPrivacy' : view === 'walkthrough' ? 'demoTitle' : 'referenceTitle')} · BitPolito`
-  }, [view, tr])
+    document.title = `${view === 'home' ? tr('title') : view === 'studio' ? t.explore : view === 'tools' ? t.tools : tr(view === 'privacy' ? 'uiPrivacy' : view === 'walkthrough' ? 'demoTitle' : 'referenceTitle')} · BitPolito`
+  }, [view, tr, t])
   return <div className="sp-app">
     <a className="sp-skip-link" href="#main-content">{tr('uiSkip')}</a>
     <header className="sp-site-header">
@@ -43,15 +47,15 @@ export default function App() {
           <span>{tr('title')}</span>
         </AppLink>
         <nav className="sp-primary-nav" aria-label={tr('uiMainNav')}>
-          {[['home', 'uiHome'], ['privacy', 'uiPrivacy'], ['walkthrough', 'uiLearn'], ['reference', 'uiReference']].map(([target, label]) => <AppLink key={target} href={pageURL(target).href} aria-current={view === target ? 'page' : undefined}>{tr(label)}</AppLink>)}
+          {[['home', t.explore], ['reference', t.referenceNav], ['tools', t.tools]].map(([target, label]) => <AppLink key={target} href={pageURL(target).href} aria-current={(view === target || (target === 'home' && ['studio', 'privacy', 'walkthrough'].includes(view))) ? 'page' : undefined}>{label}</AppLink>)}
         </nav>
         <div className="sp-header-controls"><LangToggle /><ThemeToggle ariaLabel={tr('themeAria')} /></div>
       </div>
     </header>
     <main id="main-content" tabIndex={-1} className={`sp-main ${view === 'home' ? '' : 'sp-learning-page'}`}>
       {view === 'home'
-        ? <HomePage headingRef={headingRef} onGenerate={setGenerator} />
-        : view === 'privacy' ? <PrivacyLab headingRef={headingRef} /> : <LearningPage key={search} view={view} initialSearch={search} headingRef={headingRef} />}
+        ? <HomePage headingRef={headingRef} />
+        : view === 'studio' ? <Studio key={search} search={search} headingRef={headingRef} /> : view === 'tools' ? <Tools headingRef={headingRef} onGenerate={setGenerator} /> : view === 'privacy' ? <PrivacyLab headingRef={headingRef} /> : <LearningPage key={search} view={view} initialSearch={search} headingRef={headingRef} />}
     </main>
     <div className="sp-resource-links"><a href="https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki" target="_blank" rel="noopener noreferrer">{tr('bipCta')} ↗</a><a href={BITPOLITO_URL} target="_blank" rel="noopener noreferrer">bitpolito.it ↗</a></div>
     <AppFooter />

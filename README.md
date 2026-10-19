@@ -126,3 +126,9 @@ Start at `?view=privacy` for a bilingual, browser-only simulation of address reu
 The homepage links the privacy lab to the existing guided BIP-352 walkthrough and pinned reference explorer. The conceptual exercise is implemented in `src/features/privacy/`; protocol execution remains in the existing API and reference runner.
 
 The privacy lab includes **Can you find Bob?**, an observer challenge with eight mixed outputs and three simulated Bob payments. Compare address reuse with distinct Silent Payments output keys, select suspects, optionally reveal a public receipt, and compare the hypothesis with the simulated wallet. The reveal reports correct, missed, and wrongly attributed payments rather than a privacy score. Ownership is local teaching data, not a security boundary; no cryptography is performed. Changing strategies clears guesses and clues while retaining the scenario. A new board or lab restart clears the exercise.
+
+### Silent Payments Studio
+
+The compact Explore page links to four workbenches: Payments, Addresses, Labels, and Scanning. Reference and Tools are the other primary navigation destinations. Existing privacy, walkthrough, reference, and generator APIs remain available. Generation and vanity are under `?view=tools`; the observer challenge is optional at `?view=privacy#observer`.
+
+Studio links use `?view=studio&tool=payment&preset=default` and contain selection identifiers only. Experiments reset on reload, while language and theme persist. The workbench shell distinguishes conceptual previews from computed protocol results; technical evidence belongs under Inspect details.

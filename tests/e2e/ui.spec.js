@@ -27,7 +27,7 @@ test('learning uses pages and browser Back/Forward retains reference selection',
 })
 
 test('the generator contains focus, supports Escape, and restores the opener', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?view=tools')
   const opener = page.getByRole('button', { name: /^Generate address/ })
   await opener.click()
   const dialog = page.getByRole('dialog')
@@ -50,7 +50,7 @@ test('the generator contains focus, supports Escape, and restores the opener', a
 })
 
 test('the key notice is outside mode buttons and a network change clears previous results', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?view=tools')
   await page.getByRole('button', { name: /^Generate address/ }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByRole('group', { name: 'Generation mode' })).not.toContainText('server generates')
@@ -78,6 +78,7 @@ for (const [width, locale, dark] of [[320, 'en', false], [390, 'it', true], [128
     await expect(page.getByTestId('reference-lesson')).toBeVisible()
     await noHorizontalOverflow(page)
     await page.getByRole('link', { name: locale === 'en' ? /Back to home/ : /Torna alla home/ }).click()
+    await page.getByRole('link', { name: locale === 'en' ? 'Tools' : 'Strumenti', exact: true }).click()
     await page.getByRole('button', { name: locale === 'en' ? /^Generate address/ : /^Genera indirizzo/ }).click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await noHorizontalOverflow(page)
