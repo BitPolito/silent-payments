@@ -23,6 +23,7 @@ from core.utils.schnorr_lib import (
     has_even_y,
 )
 from core.utils.utils import (
+    has_unsupported_witness,
     get_transaction_type, 
 	get_input_hash, 
 	select_inputs, 
@@ -32,6 +33,10 @@ from core.utils.utils import (
     serP
 )
 
+from core.errors import ZeroKeySum, RecipientLimitExceeded
+from core.utils.hardened_keys import validate_private_key
+
+K_MAX = 2323
 logger = logging.getLogger(__name__)
 
 def create_sp_groups(recipients: list[str]) -> dict[bytes, list[bytes]]:
@@ -47,14 +52,22 @@ def create_sp_groups(recipients: list[str]) -> dict[bytes, list[bytes]]:
     sp_groups: dict[bytes, list[bytes]] = {}
     logger.debug(f'recipients: {recipients}')
     for receip in recipients:
-        B_scan, B_m = decode_silent_payment_address(receip)
+        count = receip.get('count', 1) if isinstance(receip, dict) else 1
+        address = receip['address'] if isinstance(receip, dict) else receip
+        if not isinstance(count, int) or isinstance(count, bool) or count < 1:
+            raise ValueError('Invalid recipient count')
+        if count > K_MAX:
+            raise RecipientLimitExceeded('Maximum per-group recipient limit (2323) exceeded')
+        B_scan, B_m = decode_silent_payment_address(address)
         logger.debug(f'B_scan: {B_scan}')
         logger.debug(f'B_m: {B_m}')
         if B_scan in sp_groups:
-            sp_groups[B_scan].append(B_m)
+            sp_groups[B_scan].extend([B_m] * count)
         else:
-            sp_groups[B_scan] = [B_m]
+            sp_groups[B_scan] = [B_m] * count
     logger.debug(f'SP groups: {sp_groups}')
+    if any(len(group) > K_MAX for group in sp_groups.values()):
+        raise RecipientLimitExceeded('Maximum per-group recipient limit (2323) exceeded')
     return sp_groups
 
 def generate_a_A_from_inputs(inputs: list[dict]) -> tuple[int, bytes]:
@@ -71,7 +84,7 @@ def generate_a_A_from_inputs(inputs: list[dict]) -> tuple[int, bytes]:
     '''
     keys = []
     for tx in inputs:
-        a_i = int_from_hex(tx['private_key'])
+        a_i = int.from_bytes(validate_private_key(tx['private_key']), 'big')
         P = pubkey_point_gen_from_int(a_i)
         
         txinwitness = tx.get('txinwitness', '')
@@ -85,7 +98,7 @@ def generate_a_A_from_inputs(inputs: list[dict]) -> tuple[int, bytes]:
 
     a = sum(keys) % n
     if a == 0:
-        raise ValueError('ERROR: zero key sum.')
+        raise ZeroKeySum('zero key sum')
     A = point_mul(G, a)
     return a, A
 
@@ -116,6 +129,8 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
     a, A = generate_a_A_from_inputs(inputs)
 
     input_hash = get_input_hash(vin, A)
+    if not 0 < int_from_bytes(input_hash) < n:
+        raise ValueError('Invalid input hash scalar')
     logger.debug(f'input hash: {input_hash}')
     
     sp_groups = create_sp_groups(recipients)
@@ -128,10 +143,8 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
         # Let ecdh_shared_secret = input_hash·a·Bscan
         logger.debug(f'B_scan: {point_from_bytes(B_scan)}')
         logger.debug(f'input_hash: {input_hash}')
-        logger.debug(f'a: {a}')
         scalar = (int_from_bytes(input_hash) * a) % n
         ecdh_shared_secret = point_mul(point_from_bytes(B_scan), scalar)
-        logger.debug(f'ecdh_shared_secret: {ecdh_shared_secret}')
 
         B_m_points = []
         for b_m_bytes in B_m_list_bytes:
@@ -164,11 +177,13 @@ def create_outputs(vin: list[dict], inputs: list[dict], recipients: list[str]) -
 
 def sending_run(vin: list[dict], recipients: list[str]) -> list[str]:
     '''Main function for the sending phase. It takes as input the list of inputs and the list of recipients and returns the list of outputs.'''
+    if has_unsupported_witness(vin):
+        raise ValueError('Unsupported witness version in transaction')
     inputs = select_inputs(vin)
     inputs = validate_inputs(inputs, vin)
     if not inputs:
         return []
-    logger.debug(f'selected {len(inputs)} valid inputs: {inputs}')
+    logger.debug('selected %d valid inputs', len(inputs))
     outputs = create_outputs(vin, inputs, recipients)
     return outputs
 

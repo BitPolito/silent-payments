@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import hashlib
 from core.utils.utils import (
     encode_silent_payment_address,
     create_labeled_silent_payment_address,
@@ -8,6 +9,7 @@ from core.utils.utils import (
     compute_labels,
     get_input_hash,
     select_inputs,
+    has_unsupported_witness,
     random_message,
     create_tweak,
     get_transaction_type,
@@ -31,7 +33,7 @@ from core.utils.schnorr_lib import (
     schnorr_verify,
 )
 from core.utils.vanity_python import generate_qrcode
-from core.utils.hardened_keys import generate_hardened_keys
+from core.utils.hardened_keys import generate_hardened_keys, validate_private_key
 from typing import Tuple, List, Optional, Dict
 
 logger = logging.getLogger(__name__)
@@ -57,16 +59,36 @@ def _parse_witness(txinwitness) -> List[bytes]:
         A list of byte strings, one per witness stack item.
     """
     if isinstance(txinwitness, list):
-        return [bytes_from_hex(x) for x in txinwitness if x]
+        return [bytes_from_hex(x) for x in txinwitness]
     wit_bytes = bytes_from_hex(txinwitness)
     pos = 0
-    num_items = wit_bytes[pos]; pos += 1
+    def compact_size():
+        nonlocal pos
+        if pos >= len(wit_bytes):
+            raise ValueError('Truncated witness')
+        first = wit_bytes[pos]
+        pos += 1
+        if first < 253:
+            return first
+        size = {253: 2, 254: 4, 255: 8}[first]
+        if pos + size > len(wit_bytes):
+            raise ValueError('Truncated witness length')
+        value = int.from_bytes(wit_bytes[pos:pos+size], 'little')
+        pos += size
+        if value < {253: 253, 254: 65536, 255: 4294967296}[first]:
+            raise ValueError('Noncanonical witness length')
+        return value
     items = []
-    for _ in range(num_items):
-        item_len = wit_bytes[pos]; pos += 1
-        items.append(wit_bytes[pos:pos + item_len])
-        pos += item_len
+    for _ in range(compact_size()):
+        size = compact_size()
+        if pos + size > len(wit_bytes):
+            raise ValueError('Truncated witness item')
+        items.append(wit_bytes[pos:pos+size])
+        pos += size
+    if pos != len(wit_bytes):
+        raise ValueError('Trailing witness bytes')
     return items
+
 
 
 def _pubkey_point_from_input(tx: dict):
@@ -83,12 +105,12 @@ def _pubkey_point_from_input(tx: dict):
     - P2WPKH / P2SH-P2WPKH: the last witness stack item must be a compressed key;
       65-byte uncompressed keys (prefix 0x04) are rejected.
     - P2TR key-path spend: the x-only public key is lifted directly from scriptPubKey.
-    - P2TR script-path spend: the internal key is extracted from the control block;
+    - P2TR script-path spend: the internal key is checked in the control block, while the output key is used;
       inputs using the NUMS point as internal key are rejected because they have no
       real spending authority.
 
-    For keys with an odd y-coordinate (prefix 0x03) the point is negated so that the
-    caller always receives the even-y representative, consistent with BIP-340 conventions.
+    Compressed non-Taproot keys retain their original parity. Taproot output keys
+    use their even-y representative, consistent with BIP-340 conventions.
 
     Args:
         tx: A dictionary representing one transaction input, expected to contain at
@@ -109,24 +131,27 @@ def _pubkey_point_from_input(tx: dict):
         items = []
         pos = 0
         while pos < len(script_bytes):
-            opcode = script_bytes[pos]; pos += 1
-            if opcode == 0x00:
-                items.append(b'')
-            elif 0x01 <= opcode <= 0x4b:
-                items.append(script_bytes[pos:pos + opcode])
-                pos += opcode
-            elif opcode == 0x4c:
-                push_len = script_bytes[pos]; pos += 1
-                items.append(script_bytes[pos:pos + push_len])
-                pos += push_len
-            elif opcode == 0x4d:
-                push_len = int.from_bytes(script_bytes[pos:pos + 2], 'little'); pos += 2
-                items.append(script_bytes[pos:pos + push_len])
-                pos += push_len
+            opcode = script_bytes[pos]
+            pos += 1
+            if opcode <= 0x4b:
+                size = opcode
+            elif opcode in (0x4c, 0x4d, 0x4e):
+                width = {0x4c: 1, 0x4d: 2, 0x4e: 4}[opcode]
+                if pos + width > len(script_bytes):
+                    raise ValueError('Truncated script push length')
+                size = int.from_bytes(script_bytes[pos:pos+width], 'little')
+                pos += width
+            else:
+                continue
+            if pos + size > len(script_bytes):
+                raise ValueError('Truncated script push')
+            items.append(script_bytes[pos:pos+size])
+            pos += size
 
         raw = None
         for item in items:
-            if len(item) == 33 and item[0] in (0x02, 0x03):
+            if (len(item) == 33 and item[0] in (0x02, 0x03)
+                    and hashlib.new('ripemd160', hashlib.sha256(item).digest()).hexdigest() == scriptPubKey[6:-4]):
                 raw = item
                 break
         if raw is None:
@@ -155,11 +180,13 @@ def _pubkey_point_from_input(tx: dict):
             return lift_x_even_y(bytes_from_hex(scriptPubKey[4:]))
         else:
             control_block = items[-1]
+            if len(control_block) < 33 or (len(control_block) - 33) % 32:
+                raise ValueError('Invalid Taproot control block')
             internal_key  = control_block[1:33]
             if internal_key == NUMS_BYTES:
                 logger.debug('P2TR input rejected: NUMS internal key')
                 return None
-            return lift_x_even_y(internal_key)
+            return lift_x_even_y(bytes_from_hex(scriptPubKey[4:]))
 
     else:
         return None
@@ -183,7 +210,7 @@ def generate_sp_address(
 ) -> Tuple[List[str], dict]:
     """
     Derive one or more Silent Payment addresses from a set of key material.
-    If no key material is provided, a fresh pair of hardened BIP-32 keys is
+    If no key material is provided, a fresh pair of independent raw keys is
     generated automatically. The first address in the returned list is always
     the base (unlabeled) address. If ``labels`` is supplied, one additional
     labeled address is appended for each label integer.
@@ -203,19 +230,12 @@ def generate_sp_address(
         list of bech32m-encoded Silent Payment address strings and ``key_material``
         is the dictionary of keys used (generated or passed in).
     """
+    if network not in ('mainnet', 'testnet') or version != 0:
+        raise ValueError('Unsupported network or address version')
     if not key_material:
         key_material = generate_hardened_keys()
-        b_scan  = key_material['scan_priv_key']
-        b_spend = key_material['spend_priv_key']
-    else:
-        b_scan  = bytes_from_hex(key_material['scan_priv_key'])
-        b_spend = bytes_from_hex(key_material['spend_priv_key'])
-
-    # Normalizza a bytes in ogni caso
-    if isinstance(b_scan, str):
-        b_scan = bytes_from_hex(b_scan)
-    if isinstance(b_spend, str):
-        b_spend = bytes_from_hex(b_spend)
+    b_scan = validate_private_key(key_material['scan_priv_key'])
+    b_spend = validate_private_key(key_material['spend_priv_key'])
 
     B_scan  = pubkey_point_gen_from_int(int_from_bytes(b_scan))
     B_spend = pubkey_point_gen_from_int(int_from_bytes(b_spend))
@@ -274,6 +294,8 @@ def scan(
         - ``priv_key_tweak``: hex-encoded scalar tweak (``t_k`` or ``t_k + label``)
           to be added to ``b_spend`` to obtain the spending key.
     """
+    if has_unsupported_witness(vin):
+        return []
     inputs = select_inputs(vin)
 
     logger.debug('inputs count: %d', len(inputs))
@@ -323,6 +345,8 @@ def scan(
         )
 
     input_hash = get_input_hash(inputs, A)
+    if not 0 < int_from_bytes(input_hash) < n:
+        raise ValueError('Invalid input hash scalar')
 
     logger.debug('A:           %s', serP(A).hex())
     logger.debug('outpointL:   %s', get_outpointL(inputs).hex())
@@ -333,7 +357,6 @@ def scan(
     s                  = int_from_bytes(input_hash) * b_scan_int % n
     ecdh_shared_secret = point_mul(A, s)
 
-    logger.debug('t_k[0]: %s', create_tweak(ecdh_shared_secret, 0).hex())
 
     if not ecdh_shared_secret:
         raise ValueError('ERROR: ecdh_shared_secret is None.')
@@ -345,7 +368,7 @@ def scan(
     k       = 0
     outputs = list(outputs)
 
-    while True:
+    while k < 2323:
         t_k = create_tweak(ecdh_shared_secret, k)
         Pk  = point_add(B_spend, point_mul(G, int_from_bytes(t_k)))
         if Pk is None:
@@ -431,11 +454,12 @@ def receiving_run(
     outputs: Optional[List[str]] = None,
     key_material: Optional[dict] = None,
     labels: Optional[List] = None,
+    network: str = 'mainnet',
 ) -> Tuple[List[str], List[Dict]]:
     if vin is None or outputs is None:
         raise ValueError('vin and outputs are required and cannot be None')
 
-    address, key_material = generate_sp_address(key_material, labels)
+    address, key_material = generate_sp_address(key_material, labels, network=network)
     wallet = scan(vin, list(outputs), key_material, labels)
 
     b_spend = int_from_hex(key_material['spend_priv_key'])

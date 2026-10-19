@@ -1,0 +1,148 @@
+{
+  "spec_version": "1.1.1",
+  "commit": "c2ac36f48f71615984087fd151f410457edfed72",
+  "url": "https://raw.githubusercontent.com/bitcoin/bips/c2ac36f48f71615984087fd151f410457edfed72/bip-0352/send_and_receive_test_vectors.json",
+  "upstream_sha256": "f5f9ed4afd76a1b76f3c70b1cbe67532f89abbe559f8e02d7fc3d8ecb93af4a1",
+  "scenario_mapping": [
+    {
+      "id": 0,
+      "upstream_index": 0,
+      "comment": "Simple send: two inputs"
+    },
+    {
+      "id": 1,
+      "upstream_index": 1,
+      "comment": "Simple send: two inputs, order reversed"
+    },
+    {
+      "id": 2,
+      "upstream_index": 2,
+      "comment": "Simple send: two inputs from the same transaction"
+    },
+    {
+      "id": 3,
+      "upstream_index": 3,
+      "comment": "Simple send: two inputs from the same transaction, order reversed"
+    },
+    {
+      "id": 4,
+      "upstream_index": 4,
+      "comment": "Outpoint ordering byte-lexicographically vs. vout-integer"
+    },
+    {
+      "id": 5,
+      "upstream_index": 5,
+      "comment": "Single recipient: multiple UTXOs from the same public key"
+    },
+    {
+      "id": 6,
+      "upstream_index": 6,
+      "comment": "Single recipient: taproot only inputs with even y-values"
+    },
+    {
+      "id": 7,
+      "upstream_index": 7,
+      "comment": "Single recipient: taproot only with mixed even/odd y-values"
+    },
+    {
+      "id": 8,
+      "upstream_index": 8,
+      "comment": "Single recipient: taproot input with even y-value and non-taproot input"
+    },
+    {
+      "id": 9,
+      "upstream_index": 9,
+      "comment": "Single recipient: taproot input with odd y-value and non-taproot input"
+    },
+    {
+      "id": 10,
+      "upstream_index": 10,
+      "comment": "Multiple outputs: multiple outputs, same recipient"
+    },
+    {
+      "id": 11,
+      "upstream_index": 11,
+      "comment": "Multiple outputs: multiple outputs, multiple recipients"
+    },
+    {
+      "id": 12,
+      "upstream_index": 12,
+      "comment": "Receiving with labels: label with even parity"
+    },
+    {
+      "id": 13,
+      "upstream_index": 13,
+      "comment": "Receiving with labels: label with odd parity"
+    },
+    {
+      "id": 14,
+      "upstream_index": 14,
+      "comment": "Receiving with labels: large label integer"
+    },
+    {
+      "id": 15,
+      "upstream_index": 15,
+      "comment": "Multiple outputs with labels: un-labeled and labeled address; same recipient"
+    },
+    {
+      "id": 16,
+      "upstream_index": 16,
+      "comment": "Multiple outputs with labels: multiple outputs for labeled address; same recipient"
+    },
+    {
+      "id": 17,
+      "upstream_index": 17,
+      "comment": "Multiple outputs with labels: un-labeled, labeled, and multiple outputs for labeled address; same recipients"
+    },
+    {
+      "id": 18,
+      "upstream_index": 18,
+      "comment": "Single recipient: use silent payments for sender change"
+    },
+    {
+      "id": 19,
+      "upstream_index": 19,
+      "comment": "Single recipient: taproot input with NUMS point"
+    },
+    {
+      "id": 20,
+      "upstream_index": 20,
+      "comment": "Pubkey extraction from malleated p2pkh"
+    },
+    {
+      "id": 21,
+      "upstream_index": 21,
+      "comment": "P2PKH and P2WPKH Uncompressed Keys are skipped"
+    },
+    {
+      "id": 22,
+      "upstream_index": 22,
+      "comment": "Skip invalid P2SH inputs"
+    },
+    {
+      "id": 23,
+      "upstream_index": 23,
+      "comment": "Recipient ignores unrelated outputs"
+    },
+    {
+      "id": 24,
+      "upstream_index": 24,
+      "comment": "No valid inputs, sender generates no outputs"
+    },
+    {
+      "id": 25,
+      "upstream_index": 25,
+      "comment": "Input keys sum up to zero / point at infinity: sending fails, receiver skips tx"
+    },
+    {
+      "id": 26,
+      "upstream_index": 26,
+      "comment": "Input keys intermediate sum is zero but final sum is non-zero"
+    },
+    {
+      "id": 27,
+      "upstream_index": 27,
+      "comment": "Maximum per-group recipient limit K_max is exceeded (2324 matches): sending fails, receiver doesn't scan beyond limit"
+    }
+  ]
+}

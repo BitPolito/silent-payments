@@ -54,6 +54,8 @@ impl Matcher {
     }
 
     #[inline]
+    pub fn is_prefix(&self) -> bool { matches!(self.mode, MatchMode::Prefix) }
+
     pub fn matches(&self, address: &str) -> bool {
         let slice = searchable_part(address);
         match self.mode {

@@ -23,43 +23,18 @@ def get_transaction_type(txinwitness: str, scriptPubKey: str, scriptSig: str = '
 
 def validate_inputs(inputs: List[dict], vin: List[dict]) -> List[dict]:
     '''Validates the inputs by checking their types and removing any invalid ones'''
-    # Validation logic
-    valid_types = ['P2PKH', 'P2WPKH', 'P2TR', 'P2SH-P2WPKH']
+    from core.receive import _pubkey_point_from_input
+    return [tx for tx in inputs if _pubkey_point_from_input(tx) is not None]
+
+
+def has_unsupported_witness(vin):
     for tx in vin:
-        txinwitness = tx['txinwitness']
-        scriptPubKey = tx['prevout']['scriptPubKey']['hex']
-        
-        # check if input is a valid type transaction
-        scriptSig = tx['scriptSig']
-        type = get_transaction_type(txinwitness, scriptPubKey, scriptSig)
-        if type in valid_types:
-            
-            invalid_key = False
-            if type == "P2PKH":
-                
-                _, _, public_key_hex = decode_scriptSig(scriptSig)
-
-                if public_key_hex.startswith('04'):
-                    invalid_key = True 
-
-            elif type in ["P2WPKH", "P2SH-P2WPKH"]:
-                if txinwitness:
-                    _, pubkey_hex = decode_serialized_witness(txinwitness)
-                    
-                    if pubkey_hex.startswith('04') and len(pubkey_hex) >= 130:
-                        invalid_key = True
-            
-            elif type == "P2TR":
-
-                NUMS_H_HEX = "50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
-                
-                if txinwitness and NUMS_H_HEX in txinwitness:
-                    invalid_key = True
-            
-            if invalid_key and tx in inputs:
-                inputs.remove(tx)
-    
-    return inputs
+        script = tx['prevout']['scriptPubKey']['hex']
+        if len(script) >= 4:
+            version, size = bytes.fromhex(script[:4])
+            if 0x52 <= version <= 0x60 and 2 <= size <= 40 and len(script) == 4 + 2 * size:
+                return True
+    return False
 
 
 def select_inputs(vin: List[dict]) -> List[dict]:
@@ -169,13 +144,20 @@ def get_input_hash(inputs: List[dict], input_pubkey_sum: Point) -> bytes:
     '''Computes the input hash using the formula: hashBIP0352/Inputs(outpointL || A)'''
     return tagged_hash('BIP0352/Inputs', get_outpointL(inputs) + serP(input_pubkey_sum))
 
-def decode_silent_payment_address(address: str, hrp: str = 'sp') -> Tuple:
+def decode_silent_payment_address(address: str, hrp: str | None = None) -> Tuple:
     '''Decodes a silent payment address and returns the B_scan and B_spend points.'''
-    _, data = decode(hrp, address)
+    if not isinstance(address, str):
+        raise ValueError('Invalid address')
+    hrp = hrp or ('tsp' if address.lower().startswith('tsp1') else 'sp')
+    version, data = decode(hrp, address)
+    if version is None or version == 31:
+        raise ValueError('Unsupported Silent Payment version')
     if data is None: 
         raise ValueError('ERROR: Invalid data.')
     B_scan = bytes(data[:33])
-    B_spend = bytes(data[33:])
+    B_spend = bytes(data[33:66])
+    if len(data) < 66 or any(k[0] not in (2, 3) or point_from_bytes(k) is None for k in (B_scan, B_spend)):
+        raise ValueError('Invalid compressed public keys')
     return B_scan, B_spend
 
 def encode_silent_payment_address(B_scan: Point, B_m: Point, hrp: str = 'tsp', version: int = 0) -> str:

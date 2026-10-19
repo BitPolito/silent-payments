@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 from typing import List, Tuple, Optional, Dict, Any
 import re
+from functools import lru_cache
 
 
 # ---------------------------------------------------------------------------
@@ -35,27 +36,33 @@ import re
 # ---------------------------------------------------------------------------
 
 def _find_repo_root() -> Path:
-    """Risale le directory a partire da questo file cercando la cartella vanity/."""
-    candidate = Path(__file__).resolve().parent
-    for _ in range(8):
-        if (candidate / "vanity").is_dir():
-            return candidate
-        candidate = candidate.parent
-    return Path(__file__).resolve().parent
+    # The runtime bundle deliberately omits the Rust source/target directory.
+    return Path(__file__).resolve().parents[2]
 
 _REPO_ROOT = _find_repo_root()
 
 def _find_bin() -> Optional[Path]:
     """Cerca il binario vanity."""
-    candidates = [
-        Path(__file__).resolve().parent.parent.parent / "bin" / "vanity",  # api/bin/vanity su Vercel
-        _REPO_ROOT / "vanity" / "target" / "release" / "vanity",           # locale
-        _REPO_ROOT / "bin" / "vanity",
+    bundled = _REPO_ROOT / 'bin' / 'vanity'
+    candidates = [bundled] if is_vercel_runtime() else [
+        _REPO_ROOT / 'vanity' / 'target' / 'release' / 'vanity',
+        _REPO_ROOT / 'vanity' / 'target' / 'debug' / 'vanity', bundled,
     ]
-    for p in candidates:
-        if p.exists():
-            return p
+    executable = [p for p in candidates if p.is_file() and os.access(p, os.X_OK)]
+    for path in sorted(executable, key=lambda p: p.stat().st_mtime, reverse=True):
+        if _binary_usable(str(path), path.stat().st_mtime_ns):
+            return path
     return None
+
+
+@lru_cache(maxsize=8)
+def _binary_usable(path, modified):
+    try:
+        result = subprocess.run([path, '--self-test'], capture_output=True, timeout=2, text=True)
+        return result.returncode == 0 and result.stdout.strip() == 'vanity: ok'
+    except (OSError, subprocess.SubprocessError):
+        return False
+
 
 def is_vercel_runtime() -> bool:
     """True when running on Vercel serverless (limited CPU time)."""
@@ -64,70 +71,31 @@ def is_vercel_runtime() -> bool:
 
 VALID_VANITY_MODES = frozenset({'contains', 'prefix', 'suffix'})
 
-# Local: users run on their own hardware — default cap 5; raise with VANITY_MAX_PATTERN_LEN (bounded by cap).
-_LOCAL_PATTERN_DEFAULT = 5
-try:
-    _LOCAL_PATTERN_CAP = int(os.environ.get('VANITY_MAX_PATTERN_LEN_CAP', '64'))
-except (TypeError, ValueError):
-    _LOCAL_PATTERN_CAP = 64
-_LOCAL_PATTERN_CAP = max(1, _LOCAL_PATTERN_CAP)
-
-
-def _local_max_pattern_len() -> int:
+def _bounded_env(name, default, cap):
     try:
-        n = int(os.environ.get('VANITY_MAX_PATTERN_LEN', str(_LOCAL_PATTERN_DEFAULT)))
+        value = int(os.environ.get(name, default))
     except (TypeError, ValueError):
-        n = _LOCAL_PATTERN_DEFAULT
-    return max(1, min(n, _LOCAL_PATTERN_CAP))
+        value = default
+    return max(1, min(value, cap))
 
 
 def vanity_runtime_limits() -> Dict[str, Any]:
-    """
-    Pattern length, timeout, and parallelism depend on where the API runs.
-
-    - Vercel: short patterns, few threads, Rust only (no Python brute-force).
-    - Local: default max 5 bech32m symbols (raise with VANITY_MAX_PATTERN_LEN, cap with VANITY_MAX_PATTERN_LEN_CAP).
-
-    Override with env VANITY_MAX_PATTERN_LEN / VANITY_TIMEOUT_SEC / VANITY_MAX_THREADS.
-    """
-    if is_vercel_runtime():
-        try:
-            v_max = int(os.environ.get('VANITY_MAX_PATTERN_LEN', '5'))
-        except (TypeError, ValueError):
-            v_max = 5
-        try:
-            v_timeout = int(os.environ.get('VANITY_TIMEOUT_SEC', '55'))
-        except (TypeError, ValueError):
-            v_timeout = 55
-        try:
-            v_threads = int(os.environ.get('VANITY_MAX_THREADS', '2'))
-        except (TypeError, ValueError):
-            v_threads = 2
-        return {
-            'environment': 'vercel',
-            'max_pattern_len': max(1, v_max),
-            'timeout_sec': max(1, v_timeout),
-            'max_threads': max(1, v_threads),
-        }
+    deployed = is_vercel_runtime()
     return {
-        'environment': 'local',
-        'max_pattern_len': _local_max_pattern_len(),
-        'timeout_sec': int(os.environ.get('VANITY_TIMEOUT_SEC', '600')),
-        'max_threads': _local_max_threads(),
+        'environment': 'vercel' if deployed else 'local',
+        'max_pattern_len': _bounded_env('VANITY_MAX_PATTERN_LEN', 5, 64),
+        'timeout_sec': _bounded_env('VANITY_TIMEOUT_SEC', 50 if deployed else 600, 50 if deployed else 86400),
+        'max_threads': _bounded_env('VANITY_MAX_THREADS', 2 if deployed else 4, 2 if deployed else 64),
     }
 
 
-def _local_max_threads() -> int:
-    try:
-        t = int(os.environ.get('VANITY_MAX_THREADS', '4'))
-    except (TypeError, ValueError):
-        t = 4
-    return max(1, t)
-
-
 def normalize_vanity_mode(mode: str) -> str:
-    m = (mode or 'contains').lower().strip()
-    return m if m in VALID_VANITY_MODES else 'contains'
+    if not isinstance(mode, str):
+        raise ValueError('Invalid vanity mode')
+    m = mode.lower().strip()
+    if m not in VALID_VANITY_MODES:
+        raise ValueError('Invalid vanity mode')
+    return m
 
 
 def effective_vanity_threads(requested: int) -> int:
@@ -226,16 +194,19 @@ def _rust_vanity(
             "Per buildare: cd api/vanity && cargo build --release"
         )
 
-    cmd = [str(bin_path), pattern, "--mode", mode, "--threads", str(num_threads)]
+    timeout = timeout_sec if timeout_sec is not None else vanity_search_timeout_sec()
+    cmd = [str(bin_path), pattern, "--mode", mode, "--threads", str(num_threads), "--timeout", str(timeout)]
     if testnet:
         cmd.append("--testnet")
 
     timeout = timeout_sec if timeout_sec is not None else vanity_search_timeout_sec()
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout + 5)
+    if result.returncode == 2:
+        raise TimeoutError('Vanity search timed out')
     if result.returncode != 0:
         if is_vercel_runtime():
             raise RuntimeError('Vanity search failed or timed out.')
-        raise RuntimeError(f"vanity fallito (exit {result.returncode}): {result.stderr}")
+        raise RuntimeError(f"Vanity generator failed (exit {result.returncode})")
 
     output = {}
     for line in result.stdout.splitlines():
@@ -248,14 +219,31 @@ def _rust_vanity(
         scan_priv  = output["scan_priv"]
         spend_priv = output["spend_priv"]
     except KeyError as e:
-        raise RuntimeError(f"Output inatteso dal binario vanity, campo mancante: {e}\nOutput: {result.stdout}")
+        raise RuntimeError("Generator output is missing required fields") from e
 
-    return [address], {"scan_priv_key": scan_priv, "spend_priv_key": spend_priv}
+    from core.receive import generate_sp_address
+    from core.utils.hardened_keys import validate_private_key
+    keys = {'scan_priv_key': validate_private_key(scan_priv).hex(), 'spend_priv_key': validate_private_key(spend_priv).hex()}
+    reconstructed, _ = generate_sp_address(keys, network='testnet' if testnet else 'mainnet')
+    if reconstructed != [address] or not vanity_matches(address, pattern, mode):
+        raise RuntimeError('Invalid generator result')
+    return [address], keys
 
 
 # ---------------------------------------------------------------------------
 # Pure-Python fallback
 # ---------------------------------------------------------------------------
+
+def vanity_matches(address: str, pattern: str, mode: str) -> bool:
+    address, pattern = address.lower(), pattern.lower()
+    start = 6 if address.startswith('tsp1qq') else 5
+    searchable = address[start:]
+    if mode == 'prefix':
+        return searchable.startswith(pattern)
+    if mode == 'suffix':
+        return address.endswith(pattern)
+    return pattern in searchable
+
 
 def _python_vanity(
     pattern: str,
@@ -263,31 +251,15 @@ def _python_vanity(
     testnet: bool = False,
     timeout_sec: Optional[int] = None,
 ) -> Tuple[List[str], dict]:
+    pattern = pattern.strip().lower()
+    error = vanity_pattern_error(pattern)
+    if error:
+        raise ValueError(error)
+    mode = normalize_vanity_mode(mode)
+    if mode == 'prefix' and pattern[0] not in 'gf2tvdw0':
+        raise ValueError('Prefix must begin with one of gf2tvdw0')
     _fix_python_path()
-    from receive import generate_sp_address
-
-    def _searchable(addr: str) -> str:
-        lower = addr.lower()
-        if testnet and lower.startswith("tsp1qq"):
-            return addr[6:]
-        if not testnet and lower.startswith("sp1qq"):
-            return addr[5:]
-        if testnet and lower.startswith("tsp1q"):
-            return addr[5:]
-        if not testnet and lower.startswith("sp1q"):
-            return addr[4:]
-        sep = lower.find("1")
-        return addr[sep + 2 :] if sep != -1 else addr
-
-    def _matches(address: str) -> bool:
-        pat = pattern.lower()
-        addr = address.lower()
-        slice_ = _searchable(addr)
-        if mode == "prefix":
-            return slice_.startswith(pat)
-        if mode == "suffix":
-            return addr.endswith(pat)
-        return pat in slice_
+    from core.receive import generate_sp_address
 
     network = "testnet" if testnet else "mainnet"
     deadline = time.perf_counter() + (timeout_sec if timeout_sec is not None else vanity_search_timeout_sec())
@@ -295,7 +267,7 @@ def _python_vanity(
     while time.perf_counter() < deadline:
         addresses, key_material = generate_sp_address(network=network)
         attempts += 1
-        if _matches(addresses[0]):
+        if vanity_matches(addresses[0], pattern, mode):
             print(f"[python fallback] trovato dopo {attempts} tentativi", file=sys.stderr)
             return addresses, key_material
     raise TimeoutError('Vanity search timed out')
@@ -320,31 +292,23 @@ def get_sp_vanity_address(
     err = vanity_pattern_error(vanity_string, limits['max_pattern_len'])
     if err:
         print(err, file=sys.stderr)
-        return None, None
+        raise ValueError(err)
 
     mode = normalize_vanity_mode(mode)
+    if mode == 'prefix' and vanity_string[0] not in 'gf2tvdw0':
+        raise ValueError('Prefix must begin with one of gf2tvdw0')
     threads = effective_vanity_threads(num_threads)
     timeout = limits['timeout_sec']
     bin_path = _find_bin()
 
     if is_vercel_runtime() and bin_path is None:
-        print('[vanity] Rust binary required on Vercel', file=sys.stderr)
-        return None, None
+        raise FileNotFoundError('Vanity generator is unavailable')
 
-    try:
-        if bin_path is not None:
-            return _rust_vanity(vanity_string, mode, threads, bool(testnet), timeout)
-        if is_vercel_runtime():
-            return None, None
-        print('[vanity] binario non trovato — uso il fallback Python.', file=sys.stderr)
-        return _python_vanity(vanity_string, mode, bool(testnet), timeout)
-    except (subprocess.TimeoutExpired, TimeoutError):
-        print(f"[vanity] timeout dopo {timeout}s", file=sys.stderr)
-        return None, None
-    except RuntimeError as e:
-        # Rust exit != 0, missing output, or Vercel-safe message — never invent an address.
-        print(f'[vanity] {e}', file=sys.stderr)
-        return None, None
+    if bin_path is not None:
+        return _rust_vanity(vanity_string, mode, threads, bool(testnet), timeout)
+    if is_vercel_runtime():
+        raise FileNotFoundError('Vanity generator is unavailable')
+    return _python_vanity(vanity_string, mode, bool(testnet), timeout)
 
 
 # ---------------------------------------------------------------------------

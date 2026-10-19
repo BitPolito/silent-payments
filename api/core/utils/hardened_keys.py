@@ -1,40 +1,30 @@
-'''
-Two keys are needed to create a silent payments address: the spend key and the scan key. 
-To ensure compatibility, wallets MAY use BIP32 derivation with the following derivation paths for the spend and scan key. 
-When using BIP32 derivation, wallet software MUST use hardened derivation for both the spend and scan key.
+"""Independent raw demo keys; not BIP32-derived or seed recoverable."""
+import secrets
+from core.utils.schnorr_lib import n
 
-A scan and spend key pair using BIP32 derivation are defined (taking inspiration from BIP44) in the following manner:
 
-scan_private_key: m / purpose' / coin_type' / account' / 1' / 0
-spend_private_key: m / purpose' / coin_type' / account' / 0' / 0
+def validate_private_key(value: bytes | str) -> bytes:
+    if isinstance(value, str):
+        if len(value) != 64:
+            raise ValueError('Private keys must be exactly 32 bytes (64 hex characters)')
+        try:
+            value = bytes.fromhex(value)
+        except ValueError as exc:
+            raise ValueError('Invalid private key hex') from exc
+    if not isinstance(value, bytes) or len(value) != 32:
+        raise ValueError('Private keys must be exactly 32 bytes')
+    if not 0 < int.from_bytes(value, 'big') < n:
+        raise ValueError('Private key scalar is out of range')
+    return value
 
-purpose is a constant set to 352 following the BIP43 recommendation. Refer to BIP43 and BIP44 for more details.
-'''
 
-import hmac
-import hashlib
-import os
-from typing import Tuple, List
-
-def hmac_sha512(key: bytes, data: bytes) -> bytes:
-    '''Computes HMAC-SHA512 of the given data using the provided key.'''
-    return hmac.new(key, data, hashlib.sha512).digest()
-
-def derive_hardened_key(master_key: bytes, index: int) -> bytes:
-    '''Derives a hardened key from the master key using the given index.'''
-    index_bytes = index.to_bytes(4, byteorder='big')
-    return hmac_sha512(master_key, b'\x00' + master_key + index_bytes)
+def generate_private_key() -> bytes:
+    while True:
+        value = secrets.token_bytes(32)
+        if 0 < int.from_bytes(value, 'big') < n:
+            return value
 
 
 def generate_hardened_keys() -> dict:
-    '''Generates a pair of hardened keys for scan and spend.'''
-    master_key = os.urandom(32)  # 32 bytes 
-    scan_private_key = derive_hardened_key(master_key, 1)  # m/1'
-    spend_private_key = derive_hardened_key(master_key, 0)  # m/0'
-
-    # Store the keys in a dictionary
-    key_material = {
-        'scan_priv_key': scan_private_key,
-        'spend_priv_key': spend_private_key
-    }
-    return key_material
+    """Legacy function name; generates independent raw scan/spend keys."""
+    return {'scan_priv_key': generate_private_key(), 'spend_priv_key': generate_private_key()}

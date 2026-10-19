@@ -2,6 +2,7 @@ from typing import Tuple, Optional
 from binascii import unhexlify
 import hashlib
 import os
+from coincurve import PublicKey
 
 # Elliptic curve parameters
 p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
@@ -58,30 +59,24 @@ def y(P: Point) -> int:
 
 
 def point_add(P1: Optional[Point], P2: Optional[Point]) -> Optional[Point]:
-    '''Add two points P1 and P2 on the elliptic curve. Returns the resulting point or None if the result is the point at infinity.'''
+    """libsecp256k1 point addition with None representing infinity."""
     if P1 is None:
         return P2
     if P2 is None:
         return P1
-    if (x(P1) == x(P2)) and (y(P1) != y(P2)):
+    if P1[0] == P2[0] and (P1[1] + P2[1]) % p == 0:
         return None
-    if P1 == P2:
-        lam = (3 * x(P1) * x(P1) * pow(2 * y(P1), p - 2, p)) % p
-    else:
-        lam = ((y(P2) - y(P1)) * pow(x(P2) - x(P1), p - 2, p)) % p
-    x3 = (lam * lam - x(P1) - x(P2)) % p
-    return x3, (lam * (x(P1) - x3) - y(P1)) % p
-
+    return PublicKey.combine_keys([PublicKey.from_point(*P1), PublicKey.from_point(*P2)]).point()
 
 
 def point_mul(P: Optional[Point], d: int) -> Optional[Point]:
-    '''Multiply a point P by an integer d. Returns the resulting point or None if the result is the point at infinity.'''
-    R = None
-    for i in range(256):
-        if (d >> i) & 1:
-            R = point_add(R, P)
-        P = point_add(P, P)
-    return R
+    """Multiply without silently truncating oversized scalar inputs."""
+    if not isinstance(d, int) or d < 0 or d >= 1 << 256:
+        raise ValueError('Scalar must be an unsigned 256-bit integer')
+    d %= n
+    if P is None or d == 0:
+        return None
+    return PublicKey.from_point(*P).multiply(d.to_bytes(32, 'big')).point()
 
 
 
@@ -128,16 +123,16 @@ def point_from_bytes(b: bytes) -> Optional[Point]:
     '''Decodes a SEC1 compressed public key (33 bytes) into a Point.'''
     if len(b) != 33:
         return None
-    
+
     prefix = b[0]
     x_bytes = b[1:]
-    
+
     P = lift_x_square_y(x_bytes)
     if P is None:
         return None
-        
+
     x_coord, y_coord = P
-    
+
     if prefix == 2:
         return (x_coord, y_coord if y_coord % 2 == 0 else p - y_coord)
     elif prefix == 3:
@@ -177,6 +172,8 @@ def has_even_y(P: Point) -> bool:
 
 def pubkey_gen_from_int(seckey: int) -> bytes:
     '''Generate public key from an int'''
+    if not 0 < seckey < n:
+        raise ValueError('Private key scalar is out of range')
     P = point_mul(G, seckey)
     assert P is not None
     return bytes_from_point(P)
@@ -185,6 +182,8 @@ def pubkey_gen_from_int(seckey: int) -> bytes:
 
 def pubkey_gen_from_hex(seckey: str) -> bytes:
     '''Generate public key from a hex'''
+    if not isinstance(seckey, str) or len(seckey) != 64:
+        raise ValueError('Private keys must be 64 hex characters')
     d0 = int_from_hex(seckey)
     if not (1 <= d0 <= n - 1):
         raise ValueError(
@@ -197,8 +196,10 @@ def pubkey_gen_from_hex(seckey: str) -> bytes:
 
 def pubkey_point_gen_from_int(seckey: int) -> Point:
     '''Generate public key (as a point) from an int'''
+    if not 0 < seckey < n:
+        raise ValueError('Private key scalar is out of range')
     P = point_mul(G, seckey)
-    assert P is not None 
+    assert P is not None
     return P
 
 
@@ -236,6 +237,8 @@ def schnorr_sign(msg: bytes, privateKey: str) -> bytes:
     '''Generates a Schnorr signature for a given message and private key.'''
     if len(msg) != 32:
         raise ValueError('The message must be a 32-byte array.')
+    if not isinstance(privateKey, str) or len(privateKey) != 64:
+        raise ValueError('Private keys must be 64 hex characters')
     d0 = int_from_hex(privateKey)
     if not (1 <= d0 <= n - 1):
         raise ValueError(
@@ -252,7 +255,7 @@ def schnorr_sign(msg: bytes, privateKey: str) -> bytes:
     k = n - k0 if not has_even_y(R) else k0
     e = int_from_bytes(tagged_hash("BIP0340/challenge", bytes_from_point(R) + bytes_from_point(P) + msg)) % n
     sig = bytes_from_point(R) + bytes_from_int((k + e * d) % n)
-    
+
     if not schnorr_verify(msg, bytes_from_point(P), sig):
         raise RuntimeError('The created signature does not pass verification.')
     return sig

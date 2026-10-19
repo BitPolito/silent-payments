@@ -59,7 +59,7 @@ def bech32_decode(bech: str) -> Tuple[Optional[str], Optional[list[int]], Option
         return (None, None, None)
     bech = bech.lower()
     pos = bech.rfind('1')
-    if pos < 1 or pos + 7 > len(bech) or len(bech) > 117:
+    if pos < 1 or pos + 7 > len(bech) or len(bech) > 1023:
         return (None, None, None)
     if not all(x in CHARSET for x in bech[pos+1:]):
         return (None, None, None)
@@ -94,13 +94,13 @@ def convertbits(data: bytes, frombits: int, tobits: int, pad: bool = True) -> Op
 
 def decode(hrp: str, addr: str) -> Tuple[Optional[int], Optional[list[int]]]:
     """Decode a segwit address."""
-    hrpgot, data, _ = bech32_decode(addr)
-    if hrpgot != hrp:
+    hrpgot, data, spec = bech32_decode(addr)
+    if hrpgot != hrp or spec != Encoding.BECH32M:
         return (None, None)
     decoded = convertbits(data[1:], 5, 8, False) if data else None
-    if decoded is None or len(decoded) < 2 or len(decoded) > 71:
+    if decoded is None or len(decoded) < 66:
         return (None, None)
-    if data[0] > 16:
+    if data[0] == 31:
         return (None, None)
     if data[0] == 0 and len(decoded) != 66:
         return (None, None)

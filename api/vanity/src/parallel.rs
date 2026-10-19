@@ -2,8 +2,9 @@
 
 use std::sync::{Arc, Mutex, atomic::AtomicBool};
 use rayon::prelude::*;
+use std::time::Instant;
 
-use crate::engine::{search_loop, VanityResult};
+use crate::engine::{search_loop_until, VanityResult};
 use crate::matcher::Matcher;
 
 /// Search for a vanity Silent Payment address using all available CPU cores.
@@ -19,36 +20,29 @@ pub fn parallel_search(
     hrp:         &str,
     version:     u8,
 ) -> VanityResult {
-    let n_threads = if num_threads == 0 {
-        rayon::current_num_threads()
-    } else {
-        num_threads
-    };
+    parallel_search_until(matcher, num_threads, hrp, version, None)
+        .expect("unbounded search returned no result")
+}
 
-    let found  = Arc::new(AtomicBool::new(false));
-    let result = Arc::new(Mutex::new(None::<VanityResult>));
-
-    let hrp_owned = hrp.to_owned();
-
-    (0..n_threads).into_par_iter().for_each(|_| {
-        if let Some(r) = search_loop(
-            &matcher,
-            &hrp_owned,
-            version,
-            Arc::clone(&found),
-        ) {
-            let mut guard = result.lock().unwrap();
-            if guard.is_none() {
-                *guard = Some(r);
+pub fn parallel_search_until(
+    matcher: Matcher, num_threads: usize, hrp: &str, version: u8,
+    deadline: Option<Instant>,
+) -> Option<VanityResult> {
+    // A dedicated pool makes the requested worker limit real, including concurrent calls.
+    let workers = if num_threads == 0 { std::thread::available_parallelism().map_or(1, |n| n.get()) }
+                  else { num_threads }.clamp(1, 64);
+    let pool = rayon::ThreadPoolBuilder::new().num_threads(workers).build().ok()?;
+    let found = Arc::new(AtomicBool::new(false));
+    let result = Arc::new(Mutex::new(None));
+    pool.install(|| {
+        (0..workers).into_par_iter().for_each(|_| {
+            if let Some(r) = search_loop_until(&matcher, hrp, version, Arc::clone(&found), deadline) {
+                let mut guard = result.lock().unwrap();
+                if guard.is_none() { *guard = Some(r); }
             }
-        }
+        });
     });
-
-    Arc::try_unwrap(result)
-        .expect("no other owners after rayon join")
-        .into_inner()
-        .unwrap()
-        .expect("parallel_search: rayon returned but no result was written")
+    Arc::try_unwrap(result).expect("workers joined").into_inner().unwrap()
 }
 
 pub fn find_vanity_address(pattern: &str, num_threads: usize) -> VanityResult {

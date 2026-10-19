@@ -1,66 +1,48 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use vanity::matcher::{Matcher, MatchMode};
-use vanity::parallel::find_vanity_address_full;
+use vanity::parallel::parallel_search_until;
 
-fn main() {
-    let args: Vec<String> = std::env::args().collect();
-
-    if args.len() < 2 {
-        eprintln!("Usage: vanity <pattern> [--threads N] [--mode contains|prefix|suffix] [--testnet]");
-        std::process::exit(1);
+fn run() -> Result<(), String> {
+    let mut args = std::env::args().skip(1);
+    if std::env::args().nth(1).as_deref() == Some("--self-test") {
+        use secp256k1::{Secp256k1, SecretKey, PublicKey};
+        let secp = Secp256k1::new();
+        let key = PublicKey::from_secret_key(&secp, &SecretKey::from_slice(&[1; 32]).unwrap());
+        let address = vanity::address::encode_sp_address(&key, &key, "sp", 0);
+        if address.len() != 116 { return Err("Self-test failed".into()); }
+        println!("vanity: ok");
+        return Ok(());
     }
-
-    let pattern = &args[1];
-    let mut num_threads = 0usize;
-    let mut mode_str    = "contains".to_string();
-    let mut testnet     = false;
-
-    let mut i = 2;
-    while i < args.len() {
-        match args[i].as_str() {
-            "--threads" => {
-                i += 1;
-                num_threads = args[i].parse().unwrap_or(0);
-            }
-            "--mode" => {
-                i += 1;
-                mode_str = args[i].clone();
-            }
-            "--testnet" => { testnet = true; }
-            _ => {}
+    let pattern = args.next().ok_or("Usage: vanity <pattern> [--mode contains|prefix|suffix] [--threads N] [--timeout SECONDS] [--testnet]")?.to_lowercase();
+    if pattern.is_empty() || pattern.len() > 64 || !pattern.bytes().all(|b| b"qpzry9x8gf2tvdw0s3jn54khce6mua7l".contains(&b)) {
+        return Err("Invalid bech32m pattern (1–64 symbols required)".into());
+    }
+    let mut threads = 0;
+    let mut mode = MatchMode::Contains;
+    let mut testnet = false;
+    let mut timeout = 600.0;
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--threads" => { threads = args.next().ok_or("Missing threads")?.parse::<usize>().map_err(|_| "Invalid threads")?; if threads > 64 { return Err("Maximum 64 threads".into()); } },
+            "--mode" => mode = match args.next().as_deref() { Some("prefix") => MatchMode::Prefix, Some("suffix") => MatchMode::Suffix, Some("contains") => MatchMode::Contains, _ => return Err("Invalid mode".into()) },
+            "--testnet" => testnet = true,
+            "--timeout" => { timeout = args.next().ok_or("Missing timeout")?.parse::<f64>().map_err(|_| "Invalid timeout")?; },
+            _ => return Err(format!("Unknown argument: {arg}")),
         }
-        i += 1;
     }
-
-    let mode = match mode_str.as_str() {
-        "prefix" => MatchMode::Prefix,
-        "suffix" => MatchMode::Suffix,
-        _        => MatchMode::Contains,
-    };
-
-    let hrp     = if testnet { "tsp" } else { "sp" };
-    let matcher = Matcher::new(pattern, mode);
-
-    eprintln!(
-        "Searching for pattern '{}' (mode: {}, threads: {}, network: {})…",
-        pattern, mode_str, if num_threads == 0 { "all".to_string() } else { num_threads.to_string() },
-        hrp
-    );
-    eprintln!("Expected attempts (rough estimate): ~{}", matcher.expected_attempts());
-
-    let start  = Instant::now();
-    let result = find_vanity_address_full(matcher, num_threads, hrp, 0);
-    let elapsed = start.elapsed();
-
-    println!("address:    {}", result.address);
-    println!("scan_priv:  {}", hex::encode(result.key_material.scan_priv));
-    println!("spend_priv: {}", hex::encode(result.key_material.spend_priv));
-    println!("scan_pub:   {}", result.key_material.scan_pub);
-    println!("spend_pub:  {}", result.key_material.spend_pub);
-    println!("attempts:   {}", result.attempts);
-    println!("time:       {:.2?}", elapsed);
-    println!(
-        "rate:       {:.0} addr/s",
-        result.attempts as f64 / elapsed.as_secs_f64()
-    );
+    if !timeout.is_finite() || timeout < 0.0 || timeout > 86400.0 { return Err("Invalid timeout".into()); }
+    if matches!(mode, MatchMode::Prefix) && !b"gf2tvdw0".contains(&pattern.as_bytes()[0]) {
+        return Err("Prefix must begin with one of gf2tvdw0 (compressed scan-key encoding)".into());
+    }
+    let start = Instant::now();
+    let result = parallel_search_until(Matcher::new(&pattern, mode), threads, if testnet { "tsp" } else { "sp" }, 0, Some(start + Duration::from_secs_f64(timeout)));
+    let Some(r) = result else { eprintln!("Vanity search timed out"); std::process::exit(2); };
+    println!("address: {}", r.address);
+    println!("scan_priv: {}", hex::encode(r.key_material.scan_priv));
+    println!("spend_priv: {}", hex::encode(r.key_material.spend_priv));
+    println!("attempts: {}", r.attempts);
+    println!("time: {:.3}", start.elapsed().as_secs_f64());
+    Ok(())
 }
+
+fn main() { if let Err(message) = run() { eprintln!("{message}"); std::process::exit(1); } }
