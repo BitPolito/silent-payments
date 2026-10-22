@@ -56,7 +56,9 @@ for (const [width, locale] of [[320, 'it'], [1280, 'en']]) {
           const app = await colors(page.locator('.sp-app'))
           const card = await colors(page.locator('.sp-card').first())
           expect(app.background).not.toEqual(card.background)
-          expect(Math.max(...app.background)).toBeLessThan(60)
+          expect(app.background).toEqual([0, 28, 224])
+          // Panels use a 4% canvas tint of the brand blue, without gradients.
+          expect(card.background).toEqual([10, 37, 225])
           expect(card.image).toBe('none')
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
