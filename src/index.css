@@ -1,6 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@config "../tailwind.config.js";
+@source "./";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@utility sp-surface {
+  @apply border border-bp-200 bg-white shadow-xs;
+  @apply dark:border-bp-canvas/30 dark:bg-bp-700 dark:shadow-md dark:shadow-black/25;
+}
+
+@utility sp-icon-blue {
+  @apply object-contain dark:brightness-0 dark:invert;
+}
 
 @layer base {
   body {
@@ -8,6 +18,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  button:not(:disabled),
+  [role="button"] { cursor: pointer; }
 
   #root {
     min-height: 100vh;
@@ -25,17 +38,6 @@
 }
 
 @layer components {
-  /* Elevated cards/panels: white + bp-200 border (light); bp-700 fill + canvas border (dark). */
-  .sp-surface {
-    @apply border border-bp-200 bg-white shadow-sm;
-    @apply dark:border-bp-canvas/30 dark:bg-bp-700 dark:shadow-md dark:shadow-black/25;
-  }
-
-  /* Fixed #001CE0 SVG assets → light/canvas silhouette on dark surfaces */
-  .sp-icon-blue {
-    @apply object-contain dark:brightness-0 dark:invert;
-  }
-
   .sp-modal-overlay {
     background: rgba(0, 28, 224, 0.22);
     backdrop-filter: blur(8px);
@@ -45,7 +47,7 @@
   .sp-btn-solid {
     @apply inline-flex items-center justify-center gap-2 border-2 font-semibold transition-all duration-200;
     @apply rounded-xl px-5 py-3 text-sm sm:px-7 sm:py-3.5 sm:text-base;
-    @apply hover:-translate-y-px hover:shadow-sm active:translate-y-0;
+    @apply hover:-translate-y-px hover:shadow-xs active:translate-y-0;
   }
 
   .sp-btn-outline {
@@ -54,7 +56,7 @@
   }
 
   .sp-btn-solid {
-    @apply border-bp-blue bg-bp-blue text-bp-canvas shadow-sm;
+    @apply border-bp-blue bg-bp-blue text-bp-canvas shadow-xs;
     @apply hover:border-bp-800 hover:bg-bp-800 dark:border-bp-canvas/30 dark:bg-bp-canvas dark:text-bp-blue dark:hover:bg-bp-100;
   }
 
@@ -86,7 +88,7 @@
   }
 
   .sp-steps-btn.is-current {
-    @apply bg-bp-blue text-bp-canvas shadow-sm dark:bg-bp-canvas dark:text-bp-blue;
+    @apply bg-bp-blue text-bp-canvas shadow-xs dark:bg-bp-canvas dark:text-bp-blue;
   }
 
   .sp-steps-btn.is-done:not(.is-current) {
@@ -102,7 +104,7 @@
   }
 
   .sp-flow-nav {
-    @apply sticky bottom-0 -mx-1 flex items-center justify-between gap-3 border-t border-bp-200 bg-bp-canvas/95 px-1 pt-3 backdrop-blur-sm;
+    @apply sticky bottom-0 -mx-1 flex items-center justify-between gap-3 border-t border-bp-200 bg-bp-canvas/95 px-1 pt-3 backdrop-blur-xs;
     @apply dark:border-bp-500/35 dark:bg-bp-800/95;
   }
 

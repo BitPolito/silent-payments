@@ -1,5 +1,8 @@
 # Diagnostics — 23 October 2026
 
+Follow-up: the dependency findings recorded here were resolved by the
+[security remediation](security-2026-10-23.md), with clean npm, Python, and Rust audits.
+
 Local review of the card actions, themes, address tools, walkthrough, optional
 experiments, exports, protocol checks, and declared dependencies.
 
@@ -36,7 +39,7 @@ Visual review covers Home, Tools, Demo, Privacy, all four Studio workbenches,
 and generated-address dialogs at 320px and 1280px in both themes. These local
 screens also showed no horizontal overflow or uncaught JavaScript errors.
 
-## Dependency findings still open
+## Dependency findings at the original review
 
 - **Frontend production:** `npm audit --omit=dev` reports zero findings after
   the DOMPurify and fflate updates.

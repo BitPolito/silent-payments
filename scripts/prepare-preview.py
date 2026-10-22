@@ -19,7 +19,7 @@ def prepare(binary, output, allow_dirty=False):
         raise ValueError('Generator self-test failed')
     revision = subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip() + ('-dirty' if dirty else '')
     output.mkdir(parents=True)
-    files = ['package.json','package-lock.json','index.html','vite.config.js','tailwind.config.js','postcss.config.js','vercel.json','.python-version']
+    files = ['package.json','package-lock.json','index.html','vite.config.js','tailwind.config.js','vercel.json','.python-version']
     for file in files:
         shutil.copy2(ROOT/file,output/file)
     (output/'scripts').mkdir()

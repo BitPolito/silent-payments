@@ -87,7 +87,7 @@ Cross-language fixtures verify actual Python/Rust address encoding and checksums
 
 Playwright serves the production build and covers the guided flow, address generation, Studio experiments, both networks, clipboard, QR decoding, PDF text/keys, card-action contrast, language/theme persistence, timeout errors, stale requests, and a short real vanity search. Set `SP_PYTHON` to an alternative test-environment interpreter if needed. PR CI runs these checks without deployment secrets; the recipient-limit job has its own 60-minute timeout.
 
-The [23 October 2026 diagnostic report](docs/diagnostics-2026-10-23.md) records local verification, theme fixes, dependency updates, and remaining dependency audit findings.
+The [23 October 2026 diagnostic report](docs/diagnostics-2026-10-23.md) records local verification and theme fixes. Its dependency findings are resolved in the [security remediation report](docs/security-2026-10-23.md), with clean npm, Python, and Rust audits. The `Dependency security` workflow repeats these audits on pushes, pull requests, and a weekly schedule.
 
 ## Vercel Git deployment
 

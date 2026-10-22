@@ -20,7 +20,7 @@ const SOCIAL_LEFT = SOCIAL_LINKS.slice(0, 3)
 const SOCIAL_RIGHT = SOCIAL_LINKS.slice(3)
 
 const socialBtnClass =
-  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-bp-200 bg-white shadow-sm transition hover:border-bp-400 hover:bg-bp-50 dark:border-bp-canvas/45 dark:bg-bp-canvas/15 dark:hover:border-bp-canvas dark:hover:bg-bp-canvas/25'
+  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-bp-200 bg-white shadow-xs transition hover:border-bp-400 hover:bg-bp-50 dark:border-bp-canvas/45 dark:bg-bp-canvas/15 dark:hover:border-bp-canvas dark:hover:bg-bp-canvas/25'
 
 const socialIconSlotClass = 'inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center'
 

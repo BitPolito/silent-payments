@@ -1,7 +1,7 @@
 import BpIcon from './BpIcon'
 
 const DOWNLOAD_CARD =
-  'sp-surface sp-download-card group flex w-full items-start gap-3 rounded-lg p-3 text-left transition hover:border-bp-blue/35 hover:bg-bp-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bp-blue dark:hover:border-bp-canvas/45 dark:hover:bg-bp-600/80 dark:focus-visible:ring-bp-canvas'
+  'sp-surface sp-download-card group flex w-full items-start gap-3 rounded-lg p-3 text-left transition hover:border-bp-blue/35 hover:bg-bp-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-bp-blue dark:hover:border-bp-canvas/45 dark:hover:bg-bp-600/80 dark:focus-visible:ring-bp-canvas'
 
 /**
  * @param {{ icon: string, title: string, hint: string, onClick: () => void }} props
