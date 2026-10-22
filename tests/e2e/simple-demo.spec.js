@@ -29,6 +29,5 @@ test('the visual demo uses returned output counts and keeps a mismatch visible',
   await expect(page.getByTestId('demo-visual')).toContainText('Payment outputs created: 0')
   await expect(page.getByRole('status')).toHaveText('Unexpected mismatch')
   await expect(page.getByRole('button', { name: '4 Receipt', exact: true })).toBeDisabled()
-  await page.getByText('Compare protocol values', { exact: true }).click()
   await expect(page.getByTestId('output-comparison')).toContainText('Missing')
 })
