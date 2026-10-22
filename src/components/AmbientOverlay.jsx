@@ -38,6 +38,7 @@ export default function AmbientOverlay(props) {
 }
 
 function Animation({ preset, active, onDone }) {
+  const layerRef = useRef(null)
   const [particles, setParticles] = useState(/** @type {ReturnType<typeof spawnParticle>[]} */ ([]))
   const [isDarkTheme, setIsDarkTheme] = useState(() => document.documentElement.classList.contains('dark'))
   const idRef = useRef(0)
@@ -50,6 +51,15 @@ function Animation({ preset, active, onDone }) {
 
   useEffect(() => {
     preloadFxAssets()
+  }, [])
+
+  useEffect(() => {
+    const layer = layerRef.current
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    // A body portal cannot paint above a modal dialog. A manual popover can,
+    // without making the generator inert or capturing pointer/keyboard input.
+    layer?.showPopover?.()
+    return () => layer?.hidePopover?.()
   }, [])
 
   useEffect(() => {
@@ -130,6 +140,8 @@ function Animation({ preset, active, onDone }) {
 
   return createPortal(
     <div
+      ref={layerRef}
+      popover="manual"
       className={`sp-amb-layer ${isDarkTheme ? 'is-dark' : 'is-light'}${invertDark ? ' is-invert' : ''}`}
       style={{ background: tint }}
       aria-hidden
