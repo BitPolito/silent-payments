@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DemoRunResults from '../components/protocol/DemoRunResults'
 import WalkthroughLesson from '../components/protocol/WalkthroughLesson'
 import WalkthroughVisual from '../components/protocol/WalkthroughVisual'
-import referenceLessons from '../utils/referenceTeaching.json'
 import { FLOW_ICONS } from '../assets/flowIcons'
 import FlowProgress from '../components/flow/FlowProgress'
 import { DataBlock, SilentAddressField, UtxoList } from '../components/flow/FlowPanels'
@@ -26,10 +25,10 @@ function resetFlowState(setters) {
 }
 
 /**
- * @param {{ onOpenEdgeCases: () => void, onCloseHome?: () => void, onOpenReference?: (selection: object) => void }} props
+ * @param {{ onOpenEdgeCases: () => void, onCloseHome?: () => void }} props
  */
-export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenReference }) {
-  const { tr, locale } = useLocale()
+export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
+  const { tr } = useLocale()
   const scenario = FLOW_SCENARIOS[0]
   const [round, setRound] = useState(0)
   const testId = scenario.testId
@@ -331,10 +330,6 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
               {done && <section className="space-y-3" data-testid="walkthrough-recap">
                 <p className="sp-flow-done">{tr('flowCompleteBody')}</p>
                 <p className="text-sm">{tr('uiDemoTakeaway')}</p>
-                <h4 className="font-bold">{tr('learnExplore')}</h4>
-                <ul className="space-y-2">{[[10, 'send'], [12, 'receive'], [23, 'receive'], [25, 'send']].map(([id, direction]) => <li key={id}>
-                  <button type="button" className="text-left text-sm underline underline-offset-2" onClick={() => onOpenReference?.({ id, direction, subcase: 0 })}>{referenceLessons[id][locale].title}</button>
-                </li>)}</ul>
               </section>}
             </>
           ) : null}

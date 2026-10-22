@@ -4,7 +4,7 @@ test('home prioritizes the original tools and opens generation directly', async 
   await page.goto('/?campaign=review')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Silent Payments')
   await expect(page.getByRole('link', { name: /^Guided demo/ })).toBeVisible()
-  await expect(page.getByRole('link', { name: /All reference cases/ })).toBeVisible()
+  await expect(page.locator('a[href*="view=reference"]')).toHaveCount(0)
   await expect(page.locator('.sp-home-extras')).not.toHaveAttribute('open', '')
   await page.getByRole('button', { name: 'Generate address', exact: true }).click()
   await expect(page.getByRole('radio', { name: /^Testnet/ })).toBeChecked()

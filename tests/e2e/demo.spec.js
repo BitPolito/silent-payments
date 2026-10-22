@@ -29,22 +29,6 @@ test('guided sender and receiver walkthrough', async ({ page }) => {
   await expect(walkthrough.getByText('Donation flow complete. Demo only.')).toBeVisible()
 })
 
-test('advanced cases include subcases and expected rejection', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('link', { name: /^Guided demo/ }).click()
-  await page.getByRole('link', { name: 'All reference cases', exact: true }).click()
-  await expect(page.getByRole('combobox', { name: 'Reference case', exact: true }).locator('option')).toHaveCount(28)
-  await page.getByRole('combobox', { name: 'Reference case', exact: true }).selectOption('18')
-  await page.getByLabel('Direction', { exact: true }).selectOption('receive')
-  await page.getByLabel('Subcase', { exact: true }).selectOption('1')
-  await page.getByRole('button', { name: 'Run reference check' }).click()
-  await expect(page.getByTestId('reference-result').getByRole('status')).toHaveText('Matches reference')
-  await page.getByRole('combobox', { name: 'Reference case', exact: true }).selectOption('25')
-  await page.getByLabel('Direction', { exact: true }).selectOption('send')
-  await page.getByRole('button', { name: 'Run reference check' }).click()
-  await expect(page.getByTestId('reference-result').getByRole('status')).toContainText('Expected rejection')
-})
-
 test('generation, clipboard, QR, PDF and both networks', async ({ page }) => {
   await openGenerator(page)
   const data = await generate(page)

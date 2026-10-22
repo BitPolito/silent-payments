@@ -62,28 +62,15 @@ test('restart reloads the same fixture and clears results and progress', async (
   await expect(page.getByRole('button', { name: 'Run sender check', exact: true })).toBeEnabled()
 })
 
-for (const [name, id, direction] of [
-  ['Several payments to one recipient', 10, 'send'],
-  ['A label with even parity', 12, 'receive'],
-  ['Ignore unrelated outputs', 23, 'receive'],
-  ['A zero final key sum', 25, 'send'],
-]) {
-  test(`recap opens ${name} without executing it`, async ({ page }) => {
-    await open(page)
-    await derive(page)
-    await send(page)
-    await receive(page)
-    const executions = []
-    page.on('request', (request) => { if (request.url().includes('/api/single_test/')) executions.push(request.url()) })
-    await page.getByTestId('walkthrough-recap').getByRole('button', { name, exact: true }).click()
-    await expect(page.getByLabel('Reference case', { exact: true })).toHaveValue(String(id))
-    await expect(page.getByLabel('Direction', { exact: true })).toHaveValue(direction)
-    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Run reference check' })).toBeEnabled()
-    expect(executions).toEqual([])
-    expect(new URL(page.url()).searchParams.get('case')).toBe(String(id))
-  })
-}
+test('completed demo has a concise recap without links to the removed explorer', async ({ page }) => {
+  await open(page)
+  await derive(page)
+  await send(page)
+  await receive(page)
+  await expect(page.locator('a[href*="view=reference"]')).toHaveCount(0)
+  await expect(page.getByTestId('walkthrough-recap').getByRole('button')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Start again' })).toBeVisible()
+})
 
 test('navigating away from a pending sender check discards its late response', async ({ page }) => {
   let release, started

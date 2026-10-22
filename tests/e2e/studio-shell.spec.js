@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 test('optional studio opens presets from the focused homepage and shares public identifiers', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link')).toHaveCount(4)
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link')).toHaveCount(3)
   await expect(page.getByRole('link', { name: 'Payments ↗', exact: true })).not.toBeVisible()
   await page.getByText('More experiments', { exact: true }).click()
   await page.getByRole('link', { name: 'Payments ↗', exact: true }).click()

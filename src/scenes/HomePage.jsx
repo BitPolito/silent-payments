@@ -30,12 +30,6 @@ export default function HomePage({ headingRef, onGenerate }) {
         <p className="sp-description">{tr('uiSimpleTools')}</p>
         <div className="sp-home-card-actions"><button className="sp-btn-outline" onClick={() => onGenerate('random')}>{tr('cardGen')}</button><button className="sp-back-link" onClick={() => onGenerate('vanity')}>{tr('cardVanity')} →</button></div>
       </section>
-      <section className="sp-home-utility">
-        <img src={STORY.wallet} className="sp-icon-blue" alt="" />
-        <h2>{tr('uiReference')}</h2>
-        <p className="sp-description">{tr('uiSimpleReferences')}</p>
-        <AppLink href={pageURL('reference').href} className="sp-btn-outline">{tr('referenceTitle')} →</AppLink>
-      </section>
     </div>
     <p className="sp-home-note">{tr('uiSimpleNotice')}</p>
     <details className="sp-home-extras">

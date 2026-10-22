@@ -4,7 +4,7 @@ async function noHorizontalOverflow(page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 }
 
-test('learning uses pages and browser Back/Forward retains reference selection', async ({ page }) => {
+test('learning and tools support browser Back/Forward and retain unrelated parameters', async ({ page }) => {
   await page.goto('/?campaign=learn')
   await page.getByRole('link', { name: /^Guided demo/ }).click()
   await expect(page).toHaveURL(/view=walkthrough/)
@@ -12,16 +12,11 @@ test('learning uses pages and browser Back/Forward retains reference selection',
   await expect(page.getByRole('heading', { level: 1, name: 'Guided demo' })).toBeFocused()
   await page.getByRole('button', { name: 'Continue', exact: true }).click()
   await expect(page.getByRole('region', { name: '2 Alice', exact: true })).toBeFocused()
-  await page.getByRole('link', { name: 'All reference cases', exact: true }).click()
-  await page.getByLabel('Reference case', { exact: true }).selectOption('18')
-  await page.getByLabel('Direction', { exact: true }).selectOption('receive')
-  await page.getByLabel('Subcase', { exact: true }).selectOption('1')
+  await page.getByRole('link', { name: 'Tools', exact: true }).click()
   await page.goBack()
   await expect(page.getByRole('heading', { level: 1, name: 'Guided demo' })).toBeVisible()
   await page.goForward()
-  await expect(page.getByLabel('Reference case', { exact: true })).toHaveValue('18')
-  await expect(page.getByLabel('Subcase', { exact: true })).toHaveValue('1')
-  await expect(page.getByTestId('reference-result')).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1, name: 'Tools' })).toBeVisible()
   await page.getByRole('link', { name: /Back to home/ }).click()
   expect(new URL(page.url()).search).toBe('?campaign=learn')
 })
@@ -75,9 +70,6 @@ for (const [width, locale, dark] of [[320, 'en', false], [390, 'it', true], [128
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await page.getByRole('button', { name: locale === 'en' ? 'Continue' : 'Continua', exact: true }).scrollIntoViewIfNeeded()
     await expect(page.getByRole('button', { name: locale === 'en' ? 'Continue' : 'Continua', exact: true })).toBeInViewport()
-    await page.getByRole('link', { name: locale === 'en' ? 'All reference cases' : 'Tutti i casi di riferimento', exact: true }).click()
-    await expect(page.getByTestId('reference-lesson')).toBeVisible()
-    await noHorizontalOverflow(page)
     await page.getByRole('link', { name: locale === 'en' ? /Back to home/ : /Torna alla home/ }).click()
     await page.getByRole('link', { name: locale === 'en' ? 'Tools' : 'Strumenti', exact: true }).click()
     await page.getByRole('button', { name: locale === 'en' ? /^Generate address/ : /^Genera indirizzo/ }).click()

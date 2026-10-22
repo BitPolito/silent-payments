@@ -8,21 +8,18 @@ beforeEach(() => vi.stubGlobal('window', {
 }))
 afterEach(() => vi.unstubAllGlobals())
 
-it('supports full-page learning and preserves the existing reference view', () => {
+it('supports current pages and falls back to home for the removed reference view', () => {
   expect(currentView('')).toBe('home')
   expect(currentView('?view=walkthrough')).toBe('walkthrough')
   expect(currentView('?view=privacy')).toBe('privacy')
-  expect(currentView('?view=reference&case=18')).toBe('reference')
+  expect(currentView('?view=reference&case=18')).toBe('home')
   expect(currentView('?view=unknown')).toBe('home')
 })
 it('clears stale reference selections when leaving, retaining unrelated parameters and hashes', () => {
   expect(pageURL('home').href).toBe('https://demo.example/?campaign=learn#lesson')
   expect(pageURL('walkthrough').href).toBe('https://demo.example/?campaign=learn&view=walkthrough#lesson')
   expect(pageURL('privacy').href).toBe('https://demo.example/?campaign=learn&view=privacy#lesson')
-  const reference = pageURL('reference')
-  expect(reference.searchParams.get('case')).toBe('0')
-  expect(reference.searchParams.get('subcase')).toBe('0')
-  expect(reference.searchParams.get('direction')).toBe('send')
+  expect(pageURL('tools').href).toBe('https://demo.example/?campaign=learn&view=tools#lesson')
 })
 it('creates real browser history entries and notifies the navigation listener', () => {
   navigateTo('/?view=walkthrough')

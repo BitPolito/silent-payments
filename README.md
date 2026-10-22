@@ -21,31 +21,22 @@ Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run 
 ## What to try
 
 - Complete the guided sender/receiver walkthrough and the two curated edge cases.
-- Open **All reference cases** to select any of the 28 pinned scenario groups, sending/receiving direction, and individual subcase. A successful expected rejection is shown explicitly. Large reference results can be inspected in the expandable actual/expected output.
 - Generate random mainnet or testnet addresses, copy the address or keys, and export a public QR or private PDF backup.
 - Search for a short vanity substring. A one-character pattern is suitable for smoke tests. Five-character patterns can legitimately exhaust the deployed deadline.
 
 ### Navigation and layout
 
-The homepage focuses on the three original tasks: the guided demo, address generation (including vanity), and reference cases. Address generation opens directly from the homepage. Newer Studio and privacy experiments remain under **More experiments** and keep their existing direct links.
+The homepage focuses on the guided demo and address generation (including vanity). Address generation opens directly from the homepage. Newer Studio and privacy experiments remain under **More experiments** and keep their existing direct links.
 
-Learning uses full pages: `/?view=walkthrough` and the existing `/?view=reference&case=0&direction=send&subcase=0` links. The header and learning navigation support normal links, new tabs, and browser Back/Forward. The guided demo uses one compact column. Reference selectors sit beside results on desktop; mobile uses normal page scrolling and collapsible controls. Walkthrough actions follow the current step without covering its content.
+The header offers Home, Demo, and Tools, with normal links, new tabs, and browser Back/Forward. The guided demo uses one compact column; actions follow the current step without covering its content. Tools presents separate cards for random generation and vanity search. The reference explorer has been removed from the interface; old `?view=reference` links display the homepage. Protocol fixtures and API checks remain available internally.
 
 Address tools remain in a keyboard-accessible dialog. Escape closes it, Tab stays within it, and closing returns focus to the opener. Testnet/Mainnet are explicit radio choices; changing network clears the current result. New results receive focus at their address heading. The server-key notice is separate from generation-mode controls. Light/dark themes, English/Italian, reduced motion, and public QR/private PDF exports remain available.
 
 ### Guided learning
 
-The four-stage donation walkthrough always uses reference group 0. Each step has one title, an Alice/Bob illustration, and a visible explanation of who uses which keys and why. Addresses, transaction inputs, reference expectations, output keys, tweaks, and signature evidence are shown directly without opening panels. Expectations are replaced by actual results when the check completes. Matching expected/actual values appear once; differences remain explicit. The reference explorer retains its full detailed comparisons.
+The four-stage donation walkthrough always uses reference group 0. Each step has one title, an Alice/Bob illustration, and a visible explanation of who uses which keys and why. Addresses, transaction inputs, reference expectations, output keys, tweaks, and signature evidence are shown directly without opening panels. Expectations are replaced by actual results when the check completes. Matching expected/actual values appear once; differences remain explicit.
 
-This server simulates both roles using public fixture keys; the API does not expose every intermediate shared-secret calculation and nothing is broadcast. The completion recap links to multiple payments, labels, unrelated outputs, and zero-sum rejection in the reference explorer. Restart resets progress and results; leaving the page aborts browser requests and discards late responses.
-
-### Learning from reference cases
-
-Open **Reference → All reference cases** to explore all 28 pinned groups in English or Italian. Each lesson explains its inputs, expected behavior, and why the case matters before you run it. Published fixture keys are public test data; never use them for funds.
-
-Copy an example link to share a selection, such as `/?view=reference&case=18&direction=receive&subcase=1`. Links select the group, direction, and zero-based subcase without executing a check. Invalid selections fall back visibly to case 0, sending, subcase 0. Returning home removes the selection parameters while retaining unrelated URL parameters. Browser Back and Forward restore the selected page and reference example without automatically running a check.
-
-The runner determines pass/fail. Detailed comparisons account for output order, duplicate counts, all receiving addresses, and exact public-key/tweak pairs. Expected rejection and successful empty discovery have distinct explanations. Large output lists use 50 rows per page; complete JSON and randomized signature evidence remain available in expandable details. Technical details link to the pinned protocol revision.
+This server simulates both roles using public fixture keys; the API does not expose every intermediate shared-secret calculation and nothing is broadcast. The completion recap summarizes the payment. Restart resets progress and results; leaving the page aborts browser requests and discards late responses.
 
 ### Vanity semantics and limits
 
@@ -125,13 +116,13 @@ Packaging normally requires a clean committed tree. `--allow-dirty` is only for 
 
 Start at `?view=privacy` for a bilingual, browser-only simulation of address reuse, fresh receiving addresses, and Silent Payments. Add up to six symbolic payments, inspect equal destinations, switch between an outside observer and Bob’s wallet, and simulate recognition with private scanning information. The model uses illustrative identifiers, never real addresses or keys; no API or blockchain connection is needed. Public amounts and privacy limitations remain visible. Restart resets the entire exercise.
 
-The homepage’s **More experiments** section links to the privacy lab, which also links to the guided BIP-352 walkthrough and pinned reference explorer. The conceptual exercise is implemented in `src/features/privacy/`; protocol execution remains in the existing API and reference runner.
+The homepage’s **More experiments** section links to the privacy lab, which also links to the guided BIP-352 walkthrough. The conceptual exercise is implemented in `src/features/privacy/`; protocol execution remains in the existing API and reference runner.
 
 The privacy lab includes **Can you find Bob?**, an observer challenge with eight mixed outputs and three simulated Bob payments. Compare address reuse with distinct Silent Payments output keys, select suspects, optionally reveal a public receipt, and compare the hypothesis with the simulated wallet. The reveal reports correct, missed, and wrongly attributed payments rather than a privacy score. Ownership is local teaching data, not a security boundary; no cryptography is performed. Changing strategies clears guesses and clues while retaining the scenario. A new board or lab restart clears the exercise.
 
 ### Silent Payments Studio
 
-The homepage keeps four workbenches—Payments, Addresses, Labels, and Scanning—under the optional **More experiments** section. Existing privacy, walkthrough, reference, and generator routes remain available. Generation and vanity open directly from the homepage or under `?view=tools`; the observer challenge is optional at `?view=privacy#observer`.
+The homepage keeps four workbenches—Payments, Addresses, Labels, and Scanning—under the optional **More experiments** section. Privacy, walkthrough, and generator routes remain available. Generation and vanity open directly from the homepage or under `?view=tools`; the observer challenge is optional at `?view=privacy#observer`.
 
 Studio links use `?view=studio&tool=payment&preset=default` and contain selection identifiers only. Experiments reset on reload, while language and theme persist. The workbench shell distinguishes conceptual previews from computed protocol results; technical evidence belongs under Inspect details.
 

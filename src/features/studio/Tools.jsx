@@ -1,7 +1,29 @@
+import { ICON, STORY } from '../../assets/icons'
+import AppLink from '../../components/AppLink'
+import BpIcon from '../../components/BpIcon'
 import { useLocale } from '../../i18n/useLocale'
-import ActionCard from '../../components/ActionCard'
+import { pageURL } from '../../utils/navigation'
 import { useStudioText } from './useStudioText'
+
 export default function Tools({ headingRef, onGenerate }) {
-  const { tr } = useLocale(); const t = useStudioText()
-  return <><div className="sp-page-header"><div><h1 ref={headingRef} tabIndex={-1}>{t.tools}</h1><p>{tr('uiToolsLead')}</p></div></div><div className="grid gap-4 sm:grid-cols-2"><ActionCard title={tr('cardGen')} description={tr('cardGenDesc')} onClick={() => onGenerate('random')} /><ActionCard title={tr('cardVanity')} description={tr('cardVanityDesc')} onClick={() => onGenerate('vanity')} /></div></>
+  const { tr } = useLocale()
+  const t = useStudioText()
+  return <div className="sp-tools-page">
+    <div className="sp-page-header">
+      <div>
+        <AppLink className="sp-back-link" href={pageURL('home').href}>← {tr('uiBackHome')}</AppLink>
+        <h1 ref={headingRef} tabIndex={-1}>{t.tools}</h1>
+        <p className="sp-description">{tr('uiToolsLead')}</p>
+      </div>
+    </div>
+    <div className="sp-tools-grid">
+      {[['random', ICON.key, 'cardGen', 'uiToolsRandom', 'uiToolsRandomAction'], ['vanity', STORY.letter, 'cardVanity', 'uiToolsVanity', 'uiToolsVanityAction']].map(([mode, icon, title, description, action]) => <section className="sp-tool-card" key={mode}>
+        <div className="sp-tool-art" aria-hidden="true"><BpIcon src={icon} className="h-12 w-12" /></div>
+        <h2>{tr(title)}</h2>
+        <p className="sp-description">{tr(description)}</p>
+        <button type="button" className={mode === 'random' ? 'sp-btn-solid' : 'sp-btn-outline'} aria-label={`${tr(title)} · ${tr(action)}`} onClick={() => onGenerate(mode)}>{tr(action)} <BpIcon src={STORY.arrow} className="h-4 w-5" /></button>
+      </section>)}
+    </div>
+    <p className="sp-notice sp-tools-notice">{tr('uiToolsNotice')}</p>
+  </div>
 }
