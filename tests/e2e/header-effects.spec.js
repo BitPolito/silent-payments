@@ -34,22 +34,32 @@ test('cow celebration paints in the top layer without blocking the generator and
   await expect(page.getByRole('button', { name: /^Vanity address/ })).toBeFocused()
 })
 
-test('cow burst keeps its nodes stable and clears promptly', async ({ page }) => {
-  await page.clock.install()
-  await page.clock.pauseAt(new Date())
-  await mockCowSearch(page)
-  const layer = page.locator('.sp-amb-layer')
-  const first = await layer.locator('.sp-amb-item').first().elementHandle()
-  const count = await layer.locator('.sp-amb-item').count()
-  expect(count).toBeLessThanOrEqual(18)
-  expect(count).toBeGreaterThan(0)
-  await page.clock.runFor(700)
-  expect(await first.evaluate(element => element.isConnected)).toBe(true)
-  await expect(layer.locator('.sp-amb-item')).toHaveCount(count)
-  await page.clock.runFor(3400)
-  await expect(layer).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /QR code \(PNG\)/ })).toBeVisible()
-})
+for (const width of [320, 1280]) {
+  test(`cow rain is slower, has varied sizes, and cleans up at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.clock.install()
+    await page.clock.pauseAt(new Date())
+    await mockCowSearch(page)
+    const layer = page.locator('.sp-amb-layer')
+    const first = await layer.locator('.sp-amb-item').first().elementHandle()
+    const count = await layer.locator('.sp-amb-item').count()
+    expect(count).toBeLessThanOrEqual(18)
+    expect(count).toBeGreaterThan(0)
+    const particles = await layer.locator('.sp-amb-item').evaluateAll(items => items.map(item => ({
+      size: parseFloat(getComputedStyle(item).width),
+      duration: parseFloat(getComputedStyle(item).animationDuration),
+    })))
+    expect(Math.min(...particles.map(item => item.size))).toBeLessThanOrEqual(64)
+    expect(Math.max(...particles.map(item => item.size))).toBeGreaterThanOrEqual(96)
+    expect(particles.every(item => item.duration >= 2)).toBe(true)
+    await page.clock.runFor(2000)
+    expect(await first.evaluate(element => element.isConnected)).toBe(true)
+    await expect(layer.locator('.sp-amb-item')).toHaveCount(count)
+    await page.clock.runFor(8000)
+    await expect(layer).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /QR code \(PNG\)/ })).toBeVisible()
+  })
+}
 
 test('changing to reduced motion during the cow burst stops it', async ({ page }) => {
   await page.clock.install()
