@@ -41,7 +41,7 @@ export default function LearningPage({ headingRef }) {
         <h2 className="text-2xl font-bold">{tr('flowEdgeTitle')}</h2>
         <p className="sp-description">{tr('demoIntro')}</p>
         <ul className="grid gap-4 sm:grid-cols-2">{EDGE_SCENARIOS.map((item) => <li key={item.id}>
-          <button type="button" className="sp-surface flex h-full w-full items-start gap-4 rounded-xl p-5 text-left" onClick={() => { setCaseData(null); setError(null); setScenarioId(item.id); setScreen('detail') }}>
+          <button type="button" className="sp-card sp-surface flex h-full w-full items-start gap-4 rounded-xl p-5 text-left" onClick={() => { setCaseData(null); setError(null); setScenarioId(item.id); setScreen('detail') }}>
             <img src={item.id === 'zero_sum' ? STORY.key : STORY.wallet} alt="" className="sp-icon-blue h-8 w-8" />
             <span><strong className="block">{tr(`edgeCard_${item.id}_title`)}</strong><span className="sp-description mt-2 block text-sm">{tr(`edgeCard_${item.id}_desc`)}</span></span>
           </button>

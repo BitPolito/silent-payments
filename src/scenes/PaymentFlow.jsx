@@ -269,7 +269,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
       <FlowProgress ariaLabel={tr('learnProgress')} steps={railSteps} maxIndex={maxReachableIndex} onSelect={goPhase} />
 
       <article ref={panelRef} tabIndex={-1} role="region" aria-label={tr(`flowStep_${phase}`)} className="sp-walkthrough-grid">
-        <div className="sp-flow-card">
+        <div className="sp-card sp-flow-card">
           <WalkthroughVisual phase={phase} expectedCount={expectedOutputCount} result={currentResult} />
           <WalkthroughLesson key={phase} phase={phase} caseData={caseData} result={currentResult} />
           {showEdgeNote ? <p className="sp-flow-edge-note">{edgeNote}</p> : null}

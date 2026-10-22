@@ -173,7 +173,7 @@ export default function EdgeScenarioFlow({ caseData, scenarioId, testId, onBack,
         }}
       />
 
-      <article className="sp-flow-card">
+      <article className="sp-card sp-flow-card">
         <h3 className="text-sm font-bold text-bp-blue dark:text-bp-canvas">{tr(`edgeCard_${scenarioId}_title`)}</h3>
 
         <div key={phase} className="sp-flow-panel">

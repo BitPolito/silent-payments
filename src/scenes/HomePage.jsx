@@ -18,13 +18,13 @@ export default function HomePage({ headingRef, onGenerate }) {
       <p className="sp-lead">{tr('uiSimpleIntro')}</p>
     </section>
     <div className="sp-home-essentials">
-      <section className="sp-home-demo">
+      <section className="sp-card sp-home-demo">
         <div className="sp-home-actors" aria-hidden="true"><img className="sp-icon-blue" src={STORY.alice} alt="" /><BpIcon src={STORY.arrow} className="h-6 w-8" /><img className="sp-icon-blue" src={STORY.bob} alt="" /></div>
         <h2>{tr('uiTryDemo')}</h2>
         <p className="sp-description">{tr('uiGuideHint')}</p>
         <AppLink href={pageURL('walkthrough').href} className="sp-btn-solid">{tr('demoTitle')} →</AppLink>
       </section>
-      <section className="sp-home-utility">
+      <section className="sp-card sp-home-utility">
         <img src={STORY.key} className="sp-icon-blue" alt="" />
         <h2>{tr('uiAddressTools')}</h2>
         <p className="sp-description">{tr('uiSimpleTools')}</p>

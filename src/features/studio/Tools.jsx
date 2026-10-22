@@ -17,7 +17,7 @@ export default function Tools({ headingRef, onGenerate }) {
       </div>
     </div>
     <div className="sp-tools-grid">
-      {[['random', ICON.key, 'cardGen', 'uiToolsRandom', 'uiToolsRandomAction'], ['vanity', STORY.letter, 'cardVanity', 'uiToolsVanity', 'uiToolsVanityAction']].map(([mode, icon, title, description, action]) => <section className="sp-tool-card" key={mode}>
+      {[['random', ICON.key, 'cardGen', 'uiToolsRandom', 'uiToolsRandomAction'], ['vanity', STORY.letter, 'cardVanity', 'uiToolsVanity', 'uiToolsVanityAction']].map(([mode, icon, title, description, action]) => <section className="sp-card sp-tool-card" key={mode}>
         <div className="sp-tool-art" aria-hidden="true"><BpIcon src={icon} className="h-12 w-12" /></div>
         <h2>{tr(title)}</h2>
         <p className="sp-description">{tr(description)}</p>

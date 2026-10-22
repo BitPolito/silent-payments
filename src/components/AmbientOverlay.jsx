@@ -2,29 +2,33 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FX_PRESETS } from '../fx/presets'
 
-const LOOPS = 5
+const RAIN_SECONDS = 20
 
 function createScene(preset) {
   const width = window.innerWidth
   const height = window.innerHeight
-  const count = width < 640 ? 24 : 36
+  const count = width < 640 ? 72 : 144
   const particles = Array.from({ length: count }, (_, id) => {
     // Mix small, medium and large silhouettes in every burst.
     const size = id % 5 === 0
       ? (width < 640 ? 96 + Math.random() * 32 : 112 + Math.random() * 48)
       : id % 2 === 0 ? 72 + Math.random() * 24 : 44 + Math.random() * 20
+    // Distinct speed bands keep both drifting and fast-falling cows visible.
+    const duration = id % 3 === 0 ? 1.4 + Math.random() * .8
+      : id % 3 === 1 ? 2.8 + Math.random() * 1.2 : 4.5 + Math.random() * 1.5
     return {
       id,
       size,
-      left: Math.random() * Math.max(0, width - size),
-      delay: id * 0.075,
-      duration: 2.2 + Math.random(),
+      left: ((id + Math.random()) / count) * Math.max(0, width - size),
+      delay: Math.random() * 1.8,
+      duration,
+      iterations: Math.ceil(RAIN_SECONDS / duration),
       rotation: -12 + Math.random() * 24,
       sway: -12 + Math.random() * 24,
       source: preset.sources[id % preset.sources.length],
     }
   })
-  return { height, particles, end: Math.ceil(Math.max(...particles.map(p => p.delay + p.duration * LOOPS)) * 1000) + 100 }
+  return { height, particles, end: Math.ceil(Math.max(...particles.map(p => p.delay + p.duration * p.iterations)) * 1000) + 100 }
 }
 
 /** A bounded CSS burst: no spawning intervals or React updates during the fall. */
@@ -75,7 +79,7 @@ function Animation({ preset, onDone }) {
       WebkitMaskImage: `url("${p.source}")`,
       animationDelay: `${p.delay}s`,
       animationDuration: `${p.duration}s`,
-      animationIterationCount: LOOPS,
+      animationIterationCount: p.iterations,
       '--sp-amb-drift': `${p.rotation}deg`,
       '--sp-amb-sway': `${p.sway}px`,
     }} />)}

@@ -26,13 +26,13 @@ export default function LabelScanExperiment({ tool }) {
   function update(change){experiment.clear();setControls(current=>({...current,...change}))}
   function reset(){experiment.clear();setControls(initial())}
   return <div className="sp-friendly-workbench">
-    <section className="sp-friendly-controls">
+    <section className="sp-card sp-friendly-controls">
       {tool==='labels'&&<div><h2>{v.pockets}</h2><div className="sp-pocket-choices" role="group" aria-label={v.pockets}>{names.map((name,index)=><ChoiceCard key={name} icon={<BpIcon src={pocketIcons[index]} className="sp-choice-pixel" />} title={t[name]} selected={controls.label===index+1} onClick={()=>update({label:index+1})} />)}</div></div>}
       <fieldset><legend>{v.recognizes}</legend><div className="sp-known-pockets">{names.map((name,index)=><label key={name}><input type="checkbox" checked={controls.known_labels.includes(index+1)} onChange={()=>update({known_labels:controls.known_labels.includes(index+1)?controls.known_labels.filter(id=>id!==index+1):[...controls.known_labels,index+1]})} /><span aria-hidden="true"><BpIcon src={pocketIcons[index]} className="sp-choice-pixel" /></span><strong>{t[name]}</strong></label>)}</div></fieldset>
       <details className="sp-studio-details sp-advanced"><summary>{v.settings}</summary><label>{t.network}<select aria-label={t.network} className="sp-input" value={controls.network} onChange={e=>update({network:e.target.value})}><option value="testnet">{t.testnet}</option><option value="mainnet">{t.mainnet}</option></select></label><p className="text-xs mt-4">{t.labelHint}</p></details>
       <button className="sp-back-link" onClick={reset}>{t.reset} <span aria-hidden="true">↺</span></button>
     </section>
-    <div className="sp-studio-results sp-friendly-stage" aria-busy={experiment.busy}>
+    <div className="sp-card sp-studio-results sp-friendly-stage" aria-busy={experiment.busy}>
       {tool==='labels'?<div className="sp-pocket-scene"><StudioArt kind="labels" /><h2>{v.pocketHint}</h2></div>:<div className="sp-scan-title"><StudioArt kind="scan" compact /><h2>{v.batch}</h2></div>}
       <button className="sp-btn-solid sp-friendly-primary" disabled={experiment.busy} onClick={()=>experiment.run(controls)}>{experiment.busy?t.working:experiment.error?t.retry:tool==='labels'?t.labelScan:t.run} <span aria-hidden="true">→</span></button>
       {experiment.error&&<Failure code={experiment.error} />}

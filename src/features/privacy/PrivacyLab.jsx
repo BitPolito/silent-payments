@@ -25,7 +25,7 @@ export default function PrivacyLab({ headingRef }) {
       <h1 ref={headingRef} tabIndex={-1}>{t.title}</h1><p className="sp-description">{t.intro}</p>
     </div><span className="sp-page-badge">01 / 03 · {tr('uiDemoOnly')}</span></div>
     <div className="sp-lab-layout">
-      <section className="sp-lab-controls sp-surface" aria-labelledby="lab-strategy">
+      <section className="sp-card sp-lab-controls sp-surface" aria-labelledby="lab-strategy">
         <h2 id="lab-strategy" className="text-lg font-bold">{t.strategy}</h2>
         <div className="sp-lab-strategies" role="group" aria-label={t.strategy}>
           {STRATEGIES.map((mode, index) => <button key={mode} aria-pressed={mode === strategy} onClick={() => { setStrategy(mode); setScanned(0) }}><span aria-hidden>{index + 1}</span>{t.modes[mode]}</button>)}
@@ -62,7 +62,7 @@ export default function PrivacyLab({ headingRef }) {
       </section>
     </div>
     <details id="observer" open={observerOpen} onToggle={(event) => setObserverOpen(event.currentTarget.open)} className="sp-studio-details"><summary>{locale === 'it' ? 'Prova la vista dell’osservatore' : 'Try the observer’s view'}</summary><ObserverChallenge key={round} /></details>
-    <section className="sp-lab-check sp-surface" aria-labelledby="lab-quiz"><div><p className="sp-eyebrow">{t.quizTitle}</p><h2 id="lab-quiz" className="text-xl font-bold mt-3">{t.question}</h2><div className="flex flex-wrap gap-3 mt-5">
+    <section className="sp-card sp-lab-check sp-surface" aria-labelledby="lab-quiz"><div><p className="sp-eyebrow">{t.quizTitle}</p><h2 id="lab-quiz" className="text-xl font-bold mt-3">{t.question}</h2><div className="flex flex-wrap gap-3 mt-5">
       {['yes', 'no'].map((choice) => <button className="sp-btn-outline" aria-pressed={answer === choice} key={choice} onClick={() => setAnswer(choice)}>{t[choice]}</button>)}
     </div>{answer && <p className="sp-notice mt-4" role="status">{t[answer === 'no' ? 'correct' : 'incorrect']}</p>}</div>
     <div><p className="sp-description mb-4">{t.nextHint}</p><AppLink className="sp-btn-solid" href={pageURL('walkthrough').href}>{t.next} →</AppLink></div></section>
