@@ -981,14 +981,18 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-simple-intro { max-width: 640px; padding: 12px 0 32px; }
 .sp-simple-intro h1 { font-size: clamp(34px, 4vw, 48px); line-height: 1.15; font-weight: 800; letter-spacing: -.04em; margin: 12px 0 16px; }
 .sp-home-essentials { display: grid; gap: 16px; }
-.sp-home-essentials > section { display: flex; flex-direction: column; align-items: start; gap: 14px; min-width: 0; }
-.sp-home-essentials h2 { text-wrap: pretty; font-size: 22px; font-weight: 750; line-height: 1.3; }
-.sp-home-essentials p { font-size: 14px; }
-.sp-home-essentials .sp-btn-outline, .sp-home-essentials .sp-btn-solid, .sp-home-card-actions { margin-top: auto; }
-.sp-home-actors { display: flex; align-items: center; gap: 22px; height: 64px; font-size: 28px; }
-.sp-home-actors img { width: 42px; height: 42px; }
-.sp-home-utility > img { width: 36px; height: 36px; margin-bottom: 14px; }
-.sp-home-card-actions { display: flex; align-items: start; flex-direction: column; gap: 6px; }
+.sp-home-essentials > section { display: grid; grid-template-rows: auto 1fr auto; align-items: start; gap: 14px; min-width: 0; padding: 20px; }
+.sp-home-card-heading { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.sp-home-essentials h2 { min-width: 0; text-wrap: pretty; font-size: 21px; font-weight: 750; line-height: 1.3; }
+.sp-home-essentials p { font-size: 14px; line-height: 1.6; }
+.sp-home-actors, .sp-home-key { display: flex; flex-shrink: 0; align-items: center; justify-content: center; height: 48px; border-radius: 10px; background: var(--sp-soft); }
+.sp-home-actors { gap: 6px; width: 96px; padding: 10px; }
+.sp-home-actors img { width: 24px; height: 28px; }
+.sp-home-key { width: 48px; }
+.sp-home-key img { width: 28px; height: 28px; }
+.sp-home-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding-top: 2px; }
+.sp-home-essentials .sp-btn-solid { min-height: 44px; padding: 10px 16px; font-size: 14px; line-height: 1.4; }
+.sp-home-card-actions .sp-back-link { font-size: 13px; }
 .sp-home-note { font-size: 13px; color: var(--sp-muted); margin: 20px 0 28px; }
 .sp-home-extras { border-top: 1px solid var(--sp-line); padding-top: 12px; font-size: 13px; }
 .sp-home-extras summary { min-height: 44px; align-content: center; cursor: pointer; font-weight: 650; }
@@ -1013,14 +1017,14 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-demo-visual figcaption > span { color: var(--sp-muted); font-size: 12px; }
 .sp-demo-expectation { margin: 12px auto 0; font-size: 14px; font-weight: 650; }
 @media (min-width: 800px) {
-  .sp-home-essentials { grid-template-columns: 1.2fr 1fr; grid-template-rows: auto auto 1fr auto auto; }
-  .sp-home-essentials > section { display: grid; grid-row: span 5; grid-template-rows: subgrid; align-items: start; }
-  .sp-home-essentials .sp-btn-solid, .sp-home-essentials .sp-btn-outline { margin-top: 0; justify-self: start; }
-  .sp-home-card-actions { display: contents; }
-  .sp-home-utility > img { align-self: center; margin-bottom: 0; }
+  .sp-home-essentials { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 639px) {
   .sp-simple-intro { padding-top: 0; }
+  .sp-home-card-heading { gap: 12px; }
+  .sp-home-essentials h2 { font-size: 19px; }
+  .sp-home-card-actions { column-gap: 12px; }
+  .sp-home-essentials .sp-btn-solid { padding-inline: 12px; font-size: 13px; }
   .sp-demo-journey { gap: 18px; }
   .sp-demo-journey > div { padding: 8px; }
   .sp-demo-journey img { width: 36px; height: 36px; }
@@ -1054,10 +1058,9 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
   background-image: var(--sp-detail-gradient);
   color: var(--sp-blue);
 }
-.dark .sp-home-actors { width: fit-content; height: 80px; padding: 12px 16px; border-radius: var(--sp-card-inner-radius); }
-.dark .sp-home-utility > img { width: 64px; height: 64px; padding: 14px; border-radius: var(--sp-card-inner-radius); background: var(--sp-detail-soft); }
+.dark .sp-home-key { background: var(--sp-detail-soft); }
 .dark .sp-home-actors .sp-icon-blue,
-.dark .sp-home-utility > img,
+.dark .sp-home-key .sp-icon-blue,
 .dark .sp-demo-journey .is-active img { filter: none; }
 .dark .sp-demo-journey .is-active,
 .dark .sp-download-icon { background: var(--sp-detail-soft); color: var(--sp-blue); }

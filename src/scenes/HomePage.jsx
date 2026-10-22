@@ -19,14 +19,18 @@ export default function HomePage({ headingRef, onGenerate }) {
     </section>
     <div className="sp-home-essentials">
       <section className="sp-card sp-home-demo">
-        <div className="sp-home-actors" aria-hidden="true"><img className="sp-icon-blue" src={STORY.alice} alt="" /><BpIcon src={STORY.arrow} className="h-6 w-8" /><img className="sp-icon-blue" src={STORY.bob} alt="" /></div>
-        <h2>{tr('uiTryDemo')}</h2>
+        <div className="sp-home-card-heading">
+          <div className="sp-home-actors" aria-hidden="true"><img className="sp-icon-blue" src={STORY.alice} alt="" /><BpIcon src={STORY.arrow} className="h-4 w-4" /><img className="sp-icon-blue" src={STORY.bob} alt="" /></div>
+          <h2>{tr('uiTryDemo')}</h2>
+        </div>
         <p className="sp-description">{tr('uiGuideHint')}</p>
-        <AppLink href={pageURL('walkthrough').href} className="sp-btn-solid">{tr('demoTitle')} →</AppLink>
+        <div className="sp-home-card-actions"><AppLink href={pageURL('walkthrough').href} className="sp-btn-solid">{tr('demoTitle')} →</AppLink></div>
       </section>
       <section className="sp-card sp-home-utility">
-        <img src={STORY.key} className="sp-icon-blue" alt="" />
-        <h2>{tr('uiAddressTools')}</h2>
+        <div className="sp-home-card-heading">
+          <div className="sp-home-key" aria-hidden="true"><img src={STORY.key} className="sp-icon-blue" alt="" /></div>
+          <h2>{tr('uiAddressTools')}</h2>
+        </div>
         <p className="sp-description">{tr('uiSimpleTools')}</p>
         <div className="sp-home-card-actions"><button className="sp-btn-solid" onClick={() => onGenerate('random')}>{tr('cardGen')}</button><button className="sp-back-link" onClick={() => onGenerate('vanity')}>{tr('cardVanity')} →</button></div>
       </section>
