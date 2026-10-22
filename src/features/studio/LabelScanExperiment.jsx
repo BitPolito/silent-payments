@@ -15,7 +15,7 @@ const pocketIcons = [ICON.heart, STORY.wallet, STORY.letter]
 function TransactionCard({ tx, index, v }) {
   const [open,setOpen]=useState(false);const id=useId()
   return <section className={`sp-transaction-card ${tx ? `is-${tx.status}` : ''}`} data-testid={tx?`transaction-${tx.id}`:undefined}>
-    <button type="button" aria-label={`${v.cardInspect} ${index+1}`} aria-expanded={open} aria-controls={id} onClick={()=>setOpen(!open)}><span className="sp-transaction-number">0{index+1}</span><StudioArt kind="address" compact /><strong>{tx?v[tx.status]:`${v.paymentCard} ${index+1}`}</strong><span className="sp-transaction-stamp" aria-hidden="true">{tx?(tx.status==='found'?'✓':tx.status==='rejected'?'!':'○'):'+'}</span></button>
+    <button type="button" aria-label={`${v.cardInspect} ${index+1}`} aria-expanded={open} aria-controls={id} onClick={()=>setOpen(!open)}><span className="sp-transaction-number">0{index+1}</span><StudioArt kind="address" compact /><strong>{tx?v[tx.status]:`${v.transactionCard} ${index+1}`}</strong><span className="sp-transaction-stamp" aria-hidden="true">{tx?(tx.status==='found'?'✓':tx.status==='rejected'?'!':'○'):'+'}</span></button>
     {open&&<p id={id}>{tx?v.reasons[tx.status]:v.noResult}</p>}
   </section>
 }

@@ -53,7 +53,7 @@ export function AddressKindNote({ address, notBc1Note, badgeSilent, badgeBc1 }) 
           <span className="sp-flow-badge">{address.slice(0, 8)}…</span>
         ) : null}
       </div>
-      <p className="text-[10px] leading-snug text-bp-600 dark:text-bp-canvas/70">{notBc1Note}</p>
+      <p className="text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/70">{notBc1Note}</p>
     </div>
   )
 }
@@ -68,7 +68,7 @@ export function SilentAddressField({ value, className, notBc1Note, badgeSilent, 
       {!compact ? (
         <AddressKindNote address={value} notBc1Note={notBc1Note} badgeSilent={badgeSilent} badgeBc1={badgeBc1} />
       ) : null}
-      <CopyableText value={value} className={className || '!p-2 !text-[10px] dark:!bg-bp-700/70'} />
+      <CopyableText value={value} className={className || '!p-2 !text-xs dark:!bg-bp-700/70'} />
     </>
   )
 }
@@ -79,10 +79,10 @@ export function DataBlock({ icon, label, hint, children }) {
       <div className="sp-flow-data-label">
         <img src={icon} alt="" className="sp-flow-data-icon" />
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-bp-500 dark:text-bp-canvas/70">
+          <p className="text-xs font-semibold tracking-wide text-bp-500 dark:text-bp-canvas/70">
             {label}
           </p>
-          {hint ? <p className="text-[10px] leading-snug text-bp-600 dark:text-bp-canvas/65">{hint}</p> : null}
+          {hint ? <p className="text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{hint}</p> : null}
         </div>
       </div>
       {children ? <div className="sp-flow-data-body">{children}</div> : null}
@@ -118,13 +118,13 @@ export function UtxoList({ inputs, signedLabel, utxoLabel, scriptLabel, p2pkhNot
             </p>
             {scriptHex ? (
               <div className="mt-1">
-                <p className="text-[9px] font-bold uppercase tracking-wide text-bp-500 dark:text-bp-canvas/55">
+                <p className="text-[11px] font-semibold tracking-wide text-bp-500 dark:text-bp-canvas/55">
                   {type ? `${type} · ${scriptLabel}` : scriptLabel}
                 </p>
                 {type === 'P2PKH' && p2pkhNote ? (
-                  <p className="text-[10px] leading-snug text-bp-600 dark:text-bp-canvas/65">{p2pkhNote}</p>
+                  <p className="text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{p2pkhNote}</p>
                 ) : null}
-                <CopyableText value={scriptHex} className="!mt-0.5 !p-1.5 !text-[9px] dark:!bg-bp-700/55" />
+                <CopyableText value={scriptHex} className="!mt-0.5 !p-1.5 !text-[11px] dark:!bg-bp-700/55" />
               </div>
             ) : null}
           </li>
@@ -142,12 +142,12 @@ export function PubkeyOutput({ pubkey, label, hint }) {
   return (
     <div>
       {label ? (
-        <p className="mb-1 text-[9px] font-bold uppercase tracking-wide text-bp-500 dark:text-bp-canvas/55">
+        <p className="mb-1 text-[11px] font-semibold tracking-wide text-bp-500 dark:text-bp-canvas/55">
           {label}
         </p>
       ) : null}
-      {hint ? <p className="mb-1 text-[10px] leading-snug text-bp-600 dark:text-bp-canvas/65">{hint}</p> : null}
-      <CopyableText value={pubkey} className="!p-2 !text-[10px] dark:!bg-bp-700/70" />
+      {hint ? <p className="mb-1 text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{hint}</p> : null}
+      <CopyableText value={pubkey} className="!p-2 !text-xs dark:!bg-bp-700/70" />
     </div>
   )
 }
@@ -166,7 +166,7 @@ export function TxOutputList({ outputs, highlightSet, matchedLabel, otherLabel }
           <li key={`${hex}-${i}`}>
             <div className="mb-0.5 flex items-center gap-1.5">
               <span
-                className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                className={`rounded px-1.5 py-0.5 text-[11px] font-bold uppercase ${
                   match
                     ? 'bg-bp-blue/15 text-bp-blue dark:bg-bp-canvas/20 dark:text-bp-canvas'
                     : 'bg-bp-100 text-bp-500 dark:bg-bp-700/50 dark:text-bp-canvas/50'
@@ -177,7 +177,7 @@ export function TxOutputList({ outputs, highlightSet, matchedLabel, otherLabel }
             </div>
             <CopyableText
               value={hex}
-              className={`!p-1.5 !text-[9px] ${match ? 'ring-1 ring-bp-blue/20 dark:ring-bp-canvas/25 dark:!bg-bp-700/70' : 'dark:!bg-bp-700/45'}`}
+              className={`!p-1.5 !text-[11px] ${match ? 'ring-1 ring-bp-blue/20 dark:ring-bp-canvas/25 dark:!bg-bp-700/70' : 'dark:!bg-bp-700/45'}`}
             />
           </li>
         )
@@ -195,7 +195,7 @@ export function ScanTimeline({ steps }) {
       {steps.map((s, i) => (
         <li key={i}>
           <img src={s.icon} alt="" className="sp-scan-step-icon" />
-          <span className="text-[11px] leading-snug text-bp-700 dark:text-bp-canvas/85">{s.text}</span>
+          <span className="text-[11px] leading-relaxed text-bp-700 dark:text-bp-canvas/85">{s.text}</span>
         </li>
       ))}
     </ol>

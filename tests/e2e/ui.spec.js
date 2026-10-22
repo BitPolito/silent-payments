@@ -98,3 +98,19 @@ test('skip link reaches main content and reduced motion is respected', async ({ 
   const motion = await page.getByRole('link', { name: /^Guided demo/ }).evaluate((element) => getComputedStyle(element).transitionDuration)
   expect(motion.split(',').every((duration) => parseFloat(duration) < 0.01)).toBe(true)
 })
+
+
+test('mobile experiment actions remain inside their result card without covering controls', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 })
+  for (const tool of ['payment', 'address', 'labels', 'scan']) {
+    await page.goto(`/?view=studio&tool=${tool}`)
+    const action = page.locator('.sp-friendly-primary')
+    await action.scrollIntoViewIfNeeded()
+    const stage = await page.locator('.sp-friendly-stage').boundingBox()
+    const button = await action.boundingBox()
+    expect(button.y).toBeGreaterThanOrEqual(stage.y)
+    expect(button.y + button.height).toBeLessThanOrEqual(stage.y + stage.height)
+    expect(await action.evaluate(element => getComputedStyle(element).position)).toBe('static')
+    await noHorizontalOverflow(page)
+  }
+})

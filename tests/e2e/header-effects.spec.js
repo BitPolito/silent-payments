@@ -89,6 +89,12 @@ for (const [width, locale, dark] of [[320, 'en', false], [390, 'it', true], [768
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.evaluate(() => window.scrollTo(0,500))
     await expect.poll(async () => (await header.boundingBox()).y).toBe(0)
+    // The step navigation must sit directly below the real header in each layout.
+    await expect.poll(async () => {
+      const bar = await header.boundingBox()
+      const steps = await page.locator('.sp-stage-nav').boundingBox()
+      return Math.abs(steps.y - bar.y - bar.height)
+    }).toBeLessThanOrEqual(1)
     await header.getByRole('switch').click()
     await expect(header.getByRole('switch')).toHaveAttribute('aria-checked',String(!dark))
     await header.locator('.sp-language-control').click()

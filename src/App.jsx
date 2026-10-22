@@ -21,7 +21,19 @@ export default function App() {
   const [search, setSearch] = useState(() => window.location.search)
   const [generator, setGenerator] = useState(null)
   const headingRef = useRef(null)
+  const headerRef = useRef(null)
   const view = currentView(search)
+  useEffect(() => {
+    const header = headerRef.current
+    const updateHeight = () => document.documentElement.style.setProperty('--sp-header-height', `${header.getBoundingClientRect().height}px`)
+    const observer = new ResizeObserver(updateHeight)
+    observer.observe(header)
+    updateHeight()
+    return () => {
+      observer.disconnect()
+      document.documentElement.style.removeProperty('--sp-header-height')
+    }
+  }, [])
   useEffect(() => {
     const followURL = () => { setGenerator(null); setSearch(window.location.search) }
     window.addEventListener('popstate', followURL)
@@ -40,7 +52,7 @@ export default function App() {
   }, [view, tr, t])
   return <div className="sp-app">
     <a className="sp-skip-link" href="#main-content">{tr('uiSkip')}</a>
-    <header className="sp-site-header">
+    <header ref={headerRef} className="sp-site-header">
       <div className="sp-header-inner">
         <AppLink href={pageURL('home').href} className="sp-brand" aria-label={`${tr('title')} · ${tr('uiHome')}`}>
           <img src={BRAND.cowIconBlue} alt="" className="sp-icon-blue h-8 w-8" width={32} height={32} />
@@ -52,7 +64,7 @@ export default function App() {
         <div className="sp-header-controls"><LangToggle /><ThemeToggle ariaLabel={tr('themeAria')} /></div>
       </div>
     </header>
-    <main id="main-content" tabIndex={-1} className={`sp-main ${view === 'home' ? '' : 'sp-learning-page'}`}>
+    <main id="main-content" tabIndex={-1} className={`sp-main ${view === 'home' ? '' : 'sp-learning-page'} ${view === 'walkthrough' ? 'sp-walkthrough-page' : ''}`}>
       {view === 'home'
         ? <HomePage headingRef={headingRef} onGenerate={setGenerator} />
         : view === 'studio' ? <Studio key={search} search={search} headingRef={headingRef} /> : view === 'tools' ? <Tools headingRef={headingRef} onGenerate={setGenerator} /> : view === 'privacy' ? <PrivacyLab headingRef={headingRef} /> : <LearningPage key={search} view={view} initialSearch={search} headingRef={headingRef} />}
