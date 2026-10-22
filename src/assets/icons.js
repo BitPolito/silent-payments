@@ -11,6 +11,7 @@ export const ICON = {
   present: '/icons/icon-present.svg',
   github: '/icons/icon-github.svg',
   code: '/icons/icon-code-1.svg',
+  microscope: '/icons/icon-microscope.svg',
   home: '/icons/icon-home.svg',
 }
 

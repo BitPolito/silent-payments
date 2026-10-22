@@ -1,4 +1,6 @@
 import { useId, useState } from 'react'
+import BpIcon from '../../components/BpIcon'
+import { ICON, STORY } from '../../assets/icons'
 import AppLink from '../../components/AppLink'
 import { useLocale } from '../../i18n/useLocale'
 import { useExperiment } from './useExperiment'
@@ -9,7 +11,7 @@ import { StudioArt } from './Illustrations'
 import { visualContent } from './visualContent'
 import { studioURL } from './navigation'
 const names = ['donations', 'shop', 'project']
-const pocketIcons = ['♡', '▤', '✦']
+const pocketIcons = [ICON.heart, STORY.wallet, STORY.letter]
 function TransactionCard({ tx, index, v }) {
   const [open,setOpen]=useState(false);const id=useId()
   return <section className={`sp-transaction-card ${tx ? `is-${tx.status}` : ''}`} data-testid={tx?`transaction-${tx.id}`:undefined}>
@@ -25,8 +27,8 @@ export default function LabelScanExperiment({ tool }) {
   function reset(){experiment.clear();setControls(initial())}
   return <div className="sp-friendly-workbench">
     <section className="sp-friendly-controls">
-      {tool==='labels'&&<div><h2>{v.pockets}</h2><div className="sp-pocket-choices" role="group" aria-label={v.pockets}>{names.map((name,index)=><ChoiceCard key={name} icon={pocketIcons[index]} title={t[name]} selected={controls.label===index+1} onClick={()=>update({label:index+1})} />)}</div></div>}
-      <fieldset><legend>{v.recognizes}</legend><div className="sp-known-pockets">{names.map((name,index)=><label key={name}><input type="checkbox" checked={controls.known_labels.includes(index+1)} onChange={()=>update({known_labels:controls.known_labels.includes(index+1)?controls.known_labels.filter(id=>id!==index+1):[...controls.known_labels,index+1]})} /><span aria-hidden="true">{pocketIcons[index]}</span><strong>{t[name]}</strong></label>)}</div></fieldset>
+      {tool==='labels'&&<div><h2>{v.pockets}</h2><div className="sp-pocket-choices" role="group" aria-label={v.pockets}>{names.map((name,index)=><ChoiceCard key={name} icon={<BpIcon src={pocketIcons[index]} className="sp-choice-pixel" />} title={t[name]} selected={controls.label===index+1} onClick={()=>update({label:index+1})} />)}</div></div>}
+      <fieldset><legend>{v.recognizes}</legend><div className="sp-known-pockets">{names.map((name,index)=><label key={name}><input type="checkbox" checked={controls.known_labels.includes(index+1)} onChange={()=>update({known_labels:controls.known_labels.includes(index+1)?controls.known_labels.filter(id=>id!==index+1):[...controls.known_labels,index+1]})} /><span aria-hidden="true"><BpIcon src={pocketIcons[index]} className="sp-choice-pixel" /></span><strong>{t[name]}</strong></label>)}</div></fieldset>
       <details className="sp-studio-details sp-advanced"><summary>{v.settings}</summary><label>{t.network}<select aria-label={t.network} className="sp-input" value={controls.network} onChange={e=>update({network:e.target.value})}><option value="testnet">{t.testnet}</option><option value="mainnet">{t.mainnet}</option></select></label><p className="text-xs mt-4">{t.labelHint}</p></details>
       <button className="sp-back-link" onClick={reset}>{t.reset} <span aria-hidden="true">↺</span></button>
     </section>

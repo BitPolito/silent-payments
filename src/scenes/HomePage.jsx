@@ -1,5 +1,6 @@
 import { STORY } from '../assets/icons'
 import AppLink from '../components/AppLink'
+import BpIcon from '../components/BpIcon'
 import { useLocale } from '../i18n/useLocale'
 import { pageURL } from '../utils/navigation'
 import { studioURL } from '../features/studio/navigation'
@@ -18,7 +19,7 @@ export default function HomePage({ headingRef, onGenerate }) {
     </section>
     <div className="sp-home-essentials">
       <section className="sp-home-demo">
-        <div className="sp-home-actors" aria-hidden="true"><img className="sp-icon-blue" src={STORY.alice} alt="" /><span>→</span><img className="sp-icon-blue" src={STORY.bob} alt="" /></div>
+        <div className="sp-home-actors" aria-hidden="true"><img className="sp-icon-blue" src={STORY.alice} alt="" /><BpIcon src={STORY.arrow} className="h-6 w-8" /><img className="sp-icon-blue" src={STORY.bob} alt="" /></div>
         <h2>{tr('uiTryDemo')}</h2>
         <p className="sp-description">{tr('uiGuideHint')}</p>
         <AppLink href={pageURL('walkthrough').href} className="sp-btn-solid">{tr('demoTitle')} →</AppLink>

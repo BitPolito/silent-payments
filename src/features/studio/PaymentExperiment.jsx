@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import BpIcon from '../../components/BpIcon'
+import { STORY } from '../../assets/icons'
 import { useLocale } from '../../i18n/useLocale'
 import { useExperiment } from './useExperiment'
 import { useStudioText } from './useStudioText'
@@ -6,7 +8,11 @@ import { ComputedStatus, Details, Failure, KeyCard } from './Workbench'
 import { PaymentStory } from './Illustrations'
 import { ChoiceCard, PaymentCard } from './VisualCards'
 import { visualContent } from './visualContent'
-const scenarioIcons = { changed: '↔', reorder: '⇄', amountOnly: '₿', mutation: '↶' }
+const scenarioModes = ['changed', 'reorder', 'amountOnly', 'mutation']
+function ScenarioIcon({ mode }) {
+  if (mode === 'amountOnly') return <BpIcon src={STORY.bitSymbol} className="sp-choice-pixel" />
+  return <span className={`sp-pixel-arrows is-${mode}`}><BpIcon src={STORY.arrow} className="sp-choice-pixel" />{mode !== 'mutation' && <BpIcon src={STORY.arrow} className="sp-choice-pixel" />}</span>
+}
 export default function PaymentExperiment({ preset }) {
   const t = useStudioText(); const { locale }=useLocale(); const v=visualContent[locale] || visualContent.en
   const experiment = useExperiment('payment')
@@ -19,8 +25,8 @@ export default function PaymentExperiment({ preset }) {
   const run = (action) => experiment.run({ ...controls, action })
   return <div className="sp-friendly-workbench">
     <section className="sp-friendly-controls" aria-label={v.coins}>
-      <fieldset><legend>{v.coins}</legend><p className="sp-description text-xs mb-3">{v.coinHint}</p><div className="sp-coin-choices">{[0,1,2,3].map((id)=><label className="sp-coin-card" key={id}><input type="checkbox" checked={controls.inputs.includes(id)} onChange={()=>update({inputs: controls.inputs.includes(id)?controls.inputs.filter((i)=>i!==id):[...controls.inputs,id]})} /><span aria-hidden="true" className="sp-big-coin">₿</span><strong>{v.coin} {id+1}</strong><span className="sp-coin-check" aria-hidden="true">{controls.inputs.includes(id)?'✓':'+'}</span></label>)}</div></fieldset>
-      <div><h2>{v.scenarios}</h2><div className="sp-scenario-choices" role="group" aria-label={v.scenarios}>{Object.keys(scenarioIcons).map((mode)=><ChoiceCard key={mode} icon={scenarioIcons[mode]} title={v[mode]} selected={controls.comparison===mode} onClick={()=>update({comparison:mode})} />)}</div><p className="sp-description text-sm mt-3">{v.hints[controls.comparison]}</p></div>
+      <fieldset><legend>{v.coins}</legend><p className="sp-description text-xs mb-3">{v.coinHint}</p><div className="sp-coin-choices">{[0,1,2,3].map((id)=><label className="sp-coin-card" key={id}><input type="checkbox" checked={controls.inputs.includes(id)} onChange={()=>update({inputs: controls.inputs.includes(id)?controls.inputs.filter((i)=>i!==id):[...controls.inputs,id]})} /><span aria-hidden="true" className="sp-big-coin"><BpIcon src={STORY.bitSymbol} className="sp-coin-pixel" /></span><strong>{v.coin} {id+1}</strong><span className="sp-coin-check" aria-hidden="true">{controls.inputs.includes(id)?'✓':'+'}</span></label>)}</div></fieldset>
+      <div><h2>{v.scenarios}</h2><div className="sp-scenario-choices" role="group" aria-label={v.scenarios}>{scenarioModes.map((mode)=><ChoiceCard key={mode} icon={<ScenarioIcon mode={mode} />} title={v[mode]} selected={controls.comparison===mode} onClick={()=>update({comparison:mode})} />)}</div><p className="sp-description text-sm mt-3">{v.hints[controls.comparison]}</p></div>
       <div><h2>{v.chooseCount}</h2><div className="sp-count-choices" role="group" aria-label={v.chooseCount}>{[1,2].map((count)=><button aria-pressed={controls.recipients===count} key={count} onClick={()=>update({recipients:count})}>{count===1?v.one:v.two}</button>)}</div></div>
       <details className="sp-studio-details sp-advanced"><summary>{v.settings}</summary><label>{t.network}<select aria-label={t.network} className="sp-input" value={controls.network} onChange={(e)=>update({network:e.target.value})}><option value="testnet">{t.testnet}</option><option value="mainnet">{t.mainnet}</option></select></label><label>{t.amount}<input aria-label={t.amount} type="number" min="1" max="2100000000000000" className="sp-input" value={controls.amount} onChange={(e)=>update({amount:Number(e.target.value)} )} /></label></details>
       <button className="sp-back-link" onClick={reset}>{t.reset} <span aria-hidden="true">↺</span></button>
