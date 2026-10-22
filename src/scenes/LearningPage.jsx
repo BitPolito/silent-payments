@@ -35,13 +35,12 @@ export default function LearningPage({ view, initialSearch, headingRef }) {
       <div>
         <AppLink className="sp-back-link" href={pageURL('home').href}>← {tr('uiBackHome')}</AppLink>
         <h1 ref={headingRef} tabIndex={-1}>{tr(isWalkthrough ? 'demoTitle' : 'referenceTitle')}</h1>
-        <p className="sp-description">{tr(isWalkthrough ? 'uiWalkthroughIntro' : 'uiReferenceIntro')}</p>
+        {!isWalkthrough && <p className="sp-description">{tr('uiReferenceIntro')}</p>}
       </div>
-      <span className="sp-page-badge">BIP-352 · {tr('uiDemoOnly')}</span>
+      {!isWalkthrough && <span className="sp-page-badge">BIP-352 · {tr('uiDemoOnly')}</span>}
     </div>
     <nav className="sp-learning-nav" aria-label={tr('uiLearningNav')}>
-      <AppLink href={pageURL('walkthrough').href} aria-current={isWalkthrough ? 'page' : undefined}>{tr('demoTitle')}</AppLink>
-      <AppLink href={pageURL('reference').href} aria-current={!isWalkthrough ? 'page' : undefined}>{tr('referenceTitle')}</AppLink>
+      <AppLink href={pageURL(isWalkthrough ? 'reference' : 'walkthrough').href}>{tr(isWalkthrough ? 'referenceTitle' : 'demoTitle')}</AppLink>
     </nav>
     {!isWalkthrough ? <ReferenceCases initialSearch={initialSearch} /> : <>
       {apiStatus === 'offline' && screen !== 'edges' ? <p role="alert" className="sp-notice">{tr(import.meta.env.PROD ? 'apiOfflineProd' : 'apiOffline')}</p> : <>

@@ -270,24 +270,24 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
       <FlowProgress ariaLabel={tr('learnProgress')} steps={railSteps} maxIndex={maxReachableIndex} onSelect={goPhase} />
 
       <article ref={panelRef} tabIndex={-1} role="region" aria-label={tr(`flowStep_${phase}`)} className="sp-walkthrough-grid">
-        <WalkthroughLesson key={phase} phase={phase} caseData={caseData} />
         <div className="sp-flow-card">
-          <WalkthroughVisual phase={phase} inputCount={ctx.inputCount} expectedCount={expectedOutputCount} result={currentResult} />
+          <WalkthroughVisual phase={phase} expectedCount={expectedOutputCount} result={currentResult} />
+          <WalkthroughLesson key={phase} phase={phase} caseData={caseData} result={currentResult} />
           {showEdgeNote ? <p className="sp-flow-edge-note">{edgeNote}</p> : null}
           <div key={`${scenario.id}-${phase}`} className="sp-flow-panel">
           {phase === 'bob' ? (
             <>
               {bobShare ? (
-                <details className="sp-demo-details"><summary>{tr('uiDemoDetails')}</summary><DataBlock icon={FLOW_ICONS.address} label={tr('flowDataBobShare')} hint={tr('flowDataBobShareHint')}>
+                <section className="sp-demo-data"><DataBlock icon={FLOW_ICONS.address} label={tr('flowDataBobShare')} hint={tr('flowDataBobShareHint')}>
                   <SilentAddressField compact value={bobShare} {...addressBadges} />
-                </DataBlock></details>
+                </DataBlock></section>
               ) : null}
             </>
           ) : null}
 
           {phase === 'alice' ? (
             <>
-              <details className="sp-demo-details"><summary>{tr('uiDemoDetails')}</summary>
+              <section className="sp-demo-data">
               <DataBlock icon={FLOW_ICONS.coins} label={tr('flowDataCoins')} hint={tr('flowDataCoinsHint').replace('{n}', String(ctx.inputCount))}>
                 <UtxoList
                   inputs={ctx.aliceInputs}
@@ -301,7 +301,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
                   <SilentAddressField compact value={bobShare} {...addressBadges} />
                 </DataBlock>
               ) : null}
-              </details>
+              </section>
             </>
           ) : null}
 
@@ -312,8 +312,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
               {sendResult?.note === 'zero key sum' ? <p className="sp-flow-note">{tr('zeroKeyNote')}</p> : null}
               {sendResult && !sendLoading ? (
                 <div className="space-y-2">
-                  <h4 className="font-bold">{tr('learnActual')}</h4>
-                  <DemoRunResults tr={tr} testType="send" testResults={sendResult} disclosure />
+                  <DemoRunResults tr={tr} testType="send" testResults={sendResult} walkthrough />
                 </div>
               ) : null}
             </>
@@ -326,14 +325,12 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
               {recvError ? <p role="alert" className="sp-demo-error">{tr('teachRequestError')}: {recvError}</p> : null}
               {recvResult && !recvLoading ? (
                 <div className="space-y-2">
-                  <h4 className="font-bold">{tr('learnActual')}</h4>
-                  <DemoRunResults tr={tr} testType="receive" testResults={recvResult} disclosure />
+                  <DemoRunResults tr={tr} testType="receive" testResults={recvResult} walkthrough />
                 </div>
               ) : null}
               {done && <section className="space-y-3" data-testid="walkthrough-recap">
                 <p className="sp-flow-done">{tr('flowCompleteBody')}</p>
-                <h4 className="font-bold">{tr('learnRecap')}</h4>
-                <p className="text-sm">{tr('learnRecapBody')}</p>
+                <p className="text-sm">{tr('uiDemoTakeaway')}</p>
                 <h4 className="font-bold">{tr('learnExplore')}</h4>
                 <ul className="space-y-2">{[[10, 'send'], [12, 'receive'], [23, 'receive'], [25, 'send']].map(([id, direction]) => <li key={id}>
                   <button type="button" className="text-left text-sm underline underline-offset-2" onClick={() => onOpenReference?.({ id, direction, subcase: 0 })}>{referenceLessons[id][locale].title}</button>

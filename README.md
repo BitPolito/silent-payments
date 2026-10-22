@@ -35,7 +35,7 @@ Address tools remain in a keyboard-accessible dialog. Escape closes it, Tab stay
 
 ### Guided learning
 
-The four-stage donation walkthrough always uses reference group 0. Each stage starts with one learning goal and an Alice/Bob illustration. The illustration is labeled as a public reference example; actual output counts appear only after execution. Expand **How it works** for who knows which keys and the glossary, **Inspect protocol values** for the address and input data, or **Reference values before execution** for published expectations. Sender/receiver verdicts remain visible after execution; exact keys, tweaks, missing/extra counts, and signature evidence are under **Compare protocol values**.
+The four-stage donation walkthrough always uses reference group 0. Each step has one title, an Alice/Bob illustration, and a visible explanation of who uses which keys and why. Addresses, transaction inputs, reference expectations, output keys, tweaks, and signature evidence are shown directly without opening panels. Expectations are replaced by actual results when the check completes. Matching expected/actual values appear once; differences remain explicit. The reference explorer retains its full detailed comparisons.
 
 This server simulates both roles using public fixture keys; the API does not expose every intermediate shared-secret calculation and nothing is broadcast. The completion recap links to multiple payments, labels, unrelated outputs, and zero-sum rejection in the reference explorer. Restart resets progress and results; leaving the page aborts browser requests and discards late responses.
 

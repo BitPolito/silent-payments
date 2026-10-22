@@ -2,24 +2,24 @@
   "en": {
     "stages": {
       "bob": {
-        "goal": "Learn what Bob shares before a payment.",
-        "knows": "Bob keeps his scan and spend private keys. Alice needs only the public Silent Payments address.",
-        "outcome": "Alice has a reusable destination. This address is not the public key of a particular transaction output."
+        "goal": "Bob shares an address",
+        "knows": "Alice needs only Bob’s public Silent Payments address. Bob keeps two private keys: a scan key to find payments and a spend key to unlock them.",
+        "outcome": "The address is reusable; each payment will use a separate output key."
       },
       "alice": {
-        "goal": "Learn why Alice’s transaction inputs participate in deriving the payment.",
-        "knows": "Alice knows the private keys for the eligible coins she spends. Bob can extract their public counterparts from transaction data.",
-        "outcome": "The eligible input keys and a deterministically selected outpoint bind the derivation to this transaction."
+        "goal": "Alice chooses her coins",
+        "knows": "The selected coins are transaction inputs. Alice controls their private keys; Bob can read their public keys from transaction data.",
+        "outcome": "Changing eligible inputs changes the payment key. Alice does not need Bob’s private keys."
       },
       "derive": {
-        "goal": "Learn how Alice derives a payment without asking Bob for another address.",
-        "knows": "Alice combines her eligible input private keys with Bob’s public scan key. She does not need Bob’s private keys.",
-        "outcome": "The sender check should produce the reference payment public key. Its actual value appears only after running the check."
+        "goal": "Alice derives the payment",
+        "knows": "Alice combines her input keys with Bob’s public scan key to calculate a shared secret. A derived tweak creates the payment output key.",
+        "outcome": "Bob can calculate the same secret later. The API returns the final output key, not the intermediate secret."
       },
       "scan": {
-        "goal": "Learn how Bob recognizes and can spend the payment.",
-        "knows": "Bob combines his private scan key with eligible public input keys to derive the same shared secret. His private spend key and the recovered tweak let him spend.",
-        "outcome": "The receiver check should discover the reference output and spending tweak, then verify a synthetic spending signature."
+        "goal": "Bob discovers the payment",
+        "knows": "Bob uses his private scan key and public transaction inputs to find the output. His private spend key and the discovered tweak let him spend it.",
+        "outcome": "The receiver check also verifies a signature over a synthetic message. This proves key control; it does not sign a broadcastable transaction."
       }
     },
     "terms": {
@@ -56,24 +56,24 @@
   "it": {
     "stages": {
       "bob": {
-        "goal": "Capire cosa condivide Bob prima di un pagamento.",
-        "knows": "Bob conserva le chiavi private di scansione e spesa. Ad Alice basta l’indirizzo pubblico Silent Payments.",
-        "outcome": "Alice dispone di una destinazione riutilizzabile. Questo indirizzo non è la chiave pubblica di uno specifico output della transazione."
+        "goal": "Bob condivide un indirizzo",
+        "knows": "Ad Alice basta l’indirizzo pubblico Silent Payments di Bob. Bob conserva due chiavi private: la chiave di scansione per trovare i pagamenti e quella di spesa per spenderli.",
+        "outcome": "L’indirizzo è riutilizzabile; ogni pagamento avrà una chiave di output distinta."
       },
       "alice": {
-        "goal": "Capire perché gli input della transazione di Alice partecipano alla derivazione del pagamento.",
-        "knows": "Alice conosce le chiavi private delle monete ammesse che spende. Bob può estrarre le corrispondenti chiavi pubbliche dai dati della transazione.",
-        "outcome": "Le chiavi degli input ammessi e un outpoint scelto in modo deterministico legano la derivazione a questa transazione."
+        "goal": "Alice sceglie le monete",
+        "knows": "Le monete selezionate sono gli input della transazione. Alice ne controlla le chiavi private; Bob può leggere le corrispondenti chiavi pubbliche dai dati della transazione.",
+        "outcome": "Cambiare gli input ammessi cambia la chiave di pagamento. Ad Alice non servono le chiavi private di Bob."
       },
       "derive": {
-        "goal": "Capire come Alice ricava un pagamento senza chiedere a Bob un altro indirizzo.",
-        "knows": "Alice combina le chiavi private dei propri input ammessi con la chiave pubblica di scansione di Bob. Non le servono le chiavi private di Bob.",
-        "outcome": "La verifica del mittente deve produrre la chiave pubblica di pagamento di riferimento. Il valore effettivo appare solo dopo la verifica."
+        "goal": "Alice ricava il pagamento",
+        "knows": "Alice combina le chiavi dei propri input con la chiave pubblica di scansione di Bob per calcolare un segreto condiviso. Un tweak derivato crea la chiave dell’output di pagamento.",
+        "outcome": "Bob potrà calcolare lo stesso segreto. L’API restituisce la chiave finale dell’output, non il segreto intermedio."
       },
       "scan": {
-        "goal": "Capire come Bob riconosce il pagamento e può spenderlo.",
-        "knows": "Bob combina la propria chiave privata di scansione con le chiavi pubbliche degli input ammessi per ricavare lo stesso segreto condiviso. La chiave privata di spesa e il tweak trovato gli permettono di spendere.",
-        "outcome": "La verifica del destinatario deve riconoscere l’output e il tweak di spesa di riferimento, quindi verificare una firma di spesa sintetica."
+        "goal": "Bob riconosce il pagamento",
+        "knows": "Bob usa la propria chiave privata di scansione e gli input pubblici della transazione per trovare l’output. La chiave privata di spesa e il tweak trovato gli permettono di spenderlo.",
+        "outcome": "La verifica del destinatario controlla anche una firma su un messaggio sintetico. Dimostra il controllo della chiave; non firma una transazione trasmissibile."
       }
     },
     "terms": {
