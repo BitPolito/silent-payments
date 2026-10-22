@@ -522,6 +522,14 @@
   --sp-soft: color-mix(in srgb, var(--sp-blue) 6%, var(--sp-canvas));
   --sp-line: color-mix(in srgb, var(--sp-blue) 20%, var(--sp-canvas));
   --sp-accent: var(--sp-blue);
+  --sp-action: var(--sp-blue);
+  --sp-action-hover: #0018be;
+  --sp-action-text: var(--sp-canvas);
+  --sp-tone-500: 65 85 231;
+  --sp-tone-600: 65 85 231;
+  --sp-tone-700: 37 61 228;
+  --sp-tone-800: 20 46 226;
+  color-scheme: light;
   --sp-card-radius: 20px;
   --sp-card-inner-radius: 14px;
   --sp-card-padding: 24px;
@@ -529,14 +537,19 @@
 }
 html.dark {
   --sp-text: var(--sp-canvas);
-  --sp-muted: color-mix(in srgb, var(--sp-canvas) 85%, var(--sp-blue));
-  --sp-bg: var(--sp-blue);
-  --sp-panel: var(--sp-blue);
-  --sp-soft: color-mix(in srgb, var(--sp-canvas) 8%, var(--sp-blue));
-  --sp-line: color-mix(in srgb, var(--sp-canvas) 30%, var(--sp-blue));
-  --sp-accent: var(--sp-canvas);
+  --sp-muted: #c2cbe0;
+  --sp-bg: #091022;
+  --sp-panel: #121c32;
+  --sp-soft: #1c2942;
+  --sp-line: #627292;
+  --sp-accent: #b9c6ff;
+  --sp-tone-500: 148 166 213;
+  --sp-tone-600: 35 47 75;
+  --sp-tone-700: 18 28 50;
+  --sp-tone-800: 9 16 34;
+  color-scheme: dark;
 }
-html { scroll-padding-top: calc(var(--sp-header-height) + 24px); }
+html { scroll-padding-top: calc(var(--sp-header-height) + 24px); background: var(--sp-bg); color: var(--sp-text); }
 .sp-app { min-height: 100vh; display: flex; flex-direction: column; background: var(--sp-bg); color: var(--sp-text); line-height: 1.6; }
 .sp-description { color: var(--sp-muted); }
 .sp-app :where(h1, h2, h3) { text-wrap: balance; overflow-wrap: anywhere; }
@@ -682,15 +695,18 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-walkthrough-grid { scroll-margin-top: calc(var(--sp-header-height) + 88px); }
 .sp-walkthrough-grid:focus, .sp-modal h3[tabindex]:focus { outline: none; }
 
-/* Gradients frame the content; text and QR codes keep solid reading surfaces. */
+/* Shared actions retain the brand blue in both themes. */
 .sp-site-header::after { content: ''; position: absolute; inset: auto 0 -2px; height: 3px; background: var(--sp-accent); }
 .sp-payment-graphic { display: block; width: calc(100% + 48px); height: 140px; margin: 20px -24px 0; background: var(--sp-accent); }
 .sp-story-preview-number { background: var(--sp-accent); color: var(--sp-panel); }
 .sp-home-tools { border-top: 3px solid var(--sp-accent); }
 .sp-app .sp-btn-outline { background: var(--sp-panel); color: var(--sp-accent); border-color: var(--sp-line); }
 .sp-app .sp-btn-outline:hover { border-color: var(--sp-accent); background: var(--sp-soft); }
-.sp-app .sp-btn-solid { background: var(--sp-accent); color: var(--sp-panel); border-color: var(--sp-accent); }
-.sp-app .sp-btn-solid:hover { box-shadow: 0 4px 20px color-mix(in srgb, var(--sp-accent) 25%, transparent); }
+.sp-app .sp-btn-solid { background: var(--sp-action); color: var(--sp-action-text); border-color: var(--sp-action); }
+.sp-app .sp-btn-solid:not(:disabled):hover { background: var(--sp-action-hover); border-color: var(--sp-action-hover); }
+.sp-app :is(.sp-btn-solid, .sp-btn-outline):disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.sp-copy-highlight { background: var(--sp-accent); color: var(--sp-panel); border-radius: 4px; padding: 0 2px; font-weight: 650; }
+.sp-copy-badge { color: var(--sp-muted); }
 .sp-stage-step[aria-current], .sp-learning-nav a[aria-current] { background: var(--sp-accent); color: var(--sp-panel); }
 .sp-stage-step[aria-current] .sp-stage-number { background: var(--sp-panel); color: var(--sp-accent); }
 .sp-app .site-footer { background: var(--sp-soft); }

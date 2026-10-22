@@ -6,9 +6,9 @@ flask-cors==6.0.2
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.3
-pillow==11.2.1
+pillow==11.3.0
 qrcode[pil]==8.2
-Werkzeug==3.1.8
+Werkzeug==3.1.9
 
 # Native libsecp256k1 arithmetic for the full reference suite
 coincurve==21.0.0

@@ -85,7 +85,9 @@ The slow job executes the full official 2,323-output recipient-limit vector. All
 
 Cross-language fixtures verify actual Python/Rust address encoding and checksums. Generated-key tests derive synthetic payments, scan them, and independently verify signatures with libsecp256k1. Production arithmetic uses pinned `coincurve`; protocol logic and signature demonstration remain in Python.
 
-Playwright serves the production build and covers the guided flow, advanced subcases and expected rejections, both networks, clipboard, QR decoding, PDF text/keys, language/theme persistence, timeout errors, stale requests, and a short real vanity search. Set `SP_PYTHON` to an alternative test-environment interpreter if needed. PR CI runs these checks without deployment secrets; the recipient-limit job has its own 60-minute timeout.
+Playwright serves the production build and covers the guided flow, address generation, Studio experiments, both networks, clipboard, QR decoding, PDF text/keys, card-action contrast, language/theme persistence, timeout errors, stale requests, and a short real vanity search. Set `SP_PYTHON` to an alternative test-environment interpreter if needed. PR CI runs these checks without deployment secrets; the recipient-limit job has its own 60-minute timeout.
+
+The [23 October 2026 diagnostic report](docs/diagnostics-2026-10-23.md) records local verification, theme fixes, dependency updates, and remaining dependency audit findings.
 
 ## Vercel Git deployment
 

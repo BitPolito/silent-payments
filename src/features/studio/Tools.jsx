@@ -21,7 +21,7 @@ export default function Tools({ headingRef, onGenerate }) {
         <div className="sp-tool-art" aria-hidden="true"><BpIcon src={icon} className="h-12 w-12" /></div>
         <h2>{tr(title)}</h2>
         <p className="sp-description">{tr(description)}</p>
-        <button type="button" className={mode === 'random' ? 'sp-btn-solid' : 'sp-btn-outline'} aria-label={`${tr(title)} · ${tr(action)}`} onClick={() => onGenerate(mode)}>{tr(action)} <BpIcon src={STORY.arrow} className="h-4 w-5" /></button>
+        <button type="button" className="sp-btn-solid" aria-label={`${tr(title)} · ${tr(action)}`} onClick={() => onGenerate(mode)}>{tr(action)} <BpIcon src={STORY.arrow} className="h-4 w-5" /></button>
       </section>)}
     </div>
     <p className="sp-notice sp-tools-notice">{tr('uiToolsNotice')}</p>

@@ -41,7 +41,7 @@ export default function CopyableText({ value, className = '', emptyLabel = '—'
   ) : hasHighlight ? (
     <>
       {value.slice(0, highlight.start)}
-      <mark className="rounded bg-bp-blue/20 px-0.5 font-semibold text-bp-blue ring-1 ring-bp-blue/25 dark:bg-bp-canvas/35 dark:text-bp-blue dark:ring-bp-canvas/40">
+      <mark className="sp-copy-highlight">
         {value.slice(highlight.start, highlight.end)}
       </mark>
       {value.slice(highlight.end)}
@@ -64,7 +64,7 @@ export default function CopyableText({ value, className = '', emptyLabel = '—'
     >
       <span className="block whitespace-pre-wrap break-all pr-12 pt-0.5">{displayContent}</span>
       {canCopy ? (
-        <span className="pointer-events-none absolute right-2 top-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bp-500 shadow-sm transition group-hover:text-bp-blue group-focus-visible:text-bp-blue dark:bg-bp-800/90 dark:text-bp-200 dark:group-hover:text-bp-canvas">
+        <span className="sp-copy-badge pointer-events-none absolute right-2 top-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bp-500 shadow-sm transition group-hover:text-bp-blue group-focus-visible:text-bp-blue dark:bg-bp-800/90 dark:text-bp-200 dark:group-hover:text-bp-canvas">
           {copied ? tr('copied') : tr('copy')}
         </span>
       ) : null}

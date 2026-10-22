@@ -360,7 +360,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
             <button
               type="button"
               onClick={() => onCloseHome?.()}
-              className="min-w-[7.5rem] flex-1 rounded-[10px] bg-bp-blue px-4 py-2.5 text-sm font-bold text-bp-canvas dark:bg-bp-canvas dark:text-bp-blue sm:flex-initial"
+              className="sp-btn-solid min-w-[7.5rem] flex-1 sm:flex-initial"
             >
               {tr('flowFinishHome')}
             </button>
@@ -373,7 +373,7 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome }) {
               if (primaryAction.run) primaryAction.run()
               else if (!primaryAction.disabled) goNext()
             }}
-            className="ml-auto min-w-0 flex-1 rounded-[10px] bg-bp-blue px-4 py-2.5 text-sm font-bold text-bp-canvas disabled:opacity-45 dark:bg-bp-canvas dark:text-bp-blue sm:flex-none sm:flex-initial"
+            className="sp-btn-solid ml-auto min-w-0 flex-1 sm:flex-none sm:flex-initial"
           >
             {primaryAction.label}
           </button>
