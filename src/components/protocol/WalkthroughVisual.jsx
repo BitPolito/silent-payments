@@ -7,7 +7,14 @@ export default function WalkthroughVisual({ phase, expectedCount, result }) {
   return <figure className="sp-demo-visual" data-testid="demo-visual">
     <div className="sp-demo-journey" aria-hidden="true">
       <div className={phase === 'alice' || phase === 'derive' ? 'is-active' : ''}><img src={STORY.alice} className="sp-icon-blue" alt="" /><span>{tr('demoAlice')}</span></div>
-      <span className="sp-demo-object">{phase === 'bob' ? '✉' : phase === 'alice' ? '₿' : phase === 'scan' && result?.test_passed ? '✓' : '→'}</span>
+      <span className="sp-demo-object">
+        {phase === 'bob' && <img src={STORY.arrow} className="sp-icon-blue sp-demo-arrow is-returning" alt="" />}
+        <span className="sp-demo-symbol">
+          <img src={phase === 'bob' ? STORY.letter : STORY.bitSymbol} className={`sp-icon-blue ${phase === 'bob' ? 'sp-demo-letter' : 'sp-demo-bitcoin'}`} alt="" />
+          {phase === 'scan' && result?.test_passed && <span className="sp-demo-discovered">✓</span>}
+        </span>
+        {(phase === 'derive' || phase === 'scan') && <img src={STORY.arrow} className="sp-icon-blue sp-demo-arrow" alt="" />}
+      </span>
       <div className={phase === 'bob' || phase === 'scan' ? 'is-active' : ''}><img src={STORY.bob} className="sp-icon-blue" alt="" /><span>{tr('demoBob')}</span></div>
     </div>
     <figcaption><span>{tr('uiDemoIllustration')}</span></figcaption>

@@ -18,6 +18,9 @@ export const ICON = {
 export const STORY = {
   alice: '/story/icon-alice.svg',
   bob: '/story/icon-bob.svg',
+  arrow: '/story/arrow.svg',
+  bitSymbol: '/story/bitsymbol.svg',
+  letter: '/story/letter.svg',
   donation: '/icons/icon-present.svg',
   silent: '/story/icon-silent.svg',
   wallet: '/icons/icon-wallet.svg',

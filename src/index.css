@@ -474,6 +474,7 @@
   .sp-amb-layer {
     @apply pointer-events-none fixed inset-0 z-[120] overflow-hidden;
     contain: strict;
+    background: transparent;
     margin: 0;
     padding: 0;
     border: 0;
@@ -483,36 +484,24 @@
   }
 
   .sp-amb-item {
-    @apply absolute top-0 block object-contain;
+    @apply absolute top-0 block;
+    background: var(--sp-accent);
+    mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
     will-change: transform;
-    animation: sp-amb-fall linear forwards;
-    transform: translate3d(0, -18vh, 0);
-    filter: drop-shadow(0 3px 6px rgba(0, 28, 224, 0.22));
-  }
-
-  .sp-amb-layer.is-dark.is-invert .sp-amb-item {
-    filter: brightness(0) invert(1) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
-  }
-
-  .sp-amb-layer.is-dark:not(.is-invert) .sp-amb-item {
-    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+    animation: sp-amb-fall linear both;
   }
 
   @keyframes sp-amb-fall {
     from {
-      transform: translate3d(0, -18vh, 0) rotate(var(--sp-amb-drift, 0deg));
-    }
-    50% {
-      transform: translate3d(
-          calc(var(--sp-amb-sway, 0px) * 0.45),
-          52vh,
-          0
-        )
-        rotate(calc(var(--sp-amb-drift, 0deg) + var(--sp-amb-wobble, 0deg)));
+      transform: translate3d(0, calc(-100% - 16px), 0) rotate(var(--sp-amb-drift));
     }
     to {
-      transform: translate3d(var(--sp-amb-sway, 0px), 118vh, 0)
-        rotate(calc(var(--sp-amb-drift, 0deg) + var(--sp-amb-wobble, 0deg) + 10deg));
+      transform: translate3d(var(--sp-amb-sway), calc(var(--sp-amb-height) + 16px), 0) rotate(calc(var(--sp-amb-drift) + 18deg));
     }
   }
 
@@ -977,7 +966,13 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-demo-journey > div { display: grid; justify-items: center; gap: 4px; padding: 12px; border-radius: 16px; font-size: 12px; }
 .sp-demo-journey .is-active { background: var(--sp-soft); }
 .sp-demo-journey img { width: 44px; height: 44px; }
-.sp-demo-object { font-size: 38px; line-height: 1; }
+.sp-demo-object { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 76px; min-height: 64px; }
+.sp-demo-object .sp-demo-arrow { width: 28px; height: 24px; object-fit: contain; }
+.sp-demo-arrow.is-returning { transform: scaleX(-1); }
+.sp-demo-symbol { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.sp-demo-symbol .sp-demo-letter { width: 48px; height: 36px; object-fit: contain; }
+.sp-demo-symbol .sp-demo-bitcoin { width: 36px; height: 46px; object-fit: contain; }
+.sp-demo-discovered { position: absolute; right: -10px; bottom: -5px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--sp-accent); background: var(--sp-panel); font-size: 14px; font-weight: 750; }
 .sp-demo-visual figcaption { display: grid; gap: 4px; margin-top: 12px; }
 .sp-demo-visual figcaption > span { color: var(--sp-muted); font-size: 11px; }
 .sp-demo-expectation { margin: 12px auto 0; font-size: 14px; font-weight: 650; }

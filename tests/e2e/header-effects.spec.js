@@ -18,8 +18,9 @@ test('cow celebration paints in the top layer without blocking the generator and
   const layer = page.locator('.sp-amb-layer')
   await expect(layer).toBeVisible()
   await expect.poll(() => layer.evaluate(element => getComputedStyle(element).overlay)).toBe('auto')
-  await expect.poll(() => layer.locator('img').count()).toBeGreaterThan(0)
+  await expect.poll(() => layer.locator('.sp-amb-item').count()).toBeGreaterThan(0)
   expect(await layer.evaluate(element => getComputedStyle(element).pointerEvents)).toBe('none')
+  expect(await layer.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
   await expect(page.getByRole('heading', { name: 'Address', exact: true })).toBeFocused()
   // The decorative top layer must leave real controls usable and preserve Escape.
   const address = page.getByRole('dialog').getByRole('button', { name: /^tsp1/ })
@@ -31,6 +32,34 @@ test('cow celebration paints in the top layer without blocking the generator and
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(layer).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Vanity address/ })).toBeFocused()
+})
+
+test('cow burst keeps its nodes stable and clears promptly', async ({ page }) => {
+  await page.clock.install()
+  await page.clock.pauseAt(new Date())
+  await mockCowSearch(page)
+  const layer = page.locator('.sp-amb-layer')
+  const first = await layer.locator('.sp-amb-item').first().elementHandle()
+  const count = await layer.locator('.sp-amb-item').count()
+  expect(count).toBeLessThanOrEqual(18)
+  expect(count).toBeGreaterThan(0)
+  await page.clock.runFor(700)
+  expect(await first.evaluate(element => element.isConnected)).toBe(true)
+  await expect(layer.locator('.sp-amb-item')).toHaveCount(count)
+  await page.clock.runFor(3400)
+  await expect(layer).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /QR code \(PNG\)/ })).toBeVisible()
+})
+
+test('changing to reduced motion during the cow burst stops it', async ({ page }) => {
+  await page.clock.install()
+  await page.clock.pauseAt(new Date())
+  await mockCowSearch(page)
+  await expect(page.locator('.sp-amb-layer')).toBeVisible()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect(page.locator('.sp-amb-layer')).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('cow celebration respects reduced motion and leaves the result usable', async ({ page }) => {
