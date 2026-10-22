@@ -542,15 +542,21 @@ html.dark {
   --sp-text: var(--sp-canvas);
   --sp-muted: color-mix(in srgb, var(--sp-canvas) 88%, var(--sp-blue));
   --sp-bg: var(--sp-blue);
-  --sp-panel: color-mix(in srgb, var(--sp-blue) 96%, var(--sp-canvas));
-  --sp-soft: color-mix(in srgb, var(--sp-blue) 90%, var(--sp-canvas));
+  --sp-panel: color-mix(in srgb, var(--sp-blue) 92%, var(--sp-canvas));
+  --sp-soft: color-mix(in srgb, var(--sp-blue) 86%, var(--sp-canvas));
   --sp-line: color-mix(in srgb, var(--sp-canvas) 45%, var(--sp-blue));
-  --sp-accent: var(--sp-canvas);
-  --sp-action-line: color-mix(in srgb, var(--sp-canvas) 70%, var(--sp-blue));
+  --sp-accent: color-mix(in srgb, var(--sp-canvas) 88%, var(--sp-blue));
+  --sp-action: var(--sp-accent);
+  --sp-action-hover: var(--sp-canvas);
+  --sp-action-text: var(--sp-blue);
+  --sp-action-line: color-mix(in srgb, var(--sp-canvas) 94%, var(--sp-blue));
+  --sp-detail: color-mix(in srgb, var(--sp-canvas) 88%, var(--sp-blue));
+  --sp-detail-soft: color-mix(in srgb, var(--sp-canvas) 72%, var(--sp-blue));
+  --sp-detail-gradient: linear-gradient(135deg, var(--sp-detail), var(--sp-detail-soft));
   /* Match the surface palette in translucent Tailwind utility backgrounds. */
   --sp-tone-500: 199 205 244;
-  --sp-tone-600: 25 50 227;
-  --sp-tone-700: 10 37 225;
+  --sp-tone-600: 35 59 228;
+  --sp-tone-700: 20 46 226;
   --sp-tone-800: 0 28 224;
   color-scheme: dark;
 }
@@ -700,7 +706,7 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-walkthrough-grid { scroll-margin-top: calc(var(--sp-header-height) + 88px); }
 .sp-walkthrough-grid:focus, .sp-modal h3[tabindex]:focus { outline: none; }
 
-/* Shared actions retain the brand blue in both themes. */
+/* Shared actions use the same palette within each theme. */
 .sp-site-header::after { content: ''; position: absolute; inset: auto 0 -2px; height: 3px; background: var(--sp-accent); }
 .sp-payment-graphic { display: block; width: calc(100% + 48px); height: 140px; margin: 20px -24px 0; background: var(--sp-accent); }
 .sp-story-preview-number { background: var(--sp-accent); color: var(--sp-panel); }
@@ -1040,6 +1046,24 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-tool-card p { font-size: 14px; line-height: 1.7; }
 .sp-tool-card button { margin-top: auto; min-height: 48px; }
 .sp-tools-notice { margin-top: 24px; font-size: 13px; }
+
+/* Light brand tints give illustrations and actions contrast against blue surfaces. */
+.dark .sp-tool-art,
+.dark .sp-home-actors {
+  background-color: var(--sp-detail);
+  background-image: var(--sp-detail-gradient);
+  color: var(--sp-blue);
+}
+.dark .sp-home-actors { width: fit-content; height: 80px; padding: 12px 16px; border-radius: var(--sp-card-inner-radius); }
+.dark .sp-home-utility > img { width: 64px; height: 64px; padding: 14px; border-radius: var(--sp-card-inner-radius); background: var(--sp-detail-soft); }
+.dark .sp-home-actors .sp-icon-blue,
+.dark .sp-home-utility > img,
+.dark .sp-demo-journey .is-active img { filter: none; }
+.dark .sp-demo-journey .is-active,
+.dark .sp-download-icon { background: var(--sp-detail-soft); color: var(--sp-blue); }
+.dark .sp-network-choice label:has(:checked) { background: var(--sp-detail); color: var(--sp-blue); border-color: var(--sp-detail); }
+.dark .sp-mode-switch button[aria-pressed=true] { background: var(--sp-detail); color: var(--sp-blue); }
+.dark .sp-site-header::after { background: linear-gradient(90deg, var(--sp-detail-soft), var(--sp-canvas), var(--sp-detail-soft)); }
 @media (max-width: 639px) {
   .sp-tools-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .sp-tool-art { height: 88px; }

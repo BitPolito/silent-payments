@@ -42,9 +42,11 @@ for (const [width, locale] of [[320, 'it'], [1280, 'en']]) {
         const actions = page.locator('.sp-card .sp-btn-solid')
         await expect(actions).toHaveCount(2)
         for (const action of await actions.all()) {
+          // Navigation can leave the pointer over a new button; measure its rest state.
+          await page.mouse.move(0, 0)
+          await expect.poll(async () => (await colors(action)).background).toEqual(theme === 'dark' ? [219, 222, 246] : [0, 28, 224])
           const palette = await colors(action)
-          expect(palette.background).toEqual([0, 28, 224])
-          expect(palette.foreground).toEqual([249, 249, 249])
+          expect(palette.foreground).toEqual(theme === 'dark' ? [0, 28, 224] : [249, 249, 249])
           expect(palette.contrast).toBeGreaterThanOrEqual(4.5)
           await action.hover()
           await expect.poll(async () => (await colors(action)).contrast).toBeGreaterThanOrEqual(4.5)
@@ -57,9 +59,15 @@ for (const [width, locale] of [[320, 'it'], [1280, 'en']]) {
           const card = await colors(page.locator('.sp-card').first())
           expect(app.background).not.toEqual(card.background)
           expect(app.background).toEqual([0, 28, 224])
-          // Panels use a 4% canvas tint of the brand blue, without gradients.
-          expect(card.background).toEqual([10, 37, 225])
+          // Reading surfaces stay flat; lighter tints are reserved for details.
+          expect(card.background).toEqual([20, 46, 226])
           expect(card.image).toBe('none')
+          for (const art of await page.locator('.sp-tool-art, .sp-home-actors').all()) {
+            const detail = await colors(art)
+            expect(detail.foreground).toEqual([0, 28, 224])
+            expect(detail.background).not.toEqual(card.background)
+            expect(detail.image).toContain('linear-gradient')
+          }
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       }

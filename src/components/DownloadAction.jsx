@@ -9,7 +9,7 @@ const DOWNLOAD_CARD =
 export default function DownloadAction({ icon, title, hint, onClick }) {
   return (
     <button type="button" onClick={onClick} className={DOWNLOAD_CARD}>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bp-100 text-bp-blue dark:bg-bp-600/80 dark:text-bp-canvas">
+      <span className="sp-download-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bp-100 text-bp-blue dark:bg-bp-600/80 dark:text-bp-canvas">
         <BpIcon src={icon} className="h-4 w-4 text-inherit" />
       </span>
       <span className="min-w-0 flex-1">
