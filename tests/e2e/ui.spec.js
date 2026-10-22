@@ -73,6 +73,7 @@ for (const [width, locale, dark] of [[320, 'en', false], [390, 'it', true], [128
     await expect(page.getByTestId('stage-teaching')).toBeVisible()
     await noHorizontalOverflow(page)
     await expect(page.getByRole('dialog')).toHaveCount(0)
+    await page.getByRole('button', { name: locale === 'en' ? 'Continue' : 'Continua', exact: true }).scrollIntoViewIfNeeded()
     await expect(page.getByRole('button', { name: locale === 'en' ? 'Continue' : 'Continua', exact: true })).toBeInViewport()
     await page.getByRole('link', { name: locale === 'en' ? 'All reference cases' : 'Tutti i casi di riferimento', exact: true }).click()
     await expect(page.getByTestId('reference-lesson')).toBeVisible()

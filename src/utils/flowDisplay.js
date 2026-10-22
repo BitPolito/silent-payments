@@ -17,7 +17,7 @@ export function scriptTypeLabel(hex) {
   if (!hex) return ''
   const h = hex.toLowerCase()
   if (h.startsWith('76a914') && h.endsWith('88ac') && h.length === 50) return 'P2PKH'
-  if (h.startsWith('5120') && h.length === 44) return 'P2TR'
+  if (h.startsWith('5120') && h.length === 68) return 'P2TR'
   if (h.startsWith('0014') && h.length === 44) return 'P2WPKH'
   if (h.startsWith('a914') && h.endsWith('87')) return 'P2SH'
   return 'script'

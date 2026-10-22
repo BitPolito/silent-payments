@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { STORY } from '../assets/icons'
 import DemoRunResults from '../components/protocol/DemoRunResults'
 import WalkthroughLesson from '../components/protocol/WalkthroughLesson'
+import WalkthroughVisual from '../components/protocol/WalkthroughVisual'
 import referenceLessons from '../utils/referenceTeaching.json'
 import { FLOW_ICONS } from '../assets/flowIcons'
 import FlowProgress from '../components/flow/FlowProgress'
-import { DataBlock, SilentAddressField, StepHeader, UtxoList } from '../components/flow/FlowPanels'
+import { DataBlock, SilentAddressField, UtxoList } from '../components/flow/FlowPanels'
 import { useLocale } from '../i18n/useLocale'
 import { fetchApi, formatApiError } from '../utils/api'
 import { FLOW_SCENARIOS } from '../utils/demoScenarios'
@@ -13,13 +13,6 @@ import { canRunReceiveCheck, isSendStepComplete } from '../utils/flowDisplay'
 import { getScenarioContext } from '../utils/scenarioContext'
 
 const STEPS = ['bob', 'alice', 'derive', 'scan']
-
-const SCENARIO_MID_ICON = {
-  donation: STORY.donation,
-  silent: STORY.silent,
-  wallet: STORY.wallet,
-  key: STORY.key,
-}
 
 const alertIcon = '/bitpolito/alert.svg'
 
@@ -30,26 +23,6 @@ function resetFlowState(setters) {
   setters.setSendError('')
   setters.setRecvError('')
   setters.setFurthest(0)
-}
-
-function StoryStrip({ phase, tr, midIcon }) {
-  const bobOn = phase === 'bob' || phase === 'scan'
-  const aliceOn = phase === 'alice' || phase === 'derive'
-  const mid = phase === 'derive' || phase === 'scan' ? STORY.bitlogo : midIcon || STORY.donation
-
-  return (
-    <div className="sp-story-stage py-1">
-      <div className={`sp-story-actor max-w-[4rem] ${aliceOn ? 'is-active' : 'is-dim'}`}>
-        <img src={STORY.alice} alt="" className="sp-story-actor-img !h-8 !w-8" />
-        <span className="sp-story-actor-name">{tr('demoAlice')}</span>
-      </div>
-      <img src={mid} alt="" className="sp-story-pizza !h-7 !w-7" />
-      <div className={`sp-story-actor max-w-[4rem] ${bobOn ? 'is-active' : 'is-dim'}`}>
-        <img src={STORY.bob} alt="" className="sp-story-actor-img !h-8 !w-8" />
-        <span className="sp-story-actor-name">{tr('demoBob')}</span>
-      </div>
-    </div>
-  )
 }
 
 /**
@@ -227,6 +200,11 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
     })
   }, [cancelChecks])
 
+  const expectedOutputCount = phase === 'scan'
+    ? caseData?.receiving?.expected_outputs?.length || 0
+    : caseData?.sending?.expected_output_sets?.[0]?.length || 0
+  const currentResult = phase === 'scan' ? recvResult : phase === 'derive' ? sendResult : null
+
   const busy = sendLoading || recvLoading
   const canScan = canRunReceiveCheck(sendResult, storyKind)
 
@@ -268,8 +246,6 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
     [tr],
   )
 
-  const midIcon = SCENARIO_MID_ICON[scenario.icon] || STORY.donation
-
   if (loadingCase) {
     return (
       <div className="flex items-center justify-center gap-2 py-12">
@@ -289,34 +265,29 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
   }
 
   return (
-    <div className="sp-flow-shell">
+    <div className="sp-flow-shell sp-simple-demo">
       <p className="sp-description text-sm">{tr('learnSimulation')}</p>
       <FlowProgress ariaLabel={tr('learnProgress')} steps={railSteps} maxIndex={maxReachableIndex} onSelect={goPhase} />
 
       <article ref={panelRef} tabIndex={-1} role="region" aria-label={tr(`flowStep_${phase}`)} className="sp-walkthrough-grid">
         <WalkthroughLesson key={phase} phase={phase} caseData={caseData} />
         <div className="sp-flow-card">
-          <StoryStrip phase={phase} tr={tr} midIcon={midIcon} />
+          <WalkthroughVisual phase={phase} inputCount={ctx.inputCount} expectedCount={expectedOutputCount} result={currentResult} />
           {showEdgeNote ? <p className="sp-flow-edge-note">{edgeNote}</p> : null}
           <div key={`${scenario.id}-${phase}`} className="sp-flow-panel">
           {phase === 'bob' ? (
             <>
-              <StepHeader icon={FLOW_ICONS.bob} title={tr('flowBobTitle')}>
-                <p className="sp-flow-step-lead">{tr('flowBobLead')}</p>
-              </StepHeader>
               {bobShare ? (
-                <DataBlock icon={FLOW_ICONS.address} label={tr('flowDataBobShare')} hint={tr('flowDataBobShareHint')}>
+                <details className="sp-demo-details"><summary>{tr('uiDemoDetails')}</summary><DataBlock icon={FLOW_ICONS.address} label={tr('flowDataBobShare')} hint={tr('flowDataBobShareHint')}>
                   <SilentAddressField compact value={bobShare} {...addressBadges} />
-                </DataBlock>
+                </DataBlock></details>
               ) : null}
             </>
           ) : null}
 
           {phase === 'alice' ? (
             <>
-              <StepHeader icon={FLOW_ICONS.alice} title={tr('flowAliceTitle')}>
-                <p className="sp-flow-step-lead">{tr('flowAliceLead')}</p>
-              </StepHeader>
+              <details className="sp-demo-details"><summary>{tr('uiDemoDetails')}</summary>
               <DataBlock icon={FLOW_ICONS.coins} label={tr('flowDataCoins')} hint={tr('flowDataCoinsHint').replace('{n}', String(ctx.inputCount))}>
                 <UtxoList
                   inputs={ctx.aliceInputs}
@@ -330,21 +301,19 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
                   <SilentAddressField compact value={bobShare} {...addressBadges} />
                 </DataBlock>
               ) : null}
+              </details>
             </>
           ) : null}
 
           {phase === 'derive' ? (
             <>
-              <StepHeader icon={FLOW_ICONS.derive} title={tr('flowDeriveTitle')}>
-                <p className="sp-flow-step-lead">{tr('flowDeriveLead')}</p>
-              </StepHeader>
               {sendLoading ? <p className="sp-demo-running">{tr('flowDeriveRunning')}</p> : null}
               {sendError ? <p role="alert" className="sp-demo-error">{tr('teachRequestError')}: {sendError}</p> : null}
               {sendResult?.note === 'zero key sum' ? <p className="sp-flow-note">{tr('zeroKeyNote')}</p> : null}
               {sendResult && !sendLoading ? (
                 <div className="space-y-2">
                   <h4 className="font-bold">{tr('learnActual')}</h4>
-                  <DemoRunResults tr={tr} testType="send" testResults={sendResult} />
+                  <DemoRunResults tr={tr} testType="send" testResults={sendResult} disclosure />
                 </div>
               ) : null}
             </>
@@ -352,16 +321,13 @@ export default function PaymentFlow({ onOpenEdgeCases, onCloseHome, onOpenRefere
 
           {phase === 'scan' ? (
             <>
-              <StepHeader icon={FLOW_ICONS.scan} title={tr('flowScanTitle')}>
-                <p className="sp-flow-step-lead">{tr('flowScanLead')}</p>
-              </StepHeader>
               {!canScan && !recvResult ? <p className="sp-flow-note">{tr('flowScanNeedsSend')}</p> : null}
               {recvLoading ? <p className="sp-demo-running">{tr('flowScanRunning')}</p> : null}
               {recvError ? <p role="alert" className="sp-demo-error">{tr('teachRequestError')}: {recvError}</p> : null}
               {recvResult && !recvLoading ? (
                 <div className="space-y-2">
                   <h4 className="font-bold">{tr('learnActual')}</h4>
-                  <DemoRunResults tr={tr} testType="receive" testResults={recvResult} />
+                  <DemoRunResults tr={tr} testType="receive" testResults={recvResult} disclosure />
                 </div>
               ) : null}
               {done && <section className="space-y-3" data-testid="walkthrough-recap">
