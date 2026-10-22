@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FX_PRESETS } from '../fx/presets'
 
-const LOOPS = 2
+const LOOPS = 5
 
 function createScene(preset) {
   const width = window.innerWidth
   const height = window.innerHeight
-  const count = width < 640 ? 12 : 18
+  const count = width < 640 ? 24 : 36
   const particles = Array.from({ length: count }, (_, id) => {
     // Mix small, medium and large silhouettes in every burst.
     const size = id % 5 === 0
@@ -17,8 +17,8 @@ function createScene(preset) {
       id,
       size,
       left: Math.random() * Math.max(0, width - size),
-      delay: id * 0.09,
-      duration: 2.6 + Math.random() * 1.2,
+      delay: id * 0.075,
+      duration: 2.2 + Math.random(),
       rotation: -12 + Math.random() * 24,
       sway: -12 + Math.random() * 24,
       source: preset.sources[id % preset.sources.length],
