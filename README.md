@@ -27,19 +27,21 @@ Open http://localhost:5173. Vite proxies `/api` to Flask on port 5328. `npm run 
 
 ### Navigation and layout
 
-Learning uses full pages: `/?view=walkthrough` and the existing `/?view=reference&case=0&direction=send&subcase=0` links. The header and learning navigation support normal links, new tabs, and browser Back/Forward. Desktop layouts place explanations and reference selectors beside the results; mobile uses normal page scrolling and collapsible reference controls. Walkthrough actions stay within reach as you read.
+The homepage focuses on the three original tasks: the guided demo, address generation (including vanity), and reference cases. Address generation opens directly from the homepage. Newer Studio and privacy experiments remain under **More experiments** and keep their existing direct links.
+
+Learning uses full pages: `/?view=walkthrough` and the existing `/?view=reference&case=0&direction=send&subcase=0` links. The header and learning navigation support normal links, new tabs, and browser Back/Forward. The guided demo uses one compact column. Reference selectors sit beside results on desktop; mobile uses normal page scrolling and collapsible controls. Walkthrough actions follow the current step without covering its content.
 
 Address tools remain in a keyboard-accessible dialog. Escape closes it, Tab stays within it, and closing returns focus to the opener. Testnet/Mainnet are explicit radio choices; changing network clears the current result. New results receive focus at their address heading. The server-key notice is separate from generation-mode controls. Light/dark themes, English/Italian, reduced motion, and public QR/private PDF exports remain available.
 
 ### Guided learning
 
-The four-stage donation walkthrough always uses reference group 0. Each stage explains its learning goal, who knows which keys, and its expected outcome before showing technical data. Expand **How it works** for the glossary or **Reference values before execution** for published expectations. Actual sender/receiver comparisons appear only after their checks run.
+The four-stage donation walkthrough always uses reference group 0. Each stage starts with one learning goal and an Alice/Bob illustration. The illustration is labeled as a public reference example; actual output counts appear only after execution. Expand **How it works** for who knows which keys and the glossary, **Inspect protocol values** for the address and input data, or **Reference values before execution** for published expectations. Sender/receiver verdicts remain visible after execution; exact keys, tweaks, missing/extra counts, and signature evidence are under **Compare protocol values**.
 
 This server simulates both roles using public fixture keys; the API does not expose every intermediate shared-secret calculation and nothing is broadcast. The completion recap links to multiple payments, labels, unrelated outputs, and zero-sum rejection in the reference explorer. Restart resets progress and results; leaving the page aborts browser requests and discards late responses.
 
 ### Learning from reference cases
 
-Open **Learn → All reference cases** to explore all 28 pinned groups in English or Italian. Each lesson explains its inputs, expected behavior, and why the case matters before you run it. Published fixture keys are public test data; never use them for funds.
+Open **Reference → All reference cases** to explore all 28 pinned groups in English or Italian. Each lesson explains its inputs, expected behavior, and why the case matters before you run it. Published fixture keys are public test data; never use them for funds.
 
 Copy an example link to share a selection, such as `/?view=reference&case=18&direction=receive&subcase=1`. Links select the group, direction, and zero-based subcase without executing a check. Invalid selections fall back visibly to case 0, sending, subcase 0. Returning home removes the selection parameters while retaining unrelated URL parameters. Browser Back and Forward restore the selected page and reference example without automatically running a check.
 
@@ -123,13 +125,13 @@ Packaging normally requires a clean committed tree. `--allow-dirty` is only for 
 
 Start at `?view=privacy` for a bilingual, browser-only simulation of address reuse, fresh receiving addresses, and Silent Payments. Add up to six symbolic payments, inspect equal destinations, switch between an outside observer and Bob’s wallet, and simulate recognition with private scanning information. The model uses illustrative identifiers, never real addresses or keys; no API or blockchain connection is needed. Public amounts and privacy limitations remain visible. Restart resets the entire exercise.
 
-The homepage links the privacy lab to the existing guided BIP-352 walkthrough and pinned reference explorer. The conceptual exercise is implemented in `src/features/privacy/`; protocol execution remains in the existing API and reference runner.
+The homepage’s **More experiments** section links to the privacy lab, which also links to the guided BIP-352 walkthrough and pinned reference explorer. The conceptual exercise is implemented in `src/features/privacy/`; protocol execution remains in the existing API and reference runner.
 
 The privacy lab includes **Can you find Bob?**, an observer challenge with eight mixed outputs and three simulated Bob payments. Compare address reuse with distinct Silent Payments output keys, select suspects, optionally reveal a public receipt, and compare the hypothesis with the simulated wallet. The reveal reports correct, missed, and wrongly attributed payments rather than a privacy score. Ownership is local teaching data, not a security boundary; no cryptography is performed. Changing strategies clears guesses and clues while retaining the scenario. A new board or lab restart clears the exercise.
 
 ### Silent Payments Studio
 
-The compact Explore page links to four workbenches: Payments, Addresses, Labels, and Scanning. Reference and Tools are the other primary navigation destinations. Existing privacy, walkthrough, reference, and generator APIs remain available. Generation and vanity are under `?view=tools`; the observer challenge is optional at `?view=privacy#observer`.
+The homepage keeps four workbenches—Payments, Addresses, Labels, and Scanning—under the optional **More experiments** section. Existing privacy, walkthrough, reference, and generator routes remain available. Generation and vanity open directly from the homepage or under `?view=tools`; the observer challenge is optional at `?view=privacy#observer`.
 
 Studio links use `?view=studio&tool=payment&preset=default` and contain selection identifiers only. Experiments reset on reload, while language and theme persist. The workbench shell distinguishes conceptual previews from computed protocol results; technical evidence belongs under Inspect details.
 

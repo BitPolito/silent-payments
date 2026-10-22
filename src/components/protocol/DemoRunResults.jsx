@@ -14,7 +14,7 @@ function ValuePair({ title, expected, actual, tr }) {
   </div>
 }
 
-export default function DemoRunResults({ tr, testType, testResults, compact }) {
+export default function DemoRunResults({ tr, testType, testResults, compact, disclosure = false }) {
   const [page, setPage] = useState(0)
   const resultRef = useRef(null)
   const changePage = (next) => {
@@ -29,15 +29,13 @@ export default function DemoRunResults({ tr, testType, testResults, compact }) {
   const status = testResults.test_passed ? testResults.expected_failure ? 'teachRejected' : 'teachMatches' : 'teachMismatch'
   const missing = comparison.rows.filter((row) => row.status === 'missing').length
   const unexpected = comparison.rows.filter((row) => row.status === 'unexpected').length
-  return <div ref={resultRef} tabIndex={-1} role="region" aria-label={tr('uiResultPage')} className="min-w-0 space-y-3 scroll-mt-32" data-testid="comparison">
-    <p role="status" className="sp-result-status" data-failed={!testResults.test_passed || undefined}>{tr(status)}</p>
-    {testResults.error && <p role="alert">{testResults.error}</p>}
-    {testResults.test_passed && !testResults.expected_failure && comparison.actual.length === 0 && <p>{tr('teachEmpty')}</p>}
+  const counts = (
     <dl className="sp-result-counts grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
       {[[tr('teachExpectedCount'), comparison.expected.length], [tr('teachActualCount'), comparison.actual.length], [tr('teachMissingCount'), missing], [tr('teachUnexpectedCount'), unexpected]].map(([label, count]) =>
         <div key={label}><dt>{label}</dt><dd className="font-mono font-bold">{count}</dd></div>)}
     </dl>
-    {!compact && <>
+  )
+  const values = <>
       {comparison.alternatives > 1 && <p className="text-xs">{tr('teachAlternative').replace('{n}', comparison.index + 1).replace('{total}', comparison.alternatives)}</p>}
       {comparison.addresses.map((row, index) => <section key={index} className="sp-surface space-y-2 rounded-lg p-3" data-testid="address-comparison">
         <p className="text-xs font-bold">{tr(STATUS_KEYS[row.status])}</p>
@@ -58,6 +56,12 @@ export default function DemoRunResults({ tr, testType, testResults, compact }) {
         <span className="text-sm">{tr('teachPage').replace('{n}', currentPage + 1).replace('{total}', totalPages)}</span>
         <button className="sp-btn-solid" disabled={currentPage + 1 >= totalPages} onClick={() => changePage(currentPage + 1)}>{tr('teachNext')}</button>
       </nav>}
-    </>}
+  </>
+  return <div ref={resultRef} tabIndex={-1} role="region" aria-label={tr('uiResultPage')} className="min-w-0 space-y-3 scroll-mt-32" data-testid="comparison">
+    <p role="status" className="sp-result-status" data-failed={!testResults.test_passed || undefined}>{tr(status)}</p>
+    {testResults.error && <p role="alert">{testResults.error}</p>}
+    {testResults.test_passed && !testResults.expected_failure && comparison.actual.length === 0 && <p>{tr('teachEmpty')}</p>}
+    {!disclosure && counts}
+    {!compact && (disclosure ? <details className="sp-demo-details"><summary>{tr('uiDemoCompare')}</summary>{counts}{values}</details> : values)}
   </div>
 }

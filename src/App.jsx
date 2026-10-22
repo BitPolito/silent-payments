@@ -47,14 +47,14 @@ export default function App() {
           <span>{tr('title')}</span>
         </AppLink>
         <nav className="sp-primary-nav" aria-label={tr('uiMainNav')}>
-          {[['home', t.explore], ['reference', t.referenceNav], ['tools', t.tools]].map(([target, label]) => <AppLink key={target} href={pageURL(target).href} aria-current={(view === target || (target === 'home' && ['studio', 'privacy', 'walkthrough'].includes(view))) ? 'page' : undefined}>{label}</AppLink>)}
+          {[['home', tr('uiHome')], ['walkthrough', tr('uiDemoNav')], ['reference', t.referenceNav], ['tools', t.tools]].map(([target, label]) => <AppLink key={target} href={pageURL(target).href} aria-current={(view === target || (target === 'home' && ['studio', 'privacy'].includes(view))) ? 'page' : undefined}>{label}</AppLink>)}
         </nav>
         <div className="sp-header-controls"><LangToggle /><ThemeToggle ariaLabel={tr('themeAria')} /></div>
       </div>
     </header>
     <main id="main-content" tabIndex={-1} className={`sp-main ${view === 'home' ? '' : 'sp-learning-page'}`}>
       {view === 'home'
-        ? <HomePage headingRef={headingRef} />
+        ? <HomePage headingRef={headingRef} onGenerate={setGenerator} />
         : view === 'studio' ? <Studio key={search} search={search} headingRef={headingRef} /> : view === 'tools' ? <Tools headingRef={headingRef} onGenerate={setGenerator} /> : view === 'privacy' ? <PrivacyLab headingRef={headingRef} /> : <LearningPage key={search} view={view} initialSearch={search} headingRef={headingRef} />}
     </main>
     <div className="sp-resource-links"><a href="https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki" target="_blank" rel="noopener noreferrer">{tr('bipCta')} ↗</a><a href={BITPOLITO_URL} target="_blank" rel="noopener noreferrer">bitpolito.it ↗</a></div>

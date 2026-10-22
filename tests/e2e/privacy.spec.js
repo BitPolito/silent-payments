@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('compare reuse, fresh addresses and Silent Payments without hiding amounts', async ({ page }) => {
   await page.goto('/')
+  await page.getByText('More experiments', { exact: true }).click()
   await page.getByRole('link', { name: /Explore address reuse/ }).click()
   await expect(page).toHaveURL(/view=privacy/)
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused()

@@ -1,15 +1,45 @@
-import { StudioArt } from '../features/studio/Illustrations'
+import { STORY } from '../assets/icons'
 import AppLink from '../components/AppLink'
+import { useLocale } from '../i18n/useLocale'
 import { pageURL } from '../utils/navigation'
 import { studioURL } from '../features/studio/navigation'
 import { TOOLS } from '../features/studio/content'
 import { useStudioText } from '../features/studio/useStudioText'
-export default function HomePage({ headingRef }) {
-  const t = useStudioText()
+
+export default function HomePage({ headingRef, onGenerate }) {
+  const { tr } = useLocale()
+  const experiments = useStudioText()
   const observerURL = pageURL('privacy'); observerURL.hash = 'observer'
-  return <>
-    <section className="sp-studio-hero"><p className="sp-eyebrow">BitPolito · Silent Payments Studio</p><h1 ref={headingRef} tabIndex={-1}>{t.title}</h1><p className="sp-description">{t.intro}</p><AppLink href={studioURL().href} className="sp-btn-solid">{t.start} →</AppLink></section>
-    <div className="sp-experiment-grid">{TOOLS.map((tool, index) => <AppLink className="sp-experiment-card" key={tool} href={studioURL(tool).href}><div className="sp-experiment-illustration"><StudioArt kind={tool} compact /><span aria-hidden="true">0{index + 1} ↗</span></div><h2>{t[tool]}</h2><p className="sp-description">{t.objectives[tool]}</p></AppLink>)}</div>
-    <section className="sp-studio-learning"><h2>{t.learning}</h2><div><AppLink href={pageURL('privacy').href}>{t.privacy} ↗</AppLink><AppLink href={observerURL.href}>{t.observer} ↗</AppLink><AppLink href={pageURL('walkthrough').href}>{t.guided} ↗</AppLink><AppLink href={pageURL('reference').href}>{t.reference} ↗</AppLink></div></section>
-  </>
+  return <div className="sp-simple-home">
+    <section className="sp-simple-intro">
+      <p className="sp-eyebrow">BitPolito · BIP-352</p>
+      <h1 ref={headingRef} tabIndex={-1}>{tr('title')}</h1>
+      <p className="sp-lead">{tr('uiSimpleIntro')}</p>
+    </section>
+    <div className="sp-home-essentials">
+      <section className="sp-home-demo">
+        <div className="sp-home-actors" aria-hidden="true"><img className="sp-icon-blue" src={STORY.alice} alt="" /><span>→</span><img className="sp-icon-blue" src={STORY.bob} alt="" /></div>
+        <h2>{tr('uiTryDemo')}</h2>
+        <p className="sp-description">{tr('uiGuideHint')}</p>
+        <AppLink href={pageURL('walkthrough').href} className="sp-btn-solid">{tr('demoTitle')} →</AppLink>
+      </section>
+      <section className="sp-home-utility">
+        <img src={STORY.key} className="sp-icon-blue" alt="" />
+        <h2>{tr('uiAddressTools')}</h2>
+        <p className="sp-description">{tr('uiSimpleTools')}</p>
+        <div className="sp-home-card-actions"><button className="sp-btn-outline" onClick={() => onGenerate('random')}>{tr('cardGen')}</button><button className="sp-back-link" onClick={() => onGenerate('vanity')}>{tr('cardVanity')} →</button></div>
+      </section>
+      <section className="sp-home-utility">
+        <img src={STORY.wallet} className="sp-icon-blue" alt="" />
+        <h2>{tr('uiReference')}</h2>
+        <p className="sp-description">{tr('uiSimpleReferences')}</p>
+        <AppLink href={pageURL('reference').href} className="sp-btn-outline">{tr('referenceTitle')} →</AppLink>
+      </section>
+    </div>
+    <p className="sp-home-note">{tr('uiSimpleNotice')}</p>
+    <details className="sp-home-extras">
+      <summary>{tr('uiMoreExperiments')}</summary>
+      <div><AppLink href={pageURL('privacy').href}>{experiments.privacy} ↗</AppLink><AppLink href={observerURL.href}>{experiments.observer} ↗</AppLink>{TOOLS.map((tool) => <AppLink key={tool} href={studioURL(tool).href}>{experiments[tool]} ↗</AppLink>)}</div>
+    </details>
+  </div>
 }

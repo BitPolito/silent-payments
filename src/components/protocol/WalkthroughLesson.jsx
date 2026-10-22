@@ -10,10 +10,10 @@ export default function WalkthroughLesson({ phase, caseData }) {
   return <section className="sp-lesson-aside sp-surface space-y-4 rounded-xl p-5 text-sm" data-testid="stage-teaching">
     <h2 className="font-bold">{tr('learnGoal')}</h2>
     <p>{lesson.goal}</p>
-    <p><strong>{tr('learnWho')}: </strong>{lesson.knows}</p>
-    <p><strong>{tr('learnOutcome')}: </strong>{lesson.outcome}</p>
     <details>
       <summary>{tr('learnHow')}</summary>
+      <p className="my-2"><strong>{tr('learnWho')}: </strong>{lesson.knows}</p>
+      <p className="my-2"><strong>{tr('learnOutcome')}: </strong>{lesson.outcome}</p>
       <p className="my-2 text-xs">{tr('learnConceptual')}</p>
       <dl className="space-y-3">{TERMS[phase].map((term) => <div key={term}>
         <dt className="font-bold">{teaching[locale].terms[term].title}</dt>

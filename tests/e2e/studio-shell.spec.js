@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test'
-test('compact studio opens presets, keeps three navigation destinations, and shares public identifiers', async ({ page }) => {
+test('optional studio opens presets from the focused homepage and shares public identifiers', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link')).toHaveCount(3)
-  await page.getByRole('link', { name: /Start exploring/ }).click()
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link')).toHaveCount(4)
+  await expect(page.getByRole('link', { name: 'Payments ↗', exact: true })).not.toBeVisible()
+  await page.getByText('More experiments', { exact: true }).click()
+  await page.getByRole('link', { name: 'Payments ↗', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Payments' })).toBeFocused()
   await page.getByRole('link', { name: 'Addresses', exact: true }).click()
   await page.getByRole('button', { name: 'Copy example link' }).click()
