@@ -1,0 +1,68 @@
+import { test, expect } from '@playwright/test'
+
+async function mockCowSearch(page) {
+  // Exercise the UI celebration without waiting for a random five-character search.
+  const response = await page.request.post('/api/get_sp_address', { data: { testnet: true } })
+  expect(response.ok()).toBe(true)
+  const generated = await response.json()
+  await page.route('**/api/vanity_address', route => route.fulfill({ json: generated }))
+  await page.goto('/?view=tools')
+  await page.getByRole('button', { name: /^Vanity address/ }).click()
+  await page.getByRole('textbox').fill('mucca')
+  await page.getByRole('button', { name: 'Generate', exact: true }).click()
+  await expect(page.getByRole('button', { name: new RegExp(generated.addresses[0]) })).toBeVisible()
+}
+
+test('cow celebration paints in the top layer without blocking the generator and closes with it', async ({ page }) => {
+  await mockCowSearch(page)
+  const layer = page.locator('.sp-amb-layer')
+  await expect(layer).toBeVisible()
+  await expect.poll(() => layer.evaluate(element => getComputedStyle(element).overlay)).toBe('auto')
+  await expect.poll(() => layer.locator('img').count()).toBeGreaterThan(0)
+  expect(await layer.evaluate(element => getComputedStyle(element).pointerEvents)).toBe('none')
+  await expect(page.getByRole('heading', { name: 'Address', exact: true })).toBeFocused()
+  // The decorative top layer must leave real controls usable and preserve Escape.
+  const address = page.getByRole('dialog').getByRole('button', { name: /^tsp1/ })
+  await address.click()
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(/^tsp1qq/)
+  await page.getByRole('button', { name: /QR code \(PNG\)/ }).focus()
+  await expect(page.getByRole('button', { name: /QR code \(PNG\)/ })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(layer).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Vanity address/ })).toBeFocused()
+})
+
+test('cow celebration respects reduced motion and leaves the result usable', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await mockCowSearch(page)
+  await expect(page.locator('.sp-amb-layer')).not.toBeVisible()
+  await expect(page.locator('.sp-amb-item')).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+for (const [width, locale, dark] of [[320, 'en', false], [390, 'it', true], [768, 'en', false], [1280, 'it', true]]) {
+  test(`header controls stay compact and centered at ${width}px in ${locale}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.addInitScript(({locale,dark}) => { localStorage.setItem('sp-locale',locale); localStorage.setItem('theme',dark?'dark':'light') }, {locale,dark})
+    await page.goto('/?view=walkthrough')
+    const header = page.locator('.sp-site-header')
+    const brand = await header.locator('.sp-brand').boundingBox()
+    for (const selector of ['.sp-language-track', '.sp-theme-track']) {
+      const track = await header.locator(selector).boundingBox()
+      expect(track.height).toBe(36)
+      expect(Math.abs(track.y + track.height / 2 - brand.y - brand.height / 2)).toBeLessThanOrEqual(1)
+      const target = await header.locator(selector).locator('..').boundingBox()
+      expect(target.height).toBeGreaterThanOrEqual(44)
+      expect(target.width).toBeGreaterThanOrEqual(44)
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.evaluate(() => window.scrollTo(0,500))
+    await expect.poll(async () => (await header.boundingBox()).y).toBe(0)
+    await header.getByRole('switch').click()
+    await expect(header.getByRole('switch')).toHaveAttribute('aria-checked',String(!dark))
+    await header.locator('.sp-language-control').click()
+    await expect(page.locator('html')).toHaveAttribute('lang',locale==='en'?'it':'en')
+  })
+}
