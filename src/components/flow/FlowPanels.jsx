@@ -68,7 +68,7 @@ export function SilentAddressField({ value, className, notBc1Note, badgeSilent, 
       {!compact ? (
         <AddressKindNote address={value} notBc1Note={notBc1Note} badgeSilent={badgeSilent} badgeBc1={badgeBc1} />
       ) : null}
-      <CopyableText value={value} className={className || '!p-2 !text-xs dark:!bg-bp-700/70'} />
+      <CopyableText value={value} className={className} />
     </>
   )
 }
@@ -79,10 +79,10 @@ export function DataBlock({ icon, label, hint, children }) {
       <div className="sp-flow-data-label">
         <img src={icon} alt="" className="sp-flow-data-icon" />
         <div className="min-w-0">
-          <p className="text-xs font-semibold tracking-wide text-bp-500 dark:text-bp-canvas/70">
+          <p className="sp-flow-data-title">
             {label}
           </p>
-          {hint ? <p className="text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{hint}</p> : null}
+          {hint ? <p className="sp-flow-data-hint">{hint}</p> : null}
         </div>
       </div>
       {children ? <div className="sp-flow-data-body">{children}</div> : null}
@@ -114,17 +114,17 @@ export function UtxoList({ inputs, signedLabel, utxoLabel, scriptLabel, p2pkhNot
             </div>
             <p className="sp-utxo-ref">
               <span className="font-semibold text-bp-600 dark:text-bp-canvas/80">{formatTxidShort(v.txid)}</span>
-              <span className="text-bp-500 dark:text-bp-canvas/55"> · vout {v.vout}</span>
+              <span className="inline-block whitespace-nowrap text-bp-500 dark:text-bp-200"> · vout {v.vout}</span>
             </p>
             {scriptHex ? (
               <div className="mt-1">
-                <p className="text-[11px] font-semibold tracking-wide text-bp-500 dark:text-bp-canvas/55">
+                <p className="text-[11px] font-semibold tracking-wide text-bp-500 dark:text-bp-200">
                   {type ? `${type} · ${scriptLabel}` : scriptLabel}
                 </p>
                 {type === 'P2PKH' && p2pkhNote ? (
                   <p className="text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{p2pkhNote}</p>
                 ) : null}
-                <CopyableText value={scriptHex} className="!mt-0.5 !p-1.5 !text-[11px] dark:!bg-bp-700/55" />
+                <CopyableText value={scriptHex} />
               </div>
             ) : null}
           </li>
@@ -147,7 +147,7 @@ export function PubkeyOutput({ pubkey, label, hint }) {
         </p>
       ) : null}
       {hint ? <p className="mb-1 text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{hint}</p> : null}
-      <CopyableText value={pubkey} className="!p-2 !text-xs dark:!bg-bp-700/70" />
+      <CopyableText value={pubkey} />
     </div>
   )
 }
@@ -177,7 +177,7 @@ export function TxOutputList({ outputs, highlightSet, matchedLabel, otherLabel }
             </div>
             <CopyableText
               value={hex}
-              className={`!p-1.5 !text-[11px] ${match ? 'ring-1 ring-bp-blue/20 dark:ring-bp-canvas/25 dark:!bg-bp-700/70' : 'dark:!bg-bp-700/45'}`}
+              className={match ? 'ring-1 ring-bp-blue/20 dark:ring-bp-canvas/25' : ''}
             />
           </li>
         )

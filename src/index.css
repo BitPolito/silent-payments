@@ -307,15 +307,15 @@
   }
 
   .sp-flow-data-label {
-    @apply flex gap-2;
+    @apply grid grid-cols-[24px_minmax(0,1fr)] items-start gap-2.5;
   }
 
   .sp-flow-data-icon {
-    @apply sp-icon-blue h-5 w-5 shrink-0 opacity-90;
+    @apply sp-icon-blue mt-0.5 h-5 w-5 shrink-0 opacity-90;
   }
 
   .sp-flow-data-body {
-    @apply mt-2;
+    @apply mt-3 min-w-0;
   }
 
   .sp-flow-legend {
@@ -417,7 +417,7 @@
   }
 
   .sp-utxo-list {
-    @apply mt-2 flex flex-col gap-1.5;
+    @apply flex min-w-0 flex-col gap-3;
   }
 
   .sp-utxo-chip {
@@ -425,11 +425,11 @@
   }
 
   .sp-utxo-card {
-    @apply sp-surface rounded-lg px-2.5 py-2;
+    @apply sp-surface min-w-0 rounded-lg p-3;
   }
 
   .sp-utxo-card-head {
-    @apply mb-1 flex flex-wrap items-center justify-between gap-1;
+    @apply mb-2 flex flex-wrap items-center justify-between gap-2;
   }
 
   .sp-utxo-index {
@@ -634,6 +634,13 @@ html { scroll-padding-top: calc(var(--sp-header-height) + 24px); background: var
 .sp-learning-page .sp-flow-heading { font-size: 22px; }
 .sp-learning-page .sp-flow-step-lead { font-size: 14px; line-height: 1.7; color: var(--sp-muted); }
 .sp-learning-page .sp-flow-data { padding: 16px; }
+.sp-app .sp-flow-data { min-width: 0; background: var(--sp-soft); box-shadow: none; }
+.sp-flow-data-title { color: var(--sp-text); font-size: 13px; font-weight: 650; line-height: 1.5; }
+.sp-flow-data-hint { margin-top: 4px; color: var(--sp-muted); font-size: 12px; line-height: 1.6; }
+.sp-utxo-ref { overflow-wrap: anywhere; }
+.sp-flow-shell .sp-copy-field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; max-width: 100%; margin-top: 8px; line-height: 1.6; box-shadow: none; }
+.sp-flow-shell .sp-copy-value { grid-column: 1; grid-row: 2; min-width: 0; padding: 0; }
+.sp-flow-shell .sp-copy-badge { position: static; grid-column: 1; grid-row: 1; justify-self: end; }
 .sp-flow-panel { scroll-margin-top: calc(var(--sp-header-height) + 88px); }
 .sp-walkthrough-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; position: sticky; bottom: 12px; z-index: 25; border: 1px solid var(--sp-line); background: var(--sp-panel); border-radius: 16px; padding: 12px 16px; box-shadow: 0 8px 40px -16px #001ce04d; }
 .sp-walkthrough-actions button { min-height: 44px; }
@@ -1037,8 +1044,7 @@ h1:focus, h2[tabindex]:focus, .sp-flow-panel:focus { outline: none; }
 .sp-demo-lesson > p { font-size: 14px; line-height: 1.7; margin-top: 8px; }
 .sp-demo-expectations { margin-top: 18px; border-top: 1px solid var(--sp-line); padding-top: 16px; }
 .sp-demo-expectations h3 { font-weight: 650; font-size: 14px; }
-.sp-demo-data { border-top: 1px solid var(--sp-line); padding-top: 12px; }
-.sp-simple-demo .sp-flow-data { padding: 12px 0; background: transparent; box-shadow: none; }
+.sp-demo-data { display: grid; gap: 16px; }
 
 .sp-experiment-notice { margin-bottom: 20px; color: var(--sp-muted); font-size: 13px; line-height: 1.5; }
 
