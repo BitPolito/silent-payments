@@ -1,5 +1,5 @@
 import { ICON, STORY } from '../../assets/icons'
-import AppLink from '../../components/AppLink'
+import BackLink from '../../components/BackLink'
 import BpIcon from '../../components/BpIcon'
 import { useLocale } from '../../i18n/useLocale'
 import { pageURL } from '../../utils/navigation'
@@ -11,7 +11,7 @@ export default function Tools({ headingRef, onGenerate }) {
   return <div className="sp-tools-page">
     <div className="sp-page-header">
       <div>
-        <AppLink className="sp-back-link" href={pageURL('home').href}>← {tr('uiBackHome')}</AppLink>
+        <BackLink href={pageURL('home').href}>{tr('uiBackHome')}</BackLink>
         <h1 ref={headingRef} tabIndex={-1}>{t.tools}</h1>
         <p className="sp-description">{tr('uiToolsLead')}</p>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { STORY } from '../assets/icons'
-import AppLink from '../components/AppLink'
+import BackLink from '../components/BackLink'
 import { useLocale } from '../i18n/useLocale'
 import { useApiOnline } from '../hooks/useApiOnline'
 import { EDGE_SCENARIOS } from '../utils/demoScenarios'
@@ -30,14 +30,14 @@ export default function LearningPage({ headingRef }) {
   return <>
     <div className="sp-page-header">
       <div>
-        <AppLink className="sp-back-link" href={pageURL('home').href}>← {tr('uiBackHome')}</AppLink>
+        <BackLink href={pageURL('home').href}>{tr('uiBackHome')}</BackLink>
         <h1 ref={headingRef} tabIndex={-1}>{tr('demoTitle')}</h1>
       </div>
     </div>
     {apiStatus === 'offline' && screen !== 'edges' ? <p role="alert" className="sp-notice">{tr(import.meta.env.PROD ? 'apiOfflineProd' : 'apiOffline')}</p> : <>
       {screen === 'flow' && <PaymentFlow onOpenEdgeCases={() => setScreen('edges')} onCloseHome={goHome} />}
       {screen === 'edges' && <section className="sp-edge-page space-y-4">
-        <button className="sp-back-link" onClick={() => setScreen('flow')}>← {tr('flowBackToWalkthrough')}</button>
+        <BackLink onClick={() => setScreen('flow')}>{tr('flowBackToWalkthrough')}</BackLink>
         <h2 className="text-2xl font-bold">{tr('flowEdgeTitle')}</h2>
         <p className="sp-description">{tr('demoIntro')}</p>
         <ul className="grid gap-4 sm:grid-cols-2">{EDGE_SCENARIOS.map((item) => <li key={item.id}>

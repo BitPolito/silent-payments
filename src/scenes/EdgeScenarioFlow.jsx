@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import BackLink from '../components/BackLink'
 import Collapsible from '../components/protocol/Collapsible'
 import DemoRunResults from '../components/protocol/DemoRunResults'
 import { FLOW_ICONS } from '../assets/flowIcons'
@@ -156,13 +157,7 @@ export default function EdgeScenarioFlow({ caseData, scenarioId, testId, onBack,
 
   return (
     <div className="sp-flow-shell">
-      <button
-        type="button"
-        onClick={onBack}
-        className="self-start text-xs font-semibold text-bp-blue underline underline-offset-2 dark:text-bp-canvas"
-      >
-        ← {tr('edgeBackToList')}
-      </button>
+      <BackLink onClick={onBack}>{tr('edgeBackToList')}</BackLink>
 
       <FlowProgress
         steps={railSteps}

@@ -1,6 +1,7 @@
 import ObserverChallenge from './ObserverChallenge'
 import { useState } from 'react'
 import AppLink from '../../components/AppLink'
+import BackLink from '../../components/BackLink'
 import { useLocale } from '../../i18n/useLocale'
 import { pageURL } from '../../utils/navigation'
 import { privacyContent } from './content'
@@ -21,7 +22,7 @@ export default function PrivacyLab({ headingRef }) {
   const reset = () => { setStrategy('reuse'); setCount(2); setSelected(0); setPerspective('observer'); setScanned(0); setAnswer(null); setRound((value) => value + 1) }
   return <>
     <div className="sp-page-header"><div>
-      <AppLink className="sp-back-link" href={pageURL('home').href}>← {tr('uiBackHome')}</AppLink>
+      <BackLink href={pageURL('home').href}>{tr('uiBackHome')}</BackLink>
       <h1 ref={headingRef} tabIndex={-1}>{t.title}</h1><p className="sp-description">{t.intro}</p>
     </div><span className="sp-page-badge">01 / 03 · {tr('uiDemoOnly')}</span></div>
     <div className="sp-lab-layout">
