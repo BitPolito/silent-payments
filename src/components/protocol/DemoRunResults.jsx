@@ -5,13 +5,12 @@ import { compareReferenceResult } from '../../utils/referenceComparison'
 const STATUS_KEYS = { matched: 'teachMatched', missing: 'teachMissing', unexpected: 'teachUnexpected', different: 'teachDifferent' }
 
 function ValuePair({ title, expected, actual, tr, deduplicate = false }) {
+  if (deduplicate && expected === actual) return <CopyableText label={title} value={actual} />
   return <div className="min-w-0">
     <h5 className="text-xs font-bold">{title}</h5>
-    <div className={deduplicate && expected === actual ? 'min-w-0' : 'grid min-w-0 gap-2 sm:grid-cols-2'}>
-      {deduplicate && expected === actual ? <CopyableText value={actual} /> : <>
-        <div className="min-w-0"><p className="text-xs">{tr('expected')}</p><CopyableText value={expected} /></div>
-        <div className="min-w-0"><p className="text-xs">{tr('received')}</p><CopyableText value={actual} /></div>
-      </>}
+    <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+      <CopyableText label={tr('expected')} value={expected} />
+      <CopyableText label={tr('received')} value={actual} />
     </div>
   </div>
 }
@@ -51,7 +50,7 @@ export default function DemoRunResults({ tr, testType, testResults, compact, wal
             <ValuePair title={tr('teachKey')} expected={row.expected?.pub_key} actual={row.actual?.pub_key} tr={tr} deduplicate={walkthrough} />
             <ValuePair title={tr('teachTweak')} expected={row.expected?.priv_key_tweak} actual={row.actual?.priv_key_tweak} tr={tr} deduplicate={walkthrough} />
             {row.actual?.signature && (walkthrough
-              ? <section><h5 className="text-xs font-bold">{tr('teachSignature')}</h5><p className="text-xs">{tr('teachSignatureNote')}</p><CopyableText value={row.actual.signature} /></section>
+              ? <section><CopyableText label={tr('teachSignature')} value={row.actual.signature} /><p className="sp-description mt-2 text-xs">{tr('teachSignatureNote')}</p></section>
               : <details><summary>{tr('teachSignature')}</summary><p className="text-xs">{tr('teachSignatureNote')}</p><CopyableText value={row.actual.signature} /></details>)}
           </>}
       </section>)}

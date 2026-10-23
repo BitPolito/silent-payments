@@ -23,7 +23,7 @@ test('cow celebration paints in the top layer without blocking the generator and
   expect(await layer.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
   await expect(page.getByRole('heading', { name: 'Address', exact: true })).toBeFocused()
   // The decorative top layer must leave real controls usable and preserve Escape.
-  const address = page.getByRole('dialog').getByRole('button', { name: /^tsp1/ })
+  const address = page.getByRole('dialog').getByRole('button', { name: /^Copy: tsp1/ })
   await address.click()
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(/^tsp1qq/)
   await page.getByRole('button', { name: /QR code \(PNG\)/ }).focus()

@@ -118,13 +118,10 @@ export function UtxoList({ inputs, signedLabel, utxoLabel, scriptLabel, p2pkhNot
             </p>
             {scriptHex ? (
               <div className="mt-1">
-                <p className="text-[11px] font-semibold tracking-wide text-bp-500 dark:text-bp-200">
-                  {type ? `${type} · ${scriptLabel}` : scriptLabel}
-                </p>
                 {type === 'P2PKH' && p2pkhNote ? (
                   <p className="text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{p2pkhNote}</p>
                 ) : null}
-                <CopyableText value={scriptHex} />
+                <CopyableText label={type ? `${type} · ${scriptLabel}` : scriptLabel} value={scriptHex} />
               </div>
             ) : null}
           </li>
@@ -141,13 +138,8 @@ export function PubkeyOutput({ pubkey, label, hint }) {
   if (!pubkey) return <p className="sp-flow-muted text-[11px]">—</p>
   return (
     <div>
-      {label ? (
-        <p className="mb-1 text-[11px] font-semibold tracking-wide text-bp-500 dark:text-bp-canvas/55">
-          {label}
-        </p>
-      ) : null}
       {hint ? <p className="mb-1 text-xs leading-relaxed text-bp-600 dark:text-bp-canvas/65">{hint}</p> : null}
-      <CopyableText value={pubkey} />
+      <CopyableText label={label} value={pubkey} />
     </div>
   )
 }

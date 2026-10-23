@@ -14,13 +14,13 @@ export default function WalkthroughLesson({ phase, caseData, result }) {
       <p className="sp-description text-xs">{tr('teachNotRun')}</p>
       {phase === 'derive'
         ? (caseData.sending?.expected_output_sets || []).map((set, index) => <div key={index} className="mt-2 space-y-2">
-          {set.map((value, outputIndex) => <CopyableText key={outputIndex} value={value} />)}
+          {set.map((value, outputIndex) => <CopyableText key={outputIndex} label={`${tr('teachOutput')} ${outputIndex + 1} · ${tr('teachKey')}`} value={value} />)}
         </div>)
         : <div className="space-y-2">
-          {(caseData.receiving?.expected_addresses || []).map((address, index) => <div key={index}><p>{tr('teachAddress')} {index + 1}</p><CopyableText value={address} /></div>)}
+          {(caseData.receiving?.expected_addresses || []).map((address, index) => <CopyableText key={index} label={`${tr('teachAddress')} ${index + 1}`} value={address} />)}
           {(caseData.receiving?.expected_outputs || []).map((output, index) => <div key={index}>
-            <p>{tr('teachOutput')} {index + 1} · {tr('teachKey')}</p><CopyableText value={output.pub_key} />
-            <p>{tr('teachTweak')}</p><CopyableText value={output.priv_key_tweak} />
+            <CopyableText label={`${tr('teachOutput')} ${index + 1} · ${tr('teachKey')}`} value={output.pub_key} />
+            <CopyableText label={tr('teachTweak')} value={output.priv_key_tweak} />
           </div>)}
         </div>}
     </section>}

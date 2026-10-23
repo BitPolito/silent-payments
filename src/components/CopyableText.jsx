@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react'
 import { useLocale } from '../i18n/useLocale'
 
 /**
- * @param {{ value: string, className?: string, emptyLabel?: string, highlight?: { start: number, end: number } | null }} props
+ * @param {{ value: string, label?: string, className?: string, emptyLabel?: string, highlight?: { start: number, end: number } | null }} props
  */
-export default function CopyableText({ value, className = '', emptyLabel = '—', highlight = null }) {
+export default function CopyableText({ value, label, className = '', emptyLabel = '—', highlight = null }) {
   const { tr } = useLocale()
   const [copied, setCopied] = useState(false)
   const canCopy = Boolean(value?.trim())
@@ -50,24 +50,27 @@ export default function CopyableText({ value, className = '', emptyLabel = '—'
     value
   )
 
-  return (
+  const copyControl = canCopy ? (
     <button
       type="button"
       onClick={copy}
-      disabled={!canCopy}
-      title={canCopy ? tr('copyHint') : undefined}
-      className={`sp-copy-field group relative mt-1 block min-h-[44px] w-full rounded-lg border border-bp-200 bg-bp-50 p-3 text-left font-mono text-xs text-bp-blue shadow-xs transition dark:border-bp-500/45 dark:bg-bp-700/55 dark:text-bp-canvas ${
-        canCopy
-          ? 'cursor-pointer hover:border-bp-blue/40 hover:bg-bp-100 hover:ring-2 hover:ring-bp-blue/25 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-bp-blue dark:hover:border-bp-canvas/35 dark:hover:bg-bp-700/80 dark:hover:ring-bp-canvas/30 dark:focus-visible:ring-bp-canvas'
-          : 'cursor-default opacity-70'
-      } ${className}`}
+      title={tr('copyHint')}
+      aria-label={`${tr('copy')}: ${label ? `${label} · ` : ''}${value}`}
+      className="sp-copy-control"
+      data-copied={copied || undefined}
     >
-      <span className="sp-copy-value block whitespace-pre-wrap break-all pr-12 pt-0.5">{displayContent}</span>
-      {canCopy ? (
-        <span className="sp-copy-badge pointer-events-none absolute right-2 top-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-bp-500 shadow-xs transition group-hover:text-bp-blue group-focus-visible:text-bp-blue dark:bg-bp-800/90 dark:text-bp-200 dark:group-hover:text-bp-canvas">
-          {copied ? tr('copied') : tr('copy')}
-        </span>
-      ) : null}
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
+        <path fillRule="evenodd" d={copied ? 'M2 7h2v2h2v2h2V9h2V7h2V5h2V3h-2v2h-2v2H8v2H6V7H4V5H2v2Z' : 'M5 1h9v10h-2V3H5V1ZM2 4h9v11H2V4Zm2 2v7h5V6H4Z'} />
+      </svg>
+      <span className="sp-copy-control-text" aria-live="polite">{copied ? tr('copied') : tr('copy')}</span>
     </button>
+  ) : null
+
+  return (
+    <div className={`sp-copy-field ${className}`}>
+      {label && <div className="sp-copy-heading"><span className="sp-copy-label">{label}</span>{copyControl}</div>}
+      <code className="sp-copy-value">{displayContent}</code>
+      {!label && copyControl && <div className="sp-copy-actions">{copyControl}</div>}
+    </div>
   )
 }
